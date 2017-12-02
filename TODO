@@ -1,0 +1,40 @@
+Tasks
+-----
+
+~ Isolate machine specific code.
+~ Better dump syscall to print system informations.
+  Accepts a parameter with the things to dump.
+
+Missing milestones
+------------------
+
+- On-demand paging (for user stack and heap)
+~ ARM port.
+~ Serial driver
+- TTY attributes (termios)
+- Networking
+
+Generic coding rules
+--------------------
+
+- Document code using Doxygen syntax.
+- No more that 80 characters rows.
+- Braces on newlines
+- No typedef on structures except for the POSIX defined ones
+
+
+Code review and cleanup (bottom-up)
+-----------------------------------
+
+** Arch/x86
+
+- Arch startup: startup.s, arch_init.c
+- GDT: gdt.h, gdt.c
+- IDT: idt.h, idt.c
+- Paging: paging.h,
+    (doing) paging.c:
+        - page_map, page_unmap
+
+*** MM
+
+- Buddy: buddy.c, buddy.h

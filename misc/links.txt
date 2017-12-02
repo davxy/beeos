@@ -1,0 +1,2 @@
+http://bravegnu.org/gnu-eprog/hello-arm.html
+https://balau82.wordpress.com/2010/02/14/simplest-bare-metal-program-for-arm/
