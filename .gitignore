@@ -1,0 +1,11 @@
+*.d
+*.o
+*.a
+*.elf
+*.sym
+*.swp
+kernel/build
+kernel/tags
+user/build
+misc/disk.img
+misc/tmp
