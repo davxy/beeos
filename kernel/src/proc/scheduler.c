@@ -104,8 +104,9 @@ void scheduler(void)
     while (next->state != TASK_RUNNING && next != current_task)
         next = list_container(next->tasks.next, struct task, tasks);
     
-    if (next == current_task)
+    if (next == current_task && next->pid != 0)
     {
+        /* Nothing to run... run the idle() task */
         ktask.state = TASK_RUNNING;
         next = &ktask;
     }
