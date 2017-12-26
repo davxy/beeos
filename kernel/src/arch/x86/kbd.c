@@ -21,6 +21,8 @@
 #include "io.h"
 #include "kprintf.h"
 #include "driver/tty.h"
+#include "proc.h"
+#include "sys.h"
 
 /* Keyboard base address port. */
 #define KEYB_PORT           0x60
@@ -242,7 +244,7 @@ static char kbd_map2[] =
 /*
  * Get scan code and ack the controller.
  */
-static int scan_key()
+static int scan_key(void)
 {
     int code = inb(KEYB_PORT);
     int val = inb(KEYB_ACK);
@@ -250,6 +252,17 @@ static int scan_key()
     outb(KEYB_ACK, val | 0x80);
     outb(KEYB_ACK, val);
     return code;
+}
+
+static void kill_tty_group(void)
+{
+    struct task *t = current_task;
+    pid_t pgid = (pid_t)-1; /*TODO*/
+
+    do {
+        if (t->pgid == pgid)
+            sys_kill(t->pid, SIGINT);
+    } while (t != current_task);
 }
 
 /*
@@ -289,8 +302,18 @@ static void kbd_handler(void)
     default:
         if (!(c & 0x80))
         {
-            if (kbd_status & KBD_STATUS_CTRL)
-                c = kbd_map1[c]; /* TODO, actually ignore it */
+            if (kbd_status & KBD_STATUS_CTRL) {
+                c = kbd_map1[c];
+                kprintf("C^%c\n", c);
+                switch (c) {
+                case 'c':
+                case 'C':
+                    /* Kill all the process in the group */
+                    kill_tty_group();
+                    break;
+                }
+                return;
+            }
             else if (((kbd_status & KBD_STATUS_SHIFT) != 0) 
                     ^ ((kbd_status & KBD_STATUS_CAPS_LCK) != 0))
                 c = kbd_map2[c];
