@@ -40,6 +40,8 @@
 #define __NR_lseek          12
 #define __NR_time           13
 #define __NR_getpid         20
+#define __NR_setpgid        21
+#define __NR_getpgid        22
 #define __NR_fstat          28
 #define __NR_getppid        64
 #define __NR_getcwd         65
@@ -164,6 +166,16 @@ static inline pid_t getpid(void)
 static inline pid_t getppid(void)
 {
     return syscall(__NR_getppid);
+}
+
+static inline int setpgid(pid_t pid, pid_t pgid)
+{
+    return syscall(__NR_setpgid, pid, pgid);
+}
+
+static inline pid_t getpgid(pid_t pid)
+{
+    return syscall(__NR_getpgid, pid);
 }
 
 static inline int fstat(int fdn, struct stat *buf)

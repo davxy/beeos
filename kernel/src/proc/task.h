@@ -47,6 +47,7 @@ struct task
 {
     struct task_arch    arch;           /**< Architecture specific data. */
     pid_t               pid;            /**< Process ID. */
+    pid_t               pgid;           /**< Process group ID */
     uid_t               uid;            /**< Real user ID. */
     uid_t               euid;           /**< Effective user ID. */
     uid_t               suid;           /**< Saved used ID. */

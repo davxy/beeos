@@ -31,6 +31,7 @@ int task_init(struct task *task)
 
     /* pids */
     task->pid = next_pid++;
+    task->pgid = current_task->pgid;
     task->pptr = current_task;
    
     /* user and group */

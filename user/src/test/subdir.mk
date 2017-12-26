@@ -13,6 +13,7 @@ local_sources := dump.c \
 				 sleep.c \
 				 divbyzero.c \
 				 serial.c \
-				 initadopt.c
+				 initadopt.c \
+				 pgrp.c
 
 dirs := cp03 cp08
