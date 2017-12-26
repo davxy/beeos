@@ -62,6 +62,8 @@ int task_init(struct task *task)
     task->counter = msecs_to_ticks(SCHED_TIMESLICE);
     task->exit_code = 0;
     list_init(&task->tasks);
+    list_init(&task->children);
+    list_init(&task->sibling);
     cond_init(&task->chld_exit);
     
     /* signals */

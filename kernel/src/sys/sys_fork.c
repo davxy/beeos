@@ -22,7 +22,7 @@
 
 pid_t sys_fork(void)
 {
-    struct task *child;
+    struct task *child, *sib;
     
     child = task_create();
     if (child == NULL)
@@ -31,8 +31,14 @@ pid_t sys_fork(void)
     if (current_task->pid == child->pid)
         return 0;
 
-    /* parent */
+    /* Add to the global tasks list */
     list_insert_before(&current_task->tasks, &child->tasks);
+
+    sib = list_container(current_task->children.next, struct task, children);
+    if (list_empty(&current_task->children) || sib->pptr != current_task)
+        list_insert_after(&current_task->children, &child->children);
+    else
+        list_insert_before(&sib->sibling, &child->sibling);
 
     return child->pid;
 }
