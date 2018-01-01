@@ -255,13 +255,15 @@ static int scan_key(void)
 }
 
 static void kill_tty_group(void)
-{
-    struct task *t = current_task;
-    pid_t pgid = (pid_t)-1; /*TODO*/
 
+    struct task *t = current_task;
+    pid_t pgid;
+
+    pgid = sys_tcgetpgrp(0); 
     do {
         if (t->pgid == pgid)
             sys_kill(t->pid, SIGINT);
+        t = list_container(t->tasks.next, struct task, tasks);
     } while (t != current_task);
 }
 
@@ -333,3 +335,4 @@ void kbd_init(void)
 {
     isr_register_handler(ISR_KEYBOARD, kbd_handler);
 }
+

@@ -93,6 +93,10 @@ ssize_t tty_write(void *buf, size_t n)
     return (ssize_t)n;
 }
 
+pid_t tty_getpgid(void)
+{
+    return tty_table[0].pgrp;
+}
 
 
 /* 
@@ -136,6 +140,7 @@ void tty_update(char c)
         dev_io(0, tty->dev, DEV_WRITE, 0, echo_buf, echo_siz, NULL);
 }
 
+
 static void tty_attr_init(struct termios *termptr)
 {
     termptr->c_iflag = BRKINT | ICRNL;
@@ -157,6 +162,7 @@ static void tty_attr_init(struct termios *termptr)
 static void tty_struct_init(struct tty_st *tty, dev_t dev)
 {
     tty->dev = dev;
+    tty->pgrp = 0;
     tty->rbuf[0] = 0;
     tty->rpos = 0;
     tty->wpos = 0;
@@ -167,8 +173,10 @@ static void tty_struct_init(struct tty_st *tty, dev_t dev)
 void tty_init(void)
 {
     int i;
+
     for (i = 0; i < TTYS_CONSOLE; i++)
         tty_struct_init(&tty_table[i], DEV_CONSOLE + i);
 
     uart_init();
 }
+
