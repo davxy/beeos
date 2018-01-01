@@ -3,7 +3,46 @@
 All notable changes to this project will be documented in this file.
 This project adheres to "Semantic Versioning" (http://semver.org)
 
+################################################################################
 
-## [ Version 0.0.1 - 2017-09-14 ]
+[ Version 0.0.2 - Unreleased ]
+
+Features
+
+- Better getcwd syscall
+- tcgetpgrp and tcsetpgrp syscalls
+- getpgid and setpgid syscalls
+- CTRL-C to send SIGINT to foreground process group
+- Process vertical (parent/child) and horizontal (sibling) relationships
+
+User
+
+- Ignore SIGINT in the shell prompt
+
+Fix
+
+- Swapper task switch only if not alredy running
+
+################################################################################
+
+[ Version 0.0.1 - 2017-09-14 ]
 
 First (and last?) almost stable release.
+
+Features
+
+- Multitasking
+- Syscalls
+- Virtual Memory
+- Virtual File System (ext2 and custom initrd)
+- SLAB  memory allocator
+- Buddy memory allocator
+- Timer queues
+- Signals
+- Pipes
+- System V messages
+- Spinlocks
+- Wait queues
+- TTY
+- Ramdisk
+- Keyboard

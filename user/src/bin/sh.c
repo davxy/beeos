@@ -26,14 +26,29 @@
 #include <errno.h>
 #include <sys/wait.h>
 #include <signal.h>
-
+#include <limits.h>
 
 #define CMD_MAX 64
 
-
+static char cmd[CMD_MAX];
+static char cwd[PATH_MAX];
 static pid_t fgpid = -1;
 static int fgterm;
 
+const char *user = "guest";
+const char *host = "beeos";
+
+static void print_prompt(void)
+{
+    if (getcwd(cwd, PATH_MAX) < 0)
+        perror("getcwd");
+    printf("%s@%s:%s$ ", user, host, cwd);
+}
+
+static void sigint(int signo)
+{
+    printf("zzzzzz\n");
+}
 
 static void sigchld(int signo)
 {
@@ -120,13 +135,23 @@ static int execute(int argc, char *argv[])
     return status;
 }
 
-
 static int interactive(void)
 {
     int fd;
-    char cmd[CMD_MAX];
     char *argv[20];
     int argc;
+
+    /*
+     * POSIX1. On execve() syscall family, all signals are set to their
+     * default action unless the process that calls exec is ignoring the
+     * signal. Thus here instead of ignoring the SIGINT signal we just
+     * set it to a dummy handler.
+     */
+    if (signal(SIGINT, sigint) < 0)
+        perror("signal: SIGINT");
+
+    if (signal(SIGCHLD, sigchld) < 0)
+        perror("signal: SIGCHLD");
 
     fd = open("console", O_RDWR, 0); /* stdin (fd=1) */
     if (fd < 0)
@@ -135,7 +160,7 @@ static int interactive(void)
     dup(0); /* stderr (fd=3) */
 
     while (1) {
-        printf("$ ");
+        print_prompt();
         if (fgets(cmd, CMD_MAX, stdin)) {
             argc = 0;
             argv[argc++] = strtok(cmd, " ");
@@ -152,6 +177,9 @@ int main(int argc, char *argv[])
 {
     int status;
     sigset_t mask;
+
+    setpgid(0, 0);
+    tcsetpgrp(STDOUT_FILENO, getpid());
     
     /* Be sure that SIGCHLD is unblocked */
     (void)sigemptyset(&mask);
