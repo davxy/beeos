@@ -93,9 +93,15 @@ ssize_t tty_write(void *buf, size_t n)
     return (ssize_t)n;
 }
 
-pid_t tty_getpgid(void)
+pid_t tty_getpgrp(void)
 {
     return tty_table[0].pgrp;
+}
+
+int tty_setpgrp(pid_t pgrp)
+{
+    tty_table[0].pgrp = pgrp;
+    return 0;
 }
 
 

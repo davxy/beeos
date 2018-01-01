@@ -255,7 +255,7 @@ static int scan_key(void)
 }
 
 static void kill_tty_group(void)
-
+{
     struct task *t = current_task;
     pid_t pgid;
 

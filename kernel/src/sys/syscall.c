@@ -42,6 +42,8 @@ static void *syscalls[] =
     [__NR_getppid]      = sys_getppid,
     [__NR_getpgid]      = sys_getpgid,
     [__NR_setpgid]      = sys_setpgid,
+    [__NR_tcgetpgrp]    = sys_tcgetpgrp,
+    [__NR_tcsetpgrp]    = sys_tcsetpgrp,
     [__NR_getcwd]       = sys_getcwd,
     [__NR_sbrk]         = sys_sbrk,
     [__NR_nanosleep]    = sys_nanosleep,
@@ -89,3 +91,4 @@ void syscall_init(void)
 {
     isr_register_handler(ISR_SYSCALL, syscall_handler);
 }
+

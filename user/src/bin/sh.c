@@ -58,7 +58,7 @@ static void sigchld(int signo)
 static int execute(int argc, char *argv[])
 {
     sigset_t zeromask, newmask, oldmask;
-    pid_t pid;
+    pid_t pid, pgrp;
     int status;
     char *cmd;
     int bg = 0;
@@ -93,8 +93,7 @@ static int execute(int argc, char *argv[])
                 /* Set process group of controlling terminal */
                 if (pid == 0) {
                     if (!bg) {
-                        pid = getpid();
-                        tcsetpgrp(pid, pid);
+                        tcsetpgrp(STDOUT_FILENO, getpid());
                     }
                     status = execvpe(cmd, argv, environ);
                     if (status < 0) {
@@ -103,11 +102,11 @@ static int execute(int argc, char *argv[])
                     }
                     exit(status);
                 } else if (!bg) {
-                    tcsetpgrp(pid, pid);
+                    pgrp = tcgetpgrp(STDOUT_FILENO);
+                    tcsetpgrp(STDOUT_FILENO, pid);
                     while (!fgterm)
                         sigsuspend(&zeromask);
-                    pid = getpid();
-                    tcsetpgrp(pid, pid);
+                    tcsetpgrp(STDOUT_FILENO, pgrp);
                 }
             } else {
                 perror("setpgid error");
