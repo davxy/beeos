@@ -17,28 +17,21 @@
  * License along with BeeOS; if not, see <http://www.gnu/licenses/>.
  */
 
-#include "proc.h"
-#include "proc/task.h"
+#include <stdio.h>
+#include <unistd.h>
 
-pid_t sys_fork(void)
+
+int main(int argc, char *argv[])
 {
-    struct task *child, *sib;
+    int res;
+
+    printf("Create a process group\n");
     
-    child = task_create();
-    if (child == NULL)
-        return -1;
+    printf("<pid: %d, pgid: %d>\n", getpid(), getpgid(0));
+    if ((res = setpgid(0, 0)) < 0)
+        perror("setpgid");
+    printf("<pid: %d, pgid: %d>\n", getpid(), getpgid(0));
 
-    if (current_task->pid == child->pid)
-        return 0;
 
-    /* Add to the global tasks list */
-    list_insert_before(&current_task->tasks, &child->tasks);
-
-    sib = list_container(current_task->children.next, struct task, children);
-    if (list_empty(&current_task->children) || sib->pptr != current_task)
-        list_insert_after(&current_task->children, &child->children);
-    else
-        list_insert_before(&sib->sibling, &child->sibling);
-
-    return child->pid;
+    return 0;
 }

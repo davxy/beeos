@@ -17,28 +17,31 @@
  * License along with BeeOS; if not, see <http://www.gnu/licenses/>.
  */
 
+#include <sys/types.h>
+#include <errno.h>
 #include "proc.h"
-#include "proc/task.h"
 
-pid_t sys_fork(void)
+/*
+ * Returns the PGID of the process specified by pid. If pid is zero, the
+ * process ID of the calling process is used.  (Retrieving the PGID of a
+ * process other than the caller is rarely necessary, and the POSIX.1
+ * getpgrp() is preferred for that task.)
+ */
+
+pid_t sys_getpgid(pid_t pid)
 {
-    struct task *child, *sib;
-    
-    child = task_create();
-    if (child == NULL)
-        return -1;
+    struct task *t = NULL;
+    struct task *curr = current_task;
 
-    if (current_task->pid == child->pid)
-        return 0;
-
-    /* Add to the global tasks list */
-    list_insert_before(&current_task->tasks, &child->tasks);
-
-    sib = list_container(current_task->children.next, struct task, children);
-    if (list_empty(&current_task->children) || sib->pptr != current_task)
-        list_insert_after(&current_task->children, &child->children);
-    else
-        list_insert_before(&sib->sibling, &child->sibling);
-
-    return child->pid;
+    if (pid == 0)
+        pid = current_task->pid;
+    do {
+        if (curr->pid == pid) {
+            t = curr;
+            break;
+        }
+        curr = list_container(curr->tasks.next, struct task, tasks);
+    } while (curr != current_task);
+    return (t != NULL) ? t->pgid : -ESRCH;
 }
+

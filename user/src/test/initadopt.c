@@ -17,28 +17,37 @@
  * License along with BeeOS; if not, see <http://www.gnu/licenses/>.
  */
 
-#include "proc.h"
-#include "proc/task.h"
+#include <stddef.h>
+#include <stdio.h>
+#include <time.h>
+#include <sys/wait.h>
+#include <unistd.h>
+#include <stdlib.h>
 
-pid_t sys_fork(void)
+void spanchild(int sleept)
 {
-    struct task *child, *sib;
-    
-    child = task_create();
-    if (child == NULL)
-        return -1;
+    pid_t pid;
 
-    if (current_task->pid == child->pid)
-        return 0;
+    if ((pid = fork()) < 0) {
+        perror("fork error");
+        exit(1);
+    }
 
-    /* Add to the global tasks list */
-    list_insert_before(&current_task->tasks, &child->tasks);
+    if (pid == 0) {
+        printf("[child] (pid: %d, ppid: %d) SLEEP(%d)\n",
+                getpid(), getppid(), sleept);
+        sleep(sleept);
+        printf("[child] (pid: %d, ppid: %d) WAKEUP\n",
+                getpid(), getppid());
+        exit(0);
+    }
+}
 
-    sib = list_container(current_task->children.next, struct task, children);
-    if (list_empty(&current_task->children) || sib->pptr != current_task)
-        list_insert_after(&current_task->children, &child->children);
-    else
-        list_insert_before(&sib->sibling, &child->sibling);
-
-    return child->pid;
+int main(int argc, char *argv[])
+{
+    spanchild(20);
+    spanchild(10);
+    sleep(3);
+    printf("[parent] exit\n");
+    return 0;
 }

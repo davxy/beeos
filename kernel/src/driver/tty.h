@@ -25,16 +25,17 @@
 #include <termios.h>
 
 
-#define MAX_CANON   256 // controlla...
+#define MAX_CANON   256
 
 struct tty_st
 {
-    dev_t dev;              /* associated device */
+    dev_t dev;              /* Associated device */
+    pid_t pgrp;             /* Foreground process group */
     struct termios attr;    /* termios attributes */
     struct cond rcond;      /* Read conditional variable */
-    unsigned int rpos;      /* input line position read */
-    unsigned int wpos;      /* input line position write */
-    char rbuf[MAX_CANON];   /* canonical input line */
+    unsigned int rpos;      /* Input line position read */
+    unsigned int wpos;      /* Input line position write */
+    char rbuf[MAX_CANON];   /* Canonical input line */
 };
 
 void tty_init(void);
@@ -46,5 +47,8 @@ ssize_t tty_write(void *buf, size_t n);
 
 /* Write a character to tty */
 void tty_update(char c);
+
+pid_t tty_getpgrp(void);
+int tty_setpgrp(pid_t pgrp);
 
 #endif /* _BEEOS_DRIVER_TTY_H_ */
