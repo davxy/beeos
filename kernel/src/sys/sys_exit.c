@@ -51,7 +51,8 @@ static void children_split(struct task *node)
         if (curr->pptr != prev) {
             head = curr;
             break;
-        } prev = curr;
+        }
+        prev = curr;
         curr = list_container(curr->children.next, struct task, children);
     }
     if (head == NULL)
@@ -83,6 +84,12 @@ static void children_give(struct task *child)
         if (t->pptr != current_task)
             panic("corrupted sibling list");
         t->pptr = init; /* give in adoption */
+        /*
+         * Wake-up to eventually give the oppurtunity to terminate.
+         * This may happen if the process is waiting on a pipe that has
+         * been closed on the other side.
+         */
+        sys_kill(t->pid, SIGINT);
         t = list_container(t->sibling.next, struct task, sibling);
     } while (t != child);
 
@@ -129,7 +136,7 @@ void sys_exit(int status)
     child = list_container(current_task->children.next,
                            struct task, children);
     if (child->pptr == current_task)
-        children_give(child); /* current is not a hierarchy leaf */
+        children_give(child); /* Wrap around, current is not a leaf */
 
     /* Send SIGCHLD to the parent */
     sys_kill(current_task->pptr->pid, SIGCHLD);
