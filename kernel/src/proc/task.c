@@ -22,12 +22,14 @@
 #include "fs/vfs.h"
 #include "timer.h"
 #include "kmalloc.h"
+#include "panic.h"
 #include <string.h>
 
 int task_init(struct task *task)
 {
     static pid_t next_pid = 1;
     int i;
+    struct task *sib;
 
     /* pids */
     task->pid = next_pid++;
@@ -62,9 +64,20 @@ int task_init(struct task *task)
     task->state = TASK_RUNNING;
     task->counter = msecs_to_ticks(SCHED_TIMESLICE);
     task->exit_code = 0;
+
     list_init(&task->tasks);
     list_init(&task->children);
     list_init(&task->sibling);
+
+    /* Add to the global tasks list */
+    list_insert_before(&current_task->tasks, &task->tasks);
+    
+    sib = list_container(current_task->children.next, struct task, children);
+    if (list_empty(&current_task->children) || sib->pptr != current_task)
+        list_insert_after(&current_task->children, &task->children);
+    else
+        list_insert_before(&sib->sibling, &task->sibling);
+
     cond_init(&task->chld_exit);
     
     /* signals */
@@ -105,14 +118,12 @@ void task_delete(struct task *task)
 void init_start(void)
 {
     struct task *task;
+    void init(void);
 
     task = task_create();
     if (task == NULL)
         panic("init_start");
 
-    void init(void);
     task->arch.eip = (uint32_t)init;
     task->arch.esp = task->arch.ebp;
-
-    list_insert_before(&current_task->tasks, &task->tasks);
 }

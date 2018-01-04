@@ -30,35 +30,25 @@ extern struct task *current_task;
 
 int task_arch_init(struct task_arch *task)
 {
+    char *ti;
+
     if (task == &ktask.arch)
     {
+        /* The task 0 does not need complete initialization */
         task->pgdir = (uint32_t)virt_to_phys(kpage_dir);
         return 0;
     }
 
     task->pgdir = page_dir_dup(0);
     if ((int)task->pgdir < 0)
-        return (int)task->pgdir;
+        return (int)task->pgdir; /* Fail */
 
     task->ifr = NULL;
     task->sfr = NULL;
 
-#if 0
-    asm volatile("mov   %0, esp \n\t"
-                 "mov   %1, ebp \n\t"
-                : "=r"(task->esp),
-                  "=r"(task->ebp));
-    task->eip = get_eip();
-#endif
-
-//    struct thread_info *ti;
-    char *ti;
     ti = kmalloc(KSTACK_SIZE, 0);
     if (!ti)
         return -1;
-
-//    ti->cpu = 0;
-//    ti->task = (struct task *)task;
 
     task->ebp = (uint32_t)ti + KSTACK_SIZE;
     if (current_task->arch.ifr != NULL) {
@@ -74,7 +64,6 @@ int task_arch_init(struct task_arch *task)
     } else {
         task->esp = task->ebp;
     }
-
     return 0;
 }
 
@@ -91,6 +80,8 @@ struct tss_hdr {
 
 void task_arch_switch(struct task_arch *curr, struct task_arch *next)
 {
+    extern struct tss_hdr tss;
+
     asm volatile("mov   %0, esp \n\t"
                  "mov   %1, ebp \n\t"
                  "mov   %2, offset switch_end \n\t"
@@ -98,8 +89,8 @@ void task_arch_switch(struct task_arch *curr, struct task_arch *next)
                   "=r"(curr->ebp),
                   "=r"(curr->eip));
 
-    extern struct tss_hdr tss;
     tss.esp0 = ALIGN_UP(next->esp, KSTACK_SIZE);
+
     asm volatile("mov    esp, %0 \n\t"
                  "mov    ebp, %1 \n\t"
                  "mov    cr3, %2 \n\t"
@@ -110,3 +101,4 @@ void task_arch_switch(struct task_arch *curr, struct task_arch *next)
                   "r"(next->pgdir),
                   "r"(next->eip));
 }
+
