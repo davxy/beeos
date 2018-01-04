@@ -314,7 +314,7 @@ static void kbd_handler(void)
                     kill_tty_group();
                     break;
                 }
-                return;
+                c = '\0';
             }
             else if (((kbd_status & KBD_STATUS_SHIFT) != 0) 
                     ^ ((kbd_status & KBD_STATUS_CAPS_LCK) != 0))
