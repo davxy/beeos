@@ -47,7 +47,7 @@ static void print_prompt(void)
 
 static void sigint(int signo)
 {
-    printf("zzzzzz\n");
+    /* Nothing to do */
 }
 
 static void sigchld(int signo)
