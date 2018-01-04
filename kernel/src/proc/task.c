@@ -101,3 +101,18 @@ void task_delete(struct task *task)
     task_deinit(task);
     kfree(task, sizeof(struct task));
 }
+
+void init_start(void)
+{
+    struct task *task;
+
+    task = task_create();
+    if (task == NULL)
+        panic("init_start");
+
+    void init(void);
+    task->arch.eip = (uint32_t)init;
+    task->arch.esp = task->arch.ebp;
+
+    list_insert_before(&current_task->tasks, &task->tasks);
+}

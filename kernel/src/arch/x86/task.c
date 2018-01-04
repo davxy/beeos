@@ -17,7 +17,8 @@
  * License along with BeeOS; if not, see <http://www.gnu/licenses/>.
  */
 
-#include "proc/task.h"
+#include "proc.h"
+#include "arch/x86/task.h"
 #include "paging.h"
 #include "kmalloc.h"
 #include <stddef.h>
@@ -26,8 +27,6 @@ extern uint32_t get_eip();
 
 extern struct task ktask;
 extern struct task *current_task;
-
-#define KSTACKSIZE  4096 
 
 int task_arch_init(struct task_arch *task)
 {
@@ -44,19 +43,51 @@ int task_arch_init(struct task_arch *task)
     task->ifr = NULL;
     task->sfr = NULL;
 
+#if 0
     asm volatile("mov   %0, esp \n\t"
                  "mov   %1, ebp \n\t"
                 : "=r"(task->esp),
                   "=r"(task->ebp));
     task->eip = get_eip();
+#endif
+
+//    struct thread_info *ti;
+    char *ti;
+    ti = kmalloc(KSTACK_SIZE, 0);
+    if (!ti)
+        return -1;
+
+//    ti->cpu = 0;
+//    ti->task = (struct task *)task;
+
+    task->ebp = (uint32_t)ti + KSTACK_SIZE;
+    if (current_task->arch.ifr != NULL) {
+        extern uint32_t fork_ret;
+        struct isr_frame *ifr2;
+        
+        task->eip = (uint32_t)&fork_ret;
+        task->esp = task->ebp - sizeof(struct isr_frame);
+        memcpy((char *)task->esp, current_task->arch.ifr,
+                sizeof(struct isr_frame));
+        ifr2 = (struct isr_frame *)task->esp;
+        ifr2->eax = 0; /* fork returns 0 in the child */
+    } else {
+        task->esp = task->ebp;
+    }
 
     return 0;
 }
 
 void task_arch_deinit(struct task_arch *task)
 {
+    kfree((void *)ALIGN_DOWN(task->esp, KSTACK_SIZE), KSTACK_SIZE);
     page_dir_del(task->pgdir, 0);
 }
+
+struct tss_hdr {
+    uint32_t next;
+    uint32_t esp0;
+};
 
 void task_arch_switch(struct task_arch *curr, struct task_arch *next)
 {
@@ -67,6 +98,8 @@ void task_arch_switch(struct task_arch *curr, struct task_arch *next)
                   "=r"(curr->ebp),
                   "=r"(curr->eip));
 
+    extern struct tss_hdr tss;
+    tss.esp0 = ALIGN_UP(next->esp, KSTACK_SIZE);
     asm volatile("mov    esp, %0 \n\t"
                  "mov    ebp, %1 \n\t"
                  "mov    cr3, %2 \n\t"

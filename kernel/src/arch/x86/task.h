@@ -23,6 +23,8 @@
 #include "paging.h"
 #include "isr.h"
 
+#define KSTACK_SIZE     0x1000
+
 struct task_arch
 {
     volatile uint32_t   pgdir;  /**< Page directory physical address */

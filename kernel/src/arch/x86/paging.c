@@ -179,6 +179,7 @@ void page_dir_del(uint32_t phys, int lite)
     dir_curr[1022] = phys | PTE_W | PTE_P;
     dir = (uint32_t *)(PAGE_TAB_MAP + (1022 * 4096));
 
+#if 0
     /* Release kernel stack page (not shared) */
     if (!lite) {
         di = DIR_INDEX(&kstack);
@@ -188,6 +189,7 @@ void page_dir_del(uint32_t phys, int lite)
         frame_free((char *)(dir[di] & PTE_MASK), 0); /* free the page tab frame */
         /* What if there are more pages in the same stack tab ? */
     }
+#endif
 
     /* Release user space */
     for (di = 0; di < 768; di++) {
@@ -245,11 +247,12 @@ uint32_t page_dir_dup(int lite)
         return phys;
     }
 
+#if 0
     /*
      * Kernel stack
      * Note: all kernel stacks share the same virtual address
      */
-    
+
     mem_src = &kstack;
 
     i = DIR_INDEX(mem_src); // (uint32_t)mem_src / 0x400000;
@@ -265,6 +268,7 @@ uint32_t page_dir_dup(int lite)
     memcpy(mem_dst, mem_src, PAGE_SIZE);
     page_unmap(mem_dst, 1);
     tab_dst[i] = phys | flags;
+#endif
 
     /*
      * User space
@@ -357,11 +361,11 @@ static void page_fault_handler(void)
 
     asm volatile ("mov %0, cr2" : "=r"(virt));
 
-#ifdef DEBUG
+#if 1
     kprintf("pid: %d\n", current_task->pid);
-    kprintf("page fault at 0x%x\n", ifr->eip);
+    kprintf("page fault at 0x%x\n", current_task->arch.ifr->eip);
     kprintf("faulting address 0x%x\n", virt);
-    kprintf("error code: %x\n", ifr->err_no);
+    kprintf("error code: %x\n", current_task->arch.ifr->err_no);
 #endif
 
     if (virt < KVBASE) {
