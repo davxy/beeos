@@ -5,7 +5,6 @@ local_sources := init.S \
 				 pic.c \
 				 isr_stub.S \
 				 console.c \
-				 cpuinfo.c \
 				 gdt.c \
 				 idle.c \
 				 idt.c \

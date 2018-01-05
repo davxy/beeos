@@ -26,7 +26,6 @@
 #include "proc.h"
 #include "driver/tty.h"
 #include "fs/vfs.h"
-#include "cpuinfo.h"
 #include "proc/task.h"
 #include "dev.h"
 #include <string.h>
@@ -49,7 +48,6 @@ void kmain(void)
     
     kmalloc_init();
     isr_init();
-    cpuinfo_init();
 
     /*
      * Primary
