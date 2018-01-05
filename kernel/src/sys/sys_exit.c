@@ -117,9 +117,6 @@ void sys_exit(int status)
         list_delete(lnk);    /* Remove from current process timers */
         tm = list_container(lnk, struct timer_event, plink); 
         timer_event_del(tm); /* Remove from the global queue */
-        // TODO: fix memory leak
-        // Almost every timer is a dynamic structure. How to determine
-        // it??? Use a flag within a timer???
     }
 
     /* close all open files */
