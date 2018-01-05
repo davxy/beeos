@@ -21,13 +21,7 @@
 #include "elf.h"
 #include "kmalloc.h"
 #include "proc.h"
-
-#ifndef __arm__
 #include "arch/x86/paging.h"
-#endif
-
-
-#ifndef __arm__
 
 #include <sys/types.h>
 #include <stddef.h>
@@ -76,15 +70,9 @@ static void stack_init(uintptr_t *base, const char *argv[], const char *envp[])
         base[2] = 0;
 }
 
-#endif /* __arm__ */
-
 
 int sys_execve(const char *path, const char *argv[], const char *envp[])
 {
-#ifdef __arm__
-    return -1;
-#else
-
     int ret = 0;
     struct elf_hdr eh;
     struct elf_prog_hdr ph;
@@ -200,5 +188,4 @@ bad:
     /* Release the new dir, this also release all the mapped pages. */
     page_dir_del(pgdir);
     return ret;
-#endif
 }

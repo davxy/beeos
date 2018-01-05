@@ -28,12 +28,7 @@
 #include <limits.h>
 #include <sys/types.h>
 #include <signal.h>
-
-#ifndef __arm__
 #include "arch/x86/task.h"
-#else
-#include "arch/arm/task.h"
-#endif
 
 #define TASK_RUNNING    1
 #define TASK_SLEEPING   2

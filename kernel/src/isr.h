@@ -21,11 +21,7 @@
 #ifndef _BEEOS_ISR_H_
 #define _BEEOS_ISR_H_
 
-#ifndef __arm__
 #include "arch/x86/isr_arch.h"
-#else
-#include "arch/arm/isr_arch.h"
-#endif
 
 typedef void (*isr_handler_t)(void);
 

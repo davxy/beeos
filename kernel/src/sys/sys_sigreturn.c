@@ -31,9 +31,5 @@ int sys_sigreturn(void)
     current_task->arch.sfr = NULL;
 
     /* Return the result of the old stackframe */
-#ifndef __arm__
     return current_task->arch.ifr->eax;
-#else
-    return -1;
-#endif
 }

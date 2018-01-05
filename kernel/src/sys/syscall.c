@@ -70,7 +70,6 @@ typedef uint32_t (* syscall_f)(uint32_t arg1, ...);
 
 static void syscall_handler(void)
 {
-#ifndef __arm__
     struct isr_frame *ifr = current_task->arch.ifr;
 
     if (ifr->eax < SYSCALLS_NUM && syscalls[ifr->eax])
@@ -84,7 +83,6 @@ static void syscall_handler(void)
         kprintf("Warning: unknown syscall number (%d)\n", ifr->eax);
         ifr->eax = -1;
     }
-#endif /* __arm__ */
 }
 
 void syscall_init(void)

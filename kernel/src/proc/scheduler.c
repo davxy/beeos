@@ -43,10 +43,8 @@ int sigpop(sigset_t *sigpend, sigset_t *sigmask)
 
 int do_signal(void)
 {
-#ifndef __arm__
     struct sigaction *act;
     int sig;
-    /* TODO: remove arch dep */
     struct isr_frame *ifr;
     uint32_t *esp;
 
@@ -86,8 +84,6 @@ int do_signal(void)
     *--esp = (uint32_t)act->sa_restorer;
     ifr->usr_esp = (uint32_t)esp;
     ifr->eip = (uint32_t)act->sa_handler;
-
-#endif /* __arm__ */
 
     return 0;
 }

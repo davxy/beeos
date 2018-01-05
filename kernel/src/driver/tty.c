@@ -52,37 +52,12 @@ int tty_read(dev_t dev, int couldblock)
     return c;
 }
 
-
 void tty_putchar(int c)
 {
 //    if ((dev & 0xFF00) != (major(DEV_CONSOLE) << 8))
 //        return;
     uart_putchar(c);
-#ifndef __arm__
     console_putchar(c);
-#endif
-}
-
-/// TODO: create a common double ended queue structure
-ssize_t tty_read2(void *buf, size_t n)
-{
-    struct tty_st *tty = &tty_table[0];
-
-    spinlock_lock(&tty->rcond.lock);
-    while (tty->rpos >= tty->wpos)
-    {
-        tty->rpos = tty->wpos = 0;
-        cond_wait(&tty->rcond);
-    }
-    if (tty->rpos < tty->wpos) 
-    {
-        if (tty->wpos - tty->rpos < n)
-            n = tty->wpos - tty->rpos;
-        memcpy(buf, &tty->rbuf[tty->rpos], n);
-        tty->rpos += n;
-    }
-    spinlock_unlock(&tty->rcond.lock);
-    return -1;
 }
 
 ssize_t tty_write(void *buf, size_t n)
@@ -192,4 +167,3 @@ void tty_init(void)
 
     uart_init();
 }
-

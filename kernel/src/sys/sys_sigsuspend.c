@@ -30,9 +30,7 @@ int sys_sigsuspend(const sigset_t *mask)
 
     sys_sigprocmask(SIG_SETMASK, mask, &omask);
 
-#ifndef __arm__
     current_task->arch.ifr->eax = -EINTR;
-#endif
     /* Before re-establish the old mask we must first eventually process
      * pending signals using the current mask */
     while (do_signal() < 0)
