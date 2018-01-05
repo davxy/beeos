@@ -112,6 +112,8 @@ isr_common:
     push    %esp        /* Push a pointer to an isr_frame struct */
     call    isr_handler /* Call the arch independent dispatcher */
     add     $4, %esp
+.global fork_ret
+fork_ret:
     pop     %eax        /* Reload the original data segment descriptor */
     mov     %ax, %ds
     mov     %ax, %es
