@@ -28,9 +28,13 @@ extern uint32_t get_eip();
 extern struct task ktask;
 extern struct task *current_task;
 
+/*
+ * TODO : implement as clone syscall
+ */
 int task_arch_init(struct task_arch *task)
 {
     char *ti;
+    extern uint32_t fork_ret;
 
     if (task == &ktask.arch)
     {
@@ -47,22 +51,21 @@ int task_arch_init(struct task_arch *task)
     task->sfr = NULL;
 
     ti = kmalloc(KSTACK_SIZE, 0);
-    if (!ti)
+    if (ti == NULL)
         return -1;
 
     task->ebp = (uint32_t)ti + KSTACK_SIZE;
-    if (current_task->arch.ifr != NULL) {
-        extern uint32_t fork_ret;
+    task->esp = task->ebp;
+    task->eip = (uint32_t)&fork_ret;
+
+    if (current_task->arch.ifr != NULL)
+    {
         struct isr_frame *ifr2;
         
-        task->eip = (uint32_t)&fork_ret;
-        task->esp = task->ebp - sizeof(struct isr_frame);
-        memcpy((char *)task->esp, current_task->arch.ifr,
-                sizeof(struct isr_frame));
+        task->esp -= sizeof(struct isr_frame);
         ifr2 = (struct isr_frame *)task->esp;
+        *ifr2 = *current_task->arch.ifr;
         ifr2->eax = 0; /* fork returns 0 in the child */
-    } else {
-        task->esp = task->ebp;
     }
     return 0;
 }
