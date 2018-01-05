@@ -17,7 +17,6 @@
  * License along with BeeOS; if not, see <http://www.gnu/licenses/>.
  */
 
-#include "config.h"
 #include "gdt.h"
 #include "idt.h"
 #include "pic.h"
@@ -122,12 +121,6 @@ static void mm_init(struct multiboot_info *mbi)
  */
 void arch_init(struct multiboot_info *mbi)
 {
-    extern char kend, kstart;
-
-    /* Save kernel base and size within the config structure */
-    config.base = (uintptr_t)&kstart;
-    config.size = &kend - &kstart;
-
     /* 
      * Check for initrd.
      * To avoid corruption of the initrd content, this should be done

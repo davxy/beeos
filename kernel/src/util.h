@@ -21,6 +21,7 @@
 #define _BEEOS_UTIL_H_
 
 #include <stdint.h>
+#include <sys/types.h>
 
 #define ALIGN_UP(val, a) (((val) + ((a) - 1)) & ~((a) - 1))
 

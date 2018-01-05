@@ -1,5 +1,4 @@
-local_sources := config.c \
-				 kmain.c \
+local_sources := kmain.c \
 				 kprintf.c \
 				 kmalloc.c \
 				 panic.c \
