@@ -53,7 +53,9 @@ pid_t sys_waitpid(pid_t pid, int *wstatus, int options)
                     if (wstatus)
                         *wstatus = t->exit_code;
                     /* resources already released by the sys_exit */
-                    list_delete(&t->tasks); // unlink from process list
+                    list_delete(&t->tasks);
+                    list_delete(&t->children);
+                    list_delete(&t->sibling);
                     task_delete(t);
                     break;
                 }
@@ -67,9 +69,7 @@ pid_t sys_waitpid(pid_t pid, int *wstatus, int options)
             {
                 if ((options & WNOHANG) == 0)
                 {
-                    kprintf("wait child exit\n");
                     cond_wait(&current_task->chld_exit);
-                    kprintf("child exited\n");
                 }
                 else
                 {

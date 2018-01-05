@@ -5,6 +5,26 @@ Tasks
 ~ Better dump syscall to print system informations.
   Accepts a parameter with the things to dump.
 
+Fix
+---
+
+- SIGINT to a process waiting for input that will never arrive.
+
+To reproduce:
+
+1. Create a pipe
+2. Fork
+3. Parent sleep for N seconds
+4. Child waits for input on the other side
+5. CTRL-C before parent wakeup.
+
+The parent is killed by the SIGINT.
+The child is waked up by the SIGINT.
+The child returns to sleep "forever" (becomes an init child)
+
+Also... Change the process group.
+
+
 Missing milestones
 ------------------
 
@@ -22,19 +42,3 @@ Generic coding rules
 - Braces on newlines
 - No typedef on structures except for the POSIX defined ones
 
-
-Code review and cleanup (bottom-up)
------------------------------------
-
-** Arch/x86
-
-- Arch startup: startup.s, arch_init.c
-- GDT: gdt.h, gdt.c
-- IDT: idt.h, idt.c
-- Paging: paging.h,
-    (doing) paging.c:
-        - page_map, page_unmap
-
-*** MM
-
-- Buddy: buddy.c, buddy.h

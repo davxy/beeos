@@ -17,15 +17,21 @@
  * License along with BeeOS; if not, see <http://www.gnu/licenses/>.
  */
 
-#ifndef _BEEOS_VERSION_H_
-#define _BEEOS_VERSION_H_
+#include <stdio.h>
+#include <unistd.h>
 
-#define BEEOS_MAJOR       0
-#define BEEOS_MINOR       0
-#define BEEOS_PATCH       2
-#define BEEOS_VERSION \
-    (((BEEOS_MAJOR) << 16) + ((BEEOS_MINOR) << 8) + (BEEOS_PATCH))
 
-#define BEEOS_CODENAME    "stoneage"
+int main(int argc, char *argv[])
+{
+    int res;
 
-#endif /* _BEEOS_VERSION_H_ */
+    printf("Create a process group\n");
+    
+    printf("<pid: %d, pgid: %d>\n", getpid(), getpgid(0));
+    if ((res = setpgid(0, 0)) < 0)
+        perror("setpgid");
+    printf("<pid: %d, pgid: %d>\n", getpid(), getpgid(0));
+
+
+    return 0;
+}

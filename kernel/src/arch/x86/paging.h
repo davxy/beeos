@@ -33,21 +33,18 @@ extern uint8_t kstack[PAGE_SIZE];
 /**
  * Duplicates the current process page directory.
  *
- * @param lite  Non zero if only the kernel data and code should be
- *              copied. Used by the execve syscall.
- * @return      New page directory physical address.
+ * @param dup_user  Copy user space page tables.
+ *                  Used by the execve syscall.
+ * @return          New page directory physical address.
  */
-uint32_t page_dir_dup(int lite);
+uint32_t page_dir_dup(int dup_user);
 
 /**
  * Deletes a page directory.
  *
  * @param pgdir Physical address of the dir to delete.
- * @param lite  If zero the kernel stack page is released else is
- *              preserved. This is used by execve when we release only
- *              used by the execve syscall.
  */
-void page_dir_del(uint32_t pgdir, int lite);
+void page_dir_del(uint32_t pgdir);
 
 /**
  * Maps a page virtual memory address to a physical memory address.

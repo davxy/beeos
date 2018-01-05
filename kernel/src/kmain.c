@@ -75,11 +75,15 @@ void kmain(void)
      * Fork and start the init process
      */
 
+#if 0
     if (sys_fork() == 0)
     {
         init();
         panic("init returned");
     }
+#endif
+    void init_start(void);
+    init_start();
 
     /*
      * Idle procedure

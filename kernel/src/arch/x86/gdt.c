@@ -60,7 +60,7 @@ struct tss_struct
 
 static struct gdt_entry     gdt_entries[6];
 static struct gdt_reg       gdt_reg;
-static struct tss_struct    tss;
+struct tss_struct    tss;
 
 /*
  * Load the new GDT register and flush the old one

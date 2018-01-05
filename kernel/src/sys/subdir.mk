@@ -7,6 +7,10 @@ local_sources := syscall.c \
 				 sys_getppid.c \
 				 sys_getuid.c \
 				 sys_getgid.c \
+				 sys_getpgid.c \
+				 sys_setpgid.c \
+				 sys_tcgetpgrp.c \
+				 sys_tcsetpgrp.c \
 				 sys_getcwd.c \
 				 sys_info.c \
 				 sys_nanosleep.c \

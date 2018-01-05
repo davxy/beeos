@@ -27,12 +27,6 @@ pid_t sys_fork(void)
     child = task_create();
     if (child == NULL)
         return -1;
-
-    if (current_task->pid == child->pid)
-        return 0;
-
-    /* parent */
-    list_insert_before(&current_task->tasks, &child->tasks);
-
     return child->pid;
 }
+

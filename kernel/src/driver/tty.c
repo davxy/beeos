@@ -93,6 +93,16 @@ ssize_t tty_write(void *buf, size_t n)
     return (ssize_t)n;
 }
 
+pid_t tty_getpgrp(void)
+{
+    return tty_table[0].pgrp;
+}
+
+int tty_setpgrp(pid_t pgrp)
+{
+    tty_table[0].pgrp = pgrp;
+    return 0;
+}
 
 
 /* 
@@ -116,9 +126,16 @@ void tty_update(char c)
 
     if (c == '\b')
     {
-        tty->wpos--;    /* will be eventually adjusted below */
-        echo_buf = "\b \b";
-        echo_siz = 3;
+        if (tty->wpos > tty->rpos)
+        {
+            tty->wpos--;    /* will be eventually adjusted below */
+            echo_buf = "\b \b";
+            echo_siz = 3;
+        }
+        else
+        {
+            echo_siz = 0;
+        }
     }
     else
     {
@@ -132,9 +149,10 @@ void tty_update(char c)
 
     spinlock_unlock(&tty->rcond.lock);
 
-    if (tty->attr.c_lflag & ECHO)
+    if ((tty->attr.c_lflag & ECHO) != 0 && echo_siz != 0)
         dev_io(0, tty->dev, DEV_WRITE, 0, echo_buf, echo_siz, NULL);
 }
+
 
 static void tty_attr_init(struct termios *termptr)
 {
@@ -157,6 +175,7 @@ static void tty_attr_init(struct termios *termptr)
 static void tty_struct_init(struct tty_st *tty, dev_t dev)
 {
     tty->dev = dev;
+    tty->pgrp = 0;
     tty->rbuf[0] = 0;
     tty->rpos = 0;
     tty->wpos = 0;
@@ -167,8 +186,10 @@ static void tty_struct_init(struct tty_st *tty, dev_t dev)
 void tty_init(void)
 {
     int i;
+
     for (i = 0; i < TTYS_CONSOLE; i++)
         tty_struct_init(&tty_table[i], DEV_CONSOLE + i);
 
     uart_init();
 }
+

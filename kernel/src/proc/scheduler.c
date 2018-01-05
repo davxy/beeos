@@ -104,8 +104,9 @@ void scheduler(void)
     while (next->state != TASK_RUNNING && next != current_task)
         next = list_container(next->tasks.next, struct task, tasks);
     
-    if (next == current_task)
+    if (next == current_task && next->pid != 0)
     {
+        /* Nothing to run... run the idle() task */
         ktask.state = TASK_RUNNING;
         next = &ktask;
     }
@@ -119,12 +120,15 @@ void scheduler(void)
 void scheduler_init(void)
 {
     int i;
-    /* sets to zero: uids, gids, pids... */
+
+    /* Set to zero: uids, gids, pids... */
     memset(&ktask, 0, sizeof(ktask));
     ktask.cwd = NULL;
     ktask.state = TASK_RUNNING;
     ktask.brk = 0;
     list_init(&ktask.tasks);
+    list_init(&ktask.sibling);
+    list_init(&ktask.children);
     task_arch_init(&ktask.arch);
 
     (void)sigemptyset(&ktask.sigmask);
@@ -140,30 +144,39 @@ void scheduler_init(void)
 
 void task_dump(struct task *t)
 {
-    kprintf("--------------\n");
-    kprintf("pid: %d, ", t->pid);
-    char *state;
+    char state;
+
     switch (t->state)
     {
         case TASK_RUNNING:
-            state = "RUNNING";
+            state = 'R';
             break;
         case TASK_SLEEPING:
-            state = "SLEEPING";
+            state = 'S';
             break;
         default:
-            state = "UNKNOWN";
+            state = 'U';
             break;
     }
-    kprintf("state: %s\n", state);
+    kprintf("<%d (%c)>", t->pid, state);
 }
 
 void proc_dump(void)
 {
-    struct task *t = current_task;
-    do
-    {
-        task_dump(t);    
-        t = struct_ptr(t->tasks.next, struct task, tasks);
-    } while (t != current_task);
+    int i, level = 0;
+    struct task *t = &ktask;
+    struct task *s;
+
+    do {
+        for (i = 0; i < level; i++)
+            kprintf(" ");
+        s = t;
+        do {
+            task_dump(s);
+            s = struct_ptr(s->sibling.next, struct task, sibling);
+        } while (s != t);
+        kprintf("\n");
+        t = struct_ptr(t->children.next, struct task, children);
+        level++;
+    } while (t != &ktask);
 }

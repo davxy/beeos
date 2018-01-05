@@ -52,6 +52,12 @@ gid_t sys_getgid(void);
 int sys_setuid(uid_t uid);
 int sys_setgid(gid_t gid);
 
+pid_t sys_getpgid(pid_t pid);
+int sys_setpgid(pid_t pid, pid_t pgid);
+
+pid_t sys_tcgetpgrp(int fd);
+int sys_tcsetpgrp(int fd, pid_t pgrp);
+
 int sys_execve(const char *path, const char *argv[], const char *envp[]);
 
 void *sys_sbrk(intptr_t incr);

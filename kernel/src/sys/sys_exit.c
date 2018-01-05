@@ -24,18 +24,88 @@
 #include <sys/types.h>
 #include <stddef.h>
 
+static struct task *find_init(void)
+{
+    struct task *t;
+    extern struct task ktask;
+
+    t = list_container(ktask.tasks.next, struct task, tasks);
+    while (t != &ktask) {
+        if (t->pid == 1)
+            break;
+        t = list_container(t->tasks.next, struct task, tasks);
+    }
+    if (t == &ktask)
+        panic("init process not found");
+    return t;
+}
+
+static void children_split(struct task *node)
+{
+    struct task *head, *curr, *prev;
+
+    head = NULL;
+    prev = node;
+    curr = list_container(prev->children.next, struct task, children);
+    while (curr != node) {
+        if (curr->pptr != prev) {
+            head = curr;
+            break;
+        }
+        prev = curr;
+        curr = list_container(curr->children.next, struct task, children);
+    }
+    if (head == NULL)
+        panic("corrupted children hierarchy");
+    
+    /* second half */
+    node->children.next->prev = head->children.prev;
+    head->children.prev->next = node->children.next;
+
+    /* first hald */
+    node->children.next = &head->children;
+    head->children.prev = &node->children;
+}
+
+static void children_give(struct task *child)
+{
+    struct task *init, *init_child, *t;
+
+    init = find_init();
+    init_child = list_container(init->children.next,
+                                struct task, children);
+    if (init_child->pid == 0)
+        panic("init has not childs");
+
+    /* node is in the middle of the children chain */
+    children_split(current_task);
+    t = child;
+    do {
+        if (t->pptr != current_task)
+            panic("corrupted sibling list");
+        t->pptr = init; /* give in adoption */
+        /*
+         * Wake-up to eventually give the oppurtunity to terminate.
+         * This may happen if the process is waiting on a pipe that has
+         * been closed on the other side.
+         */
+        sys_kill(t->pid, SIGINT);
+        t = list_container(t->sibling.next, struct task, sibling);
+    } while (t != child);
+
+    list_merge(&init_child->sibling, &child->sibling); 
+}
+
 /*
  * An exited process remains in the zombie state until its parent
  * calls wait() to find out it exited.
  */
 void sys_exit(int status)
 {
-    struct task *t, *init = NULL;
     struct list_link *lnk;
     struct timer_event *tm;
+    struct task *child;
     int i;
-
-    //kprintf("[sys_exit] %d exiting\n", current_task->pid);
 
     if (current_task->pid == 1)
         panic("init exiting");
@@ -62,36 +132,16 @@ void sys_exit(int status)
     iput(current_task->cwd);
     current_task->cwd = NULL;
    
-    /* Pass abandoned children to init */
-
-    t = list_container(current_task->tasks.next, 
-            struct task, tasks);
-    while (t != current_task)
-    {
-        if (t->pid == 1)
-        {
-            init = t;
-            break;
-        }
-        t = list_container(t->tasks.next, struct task, tasks);
-    }
-    if (init == NULL)
-        panic("init process not found");
-
-    t = list_container(current_task->tasks.next, 
-            struct task, tasks);
-    while (t != current_task)
-    {
-        if (t->pptr == current_task)
-            t->pptr = init;
-        t = list_container(t->tasks.next, struct task, tasks);
-    }
-
+    /* Give children to init */
+    child = list_container(current_task->children.next,
+                           struct task, children);
+    if (child->pptr == current_task)
+        children_give(child); /* Wrap around, current is not a leaf */
 
     /* Send SIGCHLD to the parent */
     sys_kill(current_task->pptr->pid, SIGCHLD);
 
-    /* Acquire the father conditional variable to be prevent lost signals */
+    /* Acquire the father conditional variable to prevent lost signals */
     spinlock_lock(&current_task->pptr->chld_exit.lock);
     current_task->state = TASK_ZOMBIE;
     current_task->exit_code = status;

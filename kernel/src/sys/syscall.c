@@ -40,6 +40,10 @@ static void *syscalls[] =
     [__NR_execve]       = sys_execve,
     [__NR_getpid]       = sys_getpid,
     [__NR_getppid]      = sys_getppid,
+    [__NR_getpgid]      = sys_getpgid,
+    [__NR_setpgid]      = sys_setpgid,
+    [__NR_tcgetpgrp]    = sys_tcgetpgrp,
+    [__NR_tcsetpgrp]    = sys_tcsetpgrp,
     [__NR_getcwd]       = sys_getcwd,
     [__NR_sbrk]         = sys_sbrk,
     [__NR_nanosleep]    = sys_nanosleep,
@@ -68,6 +72,7 @@ static void syscall_handler(void)
 {
 #ifndef __arm__
     struct isr_frame *ifr = current_task->arch.ifr;
+
     if (ifr->eax < SYSCALLS_NUM && syscalls[ifr->eax])
     {
         ifr->eax = ((syscall_f)syscalls[ifr->eax])(
@@ -75,7 +80,10 @@ static void syscall_handler(void)
                 ifr->esi, ifr->edi, ifr->ebp);
     }
     else
+    {
+        kprintf("Warning: unknown syscall number (%d)\n", ifr->eax);
         ifr->eax = -1;
+    }
 #endif /* __arm__ */
 }
 
@@ -83,3 +91,4 @@ void syscall_init(void)
 {
     isr_register_handler(ISR_SYSCALL, syscall_handler);
 }
+

@@ -17,15 +17,11 @@
  * License along with BeeOS; if not, see <http://www.gnu/licenses/>.
  */
 
-#ifndef _BEEOS_VERSION_H_
-#define _BEEOS_VERSION_H_
+#include <sys/types.h>
+#include "driver/tty.h"
 
-#define BEEOS_MAJOR       0
-#define BEEOS_MINOR       0
-#define BEEOS_PATCH       2
-#define BEEOS_VERSION \
-    (((BEEOS_MAJOR) << 16) + ((BEEOS_MINOR) << 8) + (BEEOS_PATCH))
+int sys_tcsetpgrp(int fd, pid_t pgrp)
+{
+    return tty_setpgrp(pgrp);
+}
 
-#define BEEOS_CODENAME    "stoneage"
-
-#endif /* _BEEOS_VERSION_H_ */

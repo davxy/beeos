@@ -17,15 +17,37 @@
  * License along with BeeOS; if not, see <http://www.gnu/licenses/>.
  */
 
-#ifndef _BEEOS_VERSION_H_
-#define _BEEOS_VERSION_H_
+#include <stddef.h>
+#include <stdio.h>
+#include <time.h>
+#include <sys/wait.h>
+#include <unistd.h>
+#include <stdlib.h>
 
-#define BEEOS_MAJOR       0
-#define BEEOS_MINOR       0
-#define BEEOS_PATCH       2
-#define BEEOS_VERSION \
-    (((BEEOS_MAJOR) << 16) + ((BEEOS_MINOR) << 8) + (BEEOS_PATCH))
+void spanchild(int sleept)
+{
+    pid_t pid;
 
-#define BEEOS_CODENAME    "stoneage"
+    if ((pid = fork()) < 0) {
+        perror("fork error");
+        exit(1);
+    }
 
-#endif /* _BEEOS_VERSION_H_ */
+    if (pid == 0) {
+        printf("[child] (pid: %d, ppid: %d) SLEEP(%d)\n",
+                getpid(), getppid(), sleept);
+        sleep(sleept);
+        printf("[child] (pid: %d, ppid: %d) WAKEUP\n",
+                getpid(), getppid());
+        exit(0);
+    }
+}
+
+int main(int argc, char *argv[])
+{
+    spanchild(20);
+    spanchild(10);
+    sleep(3);
+    printf("[parent] exit\n");
+    return 0;
+}

@@ -47,6 +47,7 @@ struct task
 {
     struct task_arch    arch;           /**< Architecture specific data. */
     pid_t               pid;            /**< Process ID. */
+    pid_t               pgid;           /**< Process group ID */
     uid_t               uid;            /**< Real user ID. */
     uid_t               euid;           /**< Effective user ID. */
     uid_t               suid;           /**< Saved used ID. */
@@ -60,7 +61,9 @@ struct task
     struct cond         chld_exit;      /**< Child exit condition */
     int                 counter;        /**< Remaining time slice for sched */
     int                 exit_code;      /**< Exit status */
-    struct task         *pptr;          /**< Parent process. */
+    struct task         *pptr;          /**< Parent process */
+    struct list_link    children;       /**< Children list (vertical) */
+    struct list_link    sibling;        /**< Siblings list (horizontal) */
     uintptr_t           brk;            /**< Program break */
     sigset_t            sigpend;        /**< Pending signals */
     sigset_t            sigmask;        /**< Masked */

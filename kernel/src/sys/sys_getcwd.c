@@ -28,17 +28,13 @@ char *sys_getcwd(char *buf, size_t size)
     size_t slen;
     struct dirent dent;
     struct inode *icurr, *iparent;
+
     if (buf == NULL)
         return (char *)-EINVAL;
 
     icurr = current_task->cwd;
-    
-    j = 0;
-    while (status == 0)
-    {
-        if (j+1 >= size)
-            return (char *)-ENAMETOOLONG;
-        buf[j++] = '/';
+    j = size;
+    do {
         iparent = fs_lookup(icurr, "..");
         if (iparent == icurr)
             break;
@@ -48,16 +44,24 @@ char *sys_getcwd(char *buf, size_t size)
             if (dent.d_ino == icurr->ino)
             {
                 slen = strlen(dent.d_name);
-                if (j + slen >= size)
+                if (j - slen < 0)
                     return (char *)-ENAMETOOLONG;
+                j -= slen;
                 memcpy(&buf[j], dent.d_name, slen);
-                j += slen;
+                if (j - 1 < 0)
+                    return (char *)-ENAMETOOLONG;
+                buf[--j] = '/';
                 icurr = iparent;
                 break;
             }
         }
-    }
-    buf[j] = '\0';
+    } while (status == 0);
+    if (j == size)
+        buf[--j] = '/';
+
+    size -= j;
+    memmove(buf, buf + j, size);
+    buf[size] = '\0';
 
     return buf;
 }

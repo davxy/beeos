@@ -44,19 +44,28 @@ int main(int argc, char *argv[])
 
     if (pid > 0)
     {
+        printf("[parent] pid: %d, pgrp: %d\n", getpid(), getpgid(0));
+        printf("[parent] Sleep for 5 seconds\n");
         sleep(5);
+        printf("[parent] Wake-up\n");
         /* parent */
         close(fd[0]);
-        printf("write\n");
+        printf("[parent] Write to pipe\n");
         write(fd[1], "hello world\n", 12);
+        printf("[parent] Wait for child to exit\n");
         wait(NULL);
+        printf("[parent] Exiting\n");
     }
     else
     {
         /* child */
+        printf("[child] pid: %d, pgrp: %d\n", getpid(), getpgid(0));
+        printf("[child] Close pipe fd[1]\n");
         close(fd[1]);
         n = read(fd[0], line, MAXLINE);
+        printf("[child] Read from pipe\n");
         write(1, line, n);
+        printf("[child] Exiting\n");
     }
 
     return 0;
