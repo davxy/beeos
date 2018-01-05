@@ -5,10 +5,11 @@ This project adheres to "Semantic Versioning" (http://semver.org)
 
 ################################################################################
 
-[ Version 0.0.2 - Unreleased ]
+[ Version 0.0.2 - 2018-01-05 ]
 
 Features
 
+- Independent kernel stacks virtual addresses
 - Better getcwd syscall
 - tcgetpgrp and tcsetpgrp syscalls
 - getpgid and setpgid syscalls
