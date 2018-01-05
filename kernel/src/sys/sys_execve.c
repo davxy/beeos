@@ -111,7 +111,7 @@ int sys_execve(const char *path, const char *argv[], const char *envp[])
         return -ENOMEM;
     stack_init(ustack, argv, envp);
 
-    pgdir = page_dir_dup(1);
+    pgdir = page_dir_dup(0);
     page_dir_switch(pgdir);
 
     /* The function has been called via a syscall */
@@ -172,7 +172,7 @@ int sys_execve(const char *path, const char *argv[], const char *envp[])
     /*** FIXME ARCH specific code ***/
 
     /* Release the old dir just before jump */
-    page_dir_del(current_task->arch.pgdir, 1);
+    page_dir_del(current_task->arch.pgdir);
     current_task->arch.pgdir = pgdir;
 
     /* We assume that ARG_MAX is lass than PAGE_SIZE */
@@ -198,7 +198,7 @@ bad:
     /* Switch back to the old dir */
     page_dir_switch(current_task->arch.pgdir);
     /* Release the new dir, this also release all the mapped pages. */
-    page_dir_del(pgdir, 1);
+    page_dir_del(pgdir);
     return ret;
 #endif
 }

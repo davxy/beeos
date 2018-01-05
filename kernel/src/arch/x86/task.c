@@ -39,7 +39,7 @@ int task_arch_init(struct task_arch *task)
         return 0;
     }
 
-    task->pgdir = page_dir_dup(0);
+    task->pgdir = page_dir_dup(1);
     if ((int)task->pgdir < 0)
         return (int)task->pgdir; /* Fail */
 
@@ -70,7 +70,7 @@ int task_arch_init(struct task_arch *task)
 void task_arch_deinit(struct task_arch *task)
 {
     kfree((void *)ALIGN_DOWN(task->esp, KSTACK_SIZE), KSTACK_SIZE);
-    page_dir_del(task->pgdir, 0);
+    page_dir_del(task->pgdir);
 }
 
 struct tss_hdr {

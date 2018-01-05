@@ -168,7 +168,7 @@ uint32_t page_unmap(void *virt, int retain)
 /*
  * Delete a page directory.
  */
-void page_dir_del(uint32_t phys, int lite)
+void page_dir_del(uint32_t phys)
 {
     int di, ti;
     uint32_t *tab;
@@ -179,19 +179,9 @@ void page_dir_del(uint32_t phys, int lite)
     dir_curr[1022] = phys | PTE_W | PTE_P;
     dir = (uint32_t *)(PAGE_TAB_MAP + (1022 * 4096));
 
-#if 0
-    /* Release kernel stack page (not shared) */
-    if (!lite) {
-        di = DIR_INDEX(&kstack);
-        ti = TAB_INDEX(&kstack);
-        tab = (uint32_t *)(PAGE_TAB_MAP2 + (di * 4096));
-        frame_free((char *)(tab[ti] & PTE_MASK), 0); /* free the stack frame */
-        frame_free((char *)(dir[di] & PTE_MASK), 0); /* free the page tab frame */
-        /* What if there are more pages in the same stack tab ? */
-    }
-#endif
-
-    /* Release user space */
+    /*
+     * Release user space
+     */
     for (di = 0; di < 768; di++) {
         if (dir[di] & PTE_P) {
             tab = (uint32_t *)(PAGE_TAB_MAP2 + (di * 4096));
@@ -212,7 +202,7 @@ void page_dir_del(uint32_t phys, int lite)
 /*
  * Duplicates the current process page directory.
  */
-uint32_t page_dir_dup(int lite)
+uint32_t page_dir_dup(int dup_user)
 {
     int i, j;
     uint32_t *dir_src; 
@@ -226,7 +216,7 @@ uint32_t page_dir_dup(int lite)
     dir_src = (uint32_t *)PAGE_DIR_MAP; 
     dir_dst = (uint32_t *)(PAGE_TAB_MAP + (1022 * 4096));
     phys = (uint32_t) frame_alloc(0, 0);
-    dir_src[1022] = phys | flags;
+    dir_src[1022] = phys | flags; /* Temporary map the dst page table */
     memset(dir_dst, 0, PAGE_SIZE);
 
     /*
@@ -238,75 +228,45 @@ uint32_t page_dir_dup(int lite)
     dir_dst[1022] = 0;
     flush_tlb();
 
-    if (lite)
+    if (dup_user != 0)
     {
-        /* zero out the user space */
-        memset(dir_dst, 0, sizeof(uint32_t)*768);
-        dir_src[1022] = 0;
-        page_invalidate(phys);
-        return phys;
-    }
+        /*
+         * User space
+         */
 
-#if 0
-    /*
-     * Kernel stack
-     * Note: all kernel stacks share the same virtual address
-     */
-
-    mem_src = &kstack;
-
-    i = DIR_INDEX(mem_src); // (uint32_t)mem_src / 0x400000;
-    tab_src = (uint32_t *)(PAGE_TAB_MAP + i*PAGE_SIZE);
-    tab_dst = (uint32_t *)(PAGE_TAB_MAP2 + i*PAGE_SIZE);
-    dir_dst[i] = 0;         // force allocation of new table
-    phys = page_map(tab_dst, -1);
-    memcpy(tab_dst, tab_src, PAGE_SIZE);
-
-    i = TAB_INDEX(mem_src);
-    mem_dst = (void *)PAGE_WILD;
-    phys = page_map(mem_dst, -1);
-    memcpy(mem_dst, mem_src, PAGE_SIZE);
-    page_unmap(mem_dst, 1);
-    tab_dst[i] = phys | flags;
-#endif
-
-    /*
-     * User space
-     */
-
-    flags |= PTE_U;
-    for (i = 0; i < 768; i++)
-    {
-        if (!dir_src[i])
-            continue;
-
-        tab_src = (uint32_t *)(PAGE_TAB_MAP + (i * PAGE_SIZE));
-        tab_dst = (uint32_t *)(PAGE_TAB_MAP2 + (i * PAGE_SIZE));
-        phys = page_map(tab_dst, -1);
-        memset(tab_dst, 0, PAGE_SIZE);
-        dir_dst[i] = phys | flags;
-
-        for (j = 0; j < 1024; j++)
+        flags |= PTE_U;
+        for (i = 0; i < 768; i++)
         {
-            if (!tab_src[j])
+            if (!dir_src[i])
                 continue;
 
-            /* TODO: copy on write (in the page fault handler) */
-            //tab_src[j] &= ~PTE_W; // NON SEMBRA FUNZIONARE...
-            //tab_dst[j] = tab_src[j];
-            mem_src = (void *)((i * 0x400000) + (j * 0x1000));
-            mem_dst = (void *)PAGE_WILD;
-            phys = page_map(mem_dst, -1);
-            memcpy(mem_dst, mem_src, PAGE_SIZE);
-            page_unmap(mem_dst, 1);
-            tab_dst[j] = phys | flags;
+            tab_src = (uint32_t *)(PAGE_TAB_MAP + (i * PAGE_SIZE));
+            tab_dst = (uint32_t *)(PAGE_TAB_MAP2 + (i * PAGE_SIZE));
+            phys = page_map(tab_dst, -1);
+            memset(tab_dst, 0, PAGE_SIZE);
+            dir_dst[i] = phys | flags;
+
+            for (j = 0; j < 1024; j++)
+            {
+                if (!tab_src[j])
+                    continue;
+
+                /* TODO: copy on write (in the page fault handler) */
+                //tab_src[j] &= ~PTE_W; // NON SEMBRA FUNZIONARE...
+                //tab_dst[j] = tab_src[j];
+                mem_src = (void *)((i * 0x400000) + (j * 0x1000));
+                mem_dst = (void *)PAGE_WILD;
+                phys = page_map(mem_dst, -1);
+                memcpy(mem_dst, mem_src, PAGE_SIZE);
+                page_unmap(mem_dst, 1);
+                tab_dst[j] = phys | flags;
+            }
         }
     }
 
     phys = dir_src[1022] & PTE_MASK;
     dir_src[1022] = 0;
     page_invalidate(phys);
-
     return phys;
 }
 
@@ -361,7 +321,7 @@ static void page_fault_handler(void)
 
     asm volatile ("mov %0, cr2" : "=r"(virt));
 
-#if 1
+#if DEBUG
     kprintf("pid: %d\n", current_task->pid);
     kprintf("page fault at 0x%x\n", current_task->arch.ifr->eip);
     kprintf("faulting address 0x%x\n", virt);
