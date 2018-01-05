@@ -126,9 +126,16 @@ void tty_update(char c)
 
     if (c == '\b')
     {
-        tty->wpos--;    /* will be eventually adjusted below */
-        echo_buf = "\b \b";
-        echo_siz = 3;
+        if (tty->wpos > tty->rpos)
+        {
+            tty->wpos--;    /* will be eventually adjusted below */
+            echo_buf = "\b \b";
+            echo_siz = 3;
+        }
+        else
+        {
+            echo_siz = 0;
+        }
     }
     else
     {
@@ -142,7 +149,7 @@ void tty_update(char c)
 
     spinlock_unlock(&tty->rcond.lock);
 
-    if (tty->attr.c_lflag & ECHO)
+    if ((tty->attr.c_lflag & ECHO) != 0 && echo_siz != 0)
         dev_io(0, tty->dev, DEV_WRITE, 0, echo_buf, echo_siz, NULL);
 }
 
