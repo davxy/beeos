@@ -48,6 +48,8 @@ ssize_t tty_write(void *buf, size_t n);
 /* Write a character to tty */
 void tty_update(char c);
 
+void tty_change(int n);
+
 pid_t tty_getpgrp(void);
 int tty_setpgrp(pid_t pgrp);
 

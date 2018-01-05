@@ -26,14 +26,14 @@ void uart_putchar(int c);
 void uart_init(void);
 
 #define TTYS_CONSOLE    4
-#define TTYS_SERIAL     0
-#define TTYS_TOTAL      (TTYS_CONSOLE + TTYS_SERIAL)
+#define TTYS_TOTAL      TTYS_CONSOLE
 
 struct tty_st tty_table[TTYS_TOTAL];
+static struct tty_st *tty_curr;
 
 int tty_read(dev_t dev, int couldblock)
 {
-    struct tty_st *tty = &tty_table[0];
+    struct tty_st *tty = tty_curr;
     int c = -1;
 
     spinlock_lock(&tty->rcond.lock);
@@ -70,12 +70,12 @@ ssize_t tty_write(void *buf, size_t n)
 
 pid_t tty_getpgrp(void)
 {
-    return tty_table[0].pgrp;
+    return tty_curr->pgrp;
 }
 
 int tty_setpgrp(pid_t pgrp)
 {
-    tty_table[0].pgrp = pgrp;
+    tty_curr->pgrp = pgrp;
     return 0;
 }
 
@@ -89,7 +89,7 @@ void tty_update(char c)
 {
     char *echo_buf = &c;
     size_t echo_siz = 1;
-    struct tty_st *tty = &tty_table[0];
+    struct tty_st *tty = tty_curr;
 
     spinlock_lock(&tty->rcond.lock);
     
@@ -128,6 +128,11 @@ void tty_update(char c)
         dev_io(0, tty->dev, DEV_WRITE, 0, echo_buf, echo_siz, NULL);
 }
 
+void tty_change(int i)
+{
+    if (i >= 0 && i < TTYS_CONSOLE)
+        tty_curr = &tty_table[i];
+}
 
 static void tty_attr_init(struct termios *termptr)
 {
@@ -164,6 +169,7 @@ void tty_init(void)
 
     for (i = 0; i < TTYS_CONSOLE; i++)
         tty_struct_init(&tty_table[i], DEV_CONSOLE + i);
+    tty_curr = &tty_table[0];
 
     uart_init();
 }
