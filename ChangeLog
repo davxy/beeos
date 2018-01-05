@@ -15,6 +15,7 @@ Features
 - getpgid and setpgid syscalls
 - CTRL-C to send SIGINT to foreground process group
 - Process vertical (parent/child) and horizontal (sibling) relationships
+- Eclipse IDE projects
 
 User
 
