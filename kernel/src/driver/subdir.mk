@@ -1,1 +1,1 @@
-local_sources := tty.c ramdisk.c
+local_sources := tty.c ramdisk.c screen.c

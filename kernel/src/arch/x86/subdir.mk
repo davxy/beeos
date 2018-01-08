@@ -4,7 +4,7 @@ local_sources := init.S \
 				 startup.S \
 				 pic.c \
 				 isr_stub.S \
-				 console.c \
+				 screen.c \
 				 gdt.c \
 				 idle.c \
 				 idt.c \

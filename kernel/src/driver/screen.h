@@ -17,30 +17,51 @@
  * License along with BeeOS; if not, see <http://www.gnu/licenses/>.
  */
 
-#ifndef _BEEOS_ARCH_x86_CONSOLE_H_
-#define _BEEOS_ARCH_x86_CONSOLE_H_
+#ifndef _BEEOS_DRIVER_SCREEN_H_
+#define _BEEOS_DRIVER_SCREEN_H_
+
+#define SCREEN_WIDTH    80
+#define SCREEN_HEIGHT   25
+
+struct screen
+{
+    unsigned int pos_x;
+    unsigned int pos_y;
+    unsigned char buf[SCREEN_WIDTH * SCREEN_HEIGHT];
+};
 
 /**
- * Console subsystem initialization.
+ * Screen initialization.
  *
  * Clears the screen and set the cursor position at the start position.
  */
-void console_init(void);
+void screen_init(struct screen *scr);
 
 /**
- * Write a character string to the console.
+ * Write a character string to the screen.
  *
- * @param buf   Characters string
- * @param n     String length
+ * @param scr   Screen context.
+ * @param buf   Characters string.
+ * @param n     String length.
  */
-void console_write(const char *buf, int n);
+void screen_write(struct screen *scr, const char *buf, int n);
 
 /**
- * Puts a single character to the console.
+ * Puts a single character to the screen.
  *
- * @param c     Character to put
+ * @param scr   Screen context.
+ * @param c     Character to put.
  */
-void console_putchar(int c);
+void screen_putchar(struct screen *scr, int c);
+
+/**
+ * Update the screen with the buffer content and cursor.
+ * (Arch specific)
+ *
+ * @param scr   Screen context.
+ */
+void screen_update(struct screen *scr);
 
 
-#endif /* _BEEOS_ARCH_X86_CONSOLE_H_ */
+#endif /* _BEEOS_DRIVER_SCREEN_H_ */
+

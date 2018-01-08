@@ -20,7 +20,6 @@
 #include "gdt.h"
 #include "idt.h"
 #include "pic.h"
-#include "console.h"
 #include "kbd.h"
 #include "vmem.h"
 #include "util.h"
@@ -156,9 +155,7 @@ void arch_init(struct multiboot_info *mbi)
     /* Finish with paging initialization */
     paging_init();
 
-    /* Initialize video console */
-    console_init();
-
     /* Initialize keyboard */
     kbd_init();
 }
+

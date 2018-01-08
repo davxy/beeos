@@ -49,37 +49,53 @@ void sigchld(int signo)
     }
 }
 
-int main(int argc, char *argv[])
+#define NSH 2
+
+pid_t spawn_shell(void)
 {
-    pid_t pid;
-    int status;
     char *sh_argv[] = { "/bin/sh", NULL };
     char *sh_envp[] = { "SHELL=/bin/sh", "PATH=.:/bin:/sbin", NULL };
+    pid_t pid;
 
-    if (mknod("console", S_IFCHR | 0644, 0x0501) < 0)
-        return 1;
+    printf("Spawn shell\n");
 
+    pid = fork();
+    if (pid == 0) {
+        if (execve(sh_argv[0], sh_argv, sh_envp) < 0)
+            return -1;
+    }
+    return pid;
+}
+
+int main(int argc, char *argv[])
+{
+    int status;
+    pid_t pid;
+    pid_t sh_pid[NSH];
+    int i;
+
+    /* Create virtual console devices */
+    for (i = 1; i <= 2; i++) {
+        if (mknod("console", S_IFCHR | 0644, 0x0500 + i) < 0)
+            return 1;
+    }
+    
     if (signal(SIGCHLD, sigchld) < 0)
         perror("signal");
 
-    while (1)
-    {
+    for (i = 0; i < 2; i++) {
+        if ((sh_pid[i] = spawn_shell()) < 0)
+            return -1;
+    }
+
+    while (1) {
         pid = wait(&status);
-        if (pid < 0)
-        {
-            /* exhausted the children, spawn a shell */
-            pid = fork();
-            if (fork < 0)
-                return 1;
-            
-            if (pid == 0)
-            {
-                if (execve(sh_argv[0], sh_argv, sh_envp) < 0)
-                    return 1;
+        for (i = 0; i < NSH; i++) {
+            if (pid == sh_pid[i]) {
+                spawn_shell();
+                break;
             }
         }
-        else
-            printf("[init] child (%d) exit status: %d\n", pid, status);
     }
 
     return 0;

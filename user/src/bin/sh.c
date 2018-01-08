@@ -179,7 +179,7 @@ int main(int argc, char *argv[])
     sigset_t mask;
 
     setpgid(0, 0);
-    tcsetpgrp(STDOUT_FILENO, getpid());
+    //tcsetpgrp(STDOUT_FILENO, getpid());
     
     /* Be sure that SIGCHLD is unblocked */
     (void)sigemptyset(&mask);
