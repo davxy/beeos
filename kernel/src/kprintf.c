@@ -33,7 +33,7 @@ int kvprintf(const char *fmt, va_list arg)
     if (n < 0)
         return -1;
     /* Write to the first console. */
-    dev_io (0, DEV_CONSOLE, DEV_WRITE, 0, str, n, NULL);
+    dev_io (0, DEV_CONSOLE + 1, DEV_WRITE, 0, str, n, NULL);
     return n;
 }
 

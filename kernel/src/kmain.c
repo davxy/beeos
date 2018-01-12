@@ -39,9 +39,6 @@ void kmain(void)
 {
     struct sb *sb;
 
-    kprintf("BeeOS v%d.%d.%d - %s\n\n", 
-            BEEOS_MAJOR, BEEOS_MINOR, BEEOS_PATCH, BEEOS_CODENAME);
-
     /*
      * Core
      */
@@ -63,10 +60,12 @@ void kmain(void)
      * Initialization finished
      */
 
-    kprintf("mounting root fs\n");
+    kprintf("BeeOS v%d.%d.%d - %s\n\n", 
+            BEEOS_MAJOR, BEEOS_MINOR, BEEOS_PATCH, BEEOS_CODENAME);
+    kprintf("Mounting root fs\n");
     sb = vfs_sb_create(ROOT_DEV, ROOT_FS_TYPE);
     if (sb == NULL)
-        panic("unable to mount root file system");
+        panic("Unable to mount root file system");
     current_task->cwd = sb->root;
 
     /*

@@ -24,7 +24,11 @@
 #include <stdint.h>
 
 
+/* Clock timer frequency. */
 extern unsigned long timer_freq;
+
+/* Clock ticks since system startup. */
+extern unsigned long timer_ticks;
 
 /** Converts milliseconds to clock ticks. */
 static inline unsigned long msecs_to_ticks(unsigned long msecs)
@@ -39,6 +43,7 @@ static inline unsigned long ticks_to_msecs(unsigned long ticks)
 }
 
 struct timer_event;
+
 /** Timer event callback signature. */
 typedef void (timer_event_t)(void *data);
 
@@ -54,23 +59,28 @@ struct timer_event
 
 /**
  * Initialize the timer event structure.
+ *
+ * @param tm        Timer event context.
+ * @param fm        Timer event function callback.
+ * @param data      Data pointer to be passed to the callback.
+ * @param expires   Expiration time, in system ticks.
  */
 void timer_event_init(struct timer_event *tm, timer_event_t *fn, 
-        void *data, unsigned long expires);
+                      void *data, unsigned long expires);
 
 /**
  * Adds a timer event to the timers queue.
  * The event will be fired after the delay specified with the init function.
- * @param tm
- *  Timer event structure.
+ *
+ * @param tm        Timer event context.
  */
 void timer_event_add(struct timer_event *tm);
 
 /**
  * Removes a timer event from the timers queue.
  * As a consequence prevents to let the event fires its action.
- * @param tm
- *  Timer event structure.
+ *
+ * @param tm        Timer event context.
  */
 void timer_event_del(struct timer_event *tm);
 
@@ -79,26 +89,32 @@ void timer_event_del(struct timer_event *tm);
  * This function also specifies the expration time in ticks.
  * If the expration time is less than or equal the current 'timer_ticks' 
  * value the event is immediatelly executed.
- * @param tm
- *  Timer event structure.
- * @param expires
- *  Event expiration time, in system ticks.
+ *
+ * @param tm        Timer event structure.
+ * @param expires   Event expiration time, in system ticks.
  */
 void timer_event_mod(struct timer_event *tm, unsigned long expires);
 
 /**
  * Initialize the timer event queue.
- * @param fraquency
- *  Required timer frequency in HZ. Must be greather than 18.
+ *
+ * @param fraq      Required timer frequency in Hz (greather than 18).
  */
 void timer_init(unsigned int frequency);
 
+/**
+ * Architecture dependent timer initialization.
+ *
+ * @param freq  Required timer frequency in Hz.
+ */
 void timer_arch_init(unsigned int freq);
 
 /**
  * Timer wheel update. 
+ *
  * Eventually fires some asynchronous events.
  */
 void timer_update(void);
 
 #endif /* _BEEOS_TIMER_H_ */
+

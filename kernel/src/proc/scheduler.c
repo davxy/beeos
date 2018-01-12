@@ -125,6 +125,8 @@ void scheduler_init(void)
     list_init(&ktask.tasks);
     list_init(&ktask.sibling);
     list_init(&ktask.children);
+    list_init(&ktask.condw);
+    list_init(&ktask.timers);
     task_arch_init(&ktask.arch);
 
     (void)sigemptyset(&ktask.sigmask);
@@ -154,25 +156,31 @@ void task_dump(struct task *t)
             state = 'U';
             break;
     }
-    kprintf("<%d (%c)>", t->pid, state);
+    kprintf("<pid=%d, ppid=%d, pgid=%d, state=%c)>",
+              t->pid, t->pptr->pid, t->pgid, state);
+}
+
+
+void proc_dump_p(struct task *t, int level,
+        struct task *fs, struct task *fp)
+{
+    int i;
+    struct task *s;
+
+    for (i = 0; i < level; i++)
+        kprintf(" ");
+    task_dump(t);
+    kprintf("\n");
+    s = struct_ptr(t->sibling.next, struct task, sibling);
+    if (s != fs) {
+        proc_dump_p(s, level, fs, s);
+    }
+    t = struct_ptr(t->children.next, struct task, children);
+    if (t != fp)
+        proc_dump_p(t, level + 1, t, fp);
 }
 
 void proc_dump(void)
 {
-    int i, level = 0;
-    struct task *t = &ktask;
-    struct task *s;
-
-    do {
-        for (i = 0; i < level; i++)
-            kprintf(" ");
-        s = t;
-        do {
-            task_dump(s);
-            s = struct_ptr(s->sibling.next, struct task, sibling);
-        } while (s != t);
-        kprintf("\n");
-        t = struct_ptr(t->children.next, struct task, children);
-        level++;
-    } while (t != &ktask);
+    proc_dump_p(&ktask, 0, &ktask, &ktask);
 }

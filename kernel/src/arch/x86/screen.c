@@ -19,6 +19,7 @@
 
 #include "io.h"
 #include "vmem.h"
+#include "driver/screen.h"
 #include <stdint.h>
 
 #define VIDEO_BUF	((uint16_t *) (0xB8000 + KVBASE))
@@ -46,110 +47,29 @@
 #define VGA_WIDTH		80
 #define VGA_HEIGHT		25
 
-static unsigned pos_x;
-static unsigned pos_y;
-
 /*
- * Updates the hardware cursor. 
+ * Copy the backbuffer and update the hardware cursor. 
  *
  * The framebuffer has two I/O ports, one for accepting the data, and one 
  * for describing the data being received. Port 0x03D4 is the port that 
  * describes the data and port 0x03D5 is for the data itself.
  */
-static void cursor_update(void)
+void screen_update(struct screen *scr)
 {
-	uint16_t pos = pos_y * VGA_WIDTH + pos_x;
+    int i;
+	uint16_t pos = scr->pos_y * SCREEN_WIDTH + scr->pos_x;
+    uint16_t *buf = (uint16_t *)VIDEO_BUF;
 
+    /* Copy the backbuffer */
+    for (i = 0; i < sizeof(scr->buf); i++)
+        buf[i] = MAKE_ENTRY(BLACK, LIGHT_GREY, scr->buf[i]);
+
+    /* Update the hardware cursor */
 	outb(0x03D4, 14);  /* the highest 8 bits of the position */
 	outb(0x03D5, pos >> 8);
 	outb(0x03D4, 15);  /* the lowest 8 bits of the position */
 	outb(0x03D5, pos);
+
+    scr->dirty = 0;
 }
 
-/*
- * Put a single character to the console
- */
-void console_putchar(int c)
-{
-	uint16_t *buf = VIDEO_BUF;
-
-	if (' ' <= c && c <= '~')
-	{
-		buf[pos_y*80 + pos_x] = MAKE_ENTRY(BLACK, WHITE, c);
-		pos_x++;
-	}
-	else
-	{
-		switch (c)
-		{
-			case '\b':	/* backspace */
-				if (pos_x != 0)
-					pos_x--;
-			break;
-
-			case '\t':	/* tab */
-				pos_x = (pos_x+4) & ~(4-1);
-			break;
-
-			case '\n':
-				pos_y++;
-				pos_x = 0;
-			break;
-
-			case '\r':
-				pos_x = 0;
-			break;
-
-			default:
-			break;
-		}
-	}
-
-	if (pos_x == VGA_WIDTH)
-	{
-		/* Go to a new line */
-		pos_x = 0;
-		pos_y++;
-	}
-
-	if (pos_y == VGA_HEIGHT)
-	{
-		/* Scroll the screen */
-		int i;
-		/* move every line up by one */
-		for (i = 0; i < VGA_WIDTH*(VGA_HEIGHT-1); i++)
-			buf[i] = buf[i+80];
-		/* clear the last line */
-		for (; i < VGA_WIDTH*VGA_HEIGHT; i++)
-			buf[i] = MAKE_ENTRY(BLACK, WHITE, ' ');
-		pos_y--;
-	}
-
-	cursor_update();	/* move the hardware cursor */
-}
-
-/*
- * Write an array of characters to the screen.
- */
-void console_write(const char *buf, int n)
-{
-	int i;
-
-	for (i = 0; i < n; i++)
-		console_putchar(buf[i]);
-}
-
-/*
- * Console subsystem initialization.
- */
-void console_init(void)
-{
-	int i;
-	unsigned short *buf = VIDEO_BUF;
-
-	for (i = 0; i < VGA_WIDTH*VGA_HEIGHT; i++)
-		buf[i] = MAKE_ENTRY(BLACK, WHITE, ' ');
-
-	pos_x = pos_y = 0;
-	cursor_update();
-}

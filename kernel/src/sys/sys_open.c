@@ -21,6 +21,7 @@
 #include "proc.h"
 #include "dev.h"
 #include "kmalloc.h"
+#include "driver/tty.h"
 #include <unistd.h>
 #include <errno.h>
 #include <limits.h>
@@ -50,7 +51,7 @@ int sys_open(const char *pathname, int flags, mode_t mode)
         inode = kmalloc(sizeof(struct inode), 0);
         memset(inode, 0, sizeof(*inode));
         inode->mode = S_IFCHR;
-        inode->dev = DEV_CONSOLE;
+        inode->dev = tty_get();
         inode->ref = 1;
     }
     else

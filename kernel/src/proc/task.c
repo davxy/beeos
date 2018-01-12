@@ -35,7 +35,7 @@ int task_init(struct task *task)
     task->pid = next_pid++;
     task->pgid = current_task->pgid;
     task->pptr = current_task;
-   
+
     /* user and group */
     task->uid = current_task->uid;
     task->euid = current_task->euid;
@@ -43,7 +43,7 @@ int task_init(struct task *task)
     task->gid = current_task->gid;
     task->egid = current_task->egid;
     task->sgid = current_task->sgid;
-   
+ 
     /* file system */
     task->cwd = idup(current_task->cwd);
 
@@ -85,8 +85,11 @@ int task_init(struct task *task)
     (void)sigemptyset(&task->sigmask);
     memcpy(task->signals, current_task->signals, sizeof(task->signals));
 
-    /* Timer events */
+    /* Timers events */
     list_init(&task->timers);
+
+    /* Conditional wait link */
+    list_init(&task->condw);
 
     task_arch_init(&task->arch);
 
