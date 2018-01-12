@@ -38,10 +38,11 @@ void wakeup(void *ctx);
  */
 int do_signal(void);
 
-/**
- * First user-mode process trampoline.
+
+/*
+ * Start init user-mode process.
  */
-void init(void);
+void init_start(void);
 
 /**
  * Idle procedure.
@@ -51,3 +52,4 @@ void init(void);
 void idle(void);
 
 #endif /* _BEEOS_PROC_H_ */
+
