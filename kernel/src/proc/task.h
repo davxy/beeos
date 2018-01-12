@@ -65,6 +65,7 @@ struct task
     struct sigaction    signals[SIGNALS_NUM];   /**< Signal handlers */
     struct list_link    timers;         /**< Process running timer events */
     struct timer_event  alarm;          /**< Alarm timer event (pre-allocated) */
+    struct list_link    condw;          /**< Conditional wait */
 };
 
 struct task *task_create(void);

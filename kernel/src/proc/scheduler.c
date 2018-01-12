@@ -125,6 +125,8 @@ void scheduler_init(void)
     list_init(&ktask.tasks);
     list_init(&ktask.sibling);
     list_init(&ktask.children);
+    list_init(&ktask.condw);
+    list_init(&ktask.timers);
     task_arch_init(&ktask.arch);
 
     (void)sigemptyset(&ktask.sigmask);

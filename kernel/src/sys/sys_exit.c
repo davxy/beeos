@@ -89,7 +89,6 @@ static void children_give(struct task *child)
          * This may happen if the process is waiting on a pipe that has
          * been closed on the other side.
          */
-        sys_kill(t->pid, SIGINT);
         t = list_container(t->sibling.next, struct task, sibling);
     } while (t != child);
 
