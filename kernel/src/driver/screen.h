@@ -25,9 +25,10 @@
 
 struct screen
 {
-    unsigned int pos_x;
-    unsigned int pos_y;
-    unsigned char buf[SCREEN_WIDTH * SCREEN_HEIGHT];
+    int pos_x;
+    int pos_y;
+    int dirty;
+    char buf[SCREEN_WIDTH * SCREEN_HEIGHT];
 };
 
 /**

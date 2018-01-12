@@ -69,5 +69,7 @@ void screen_update(struct screen *scr)
 	outb(0x03D5, pos >> 8);
 	outb(0x03D4, 15);  /* the lowest 8 bits of the position */
 	outb(0x03D5, pos);
+
+    scr->dirty = 0;
 }
 

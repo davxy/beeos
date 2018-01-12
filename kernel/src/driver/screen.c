@@ -73,6 +73,9 @@ void screen_putchar(struct screen *scr, int c)
 			scr->buf[i] = ' ';
 		scr->pos_y = SCREEN_HEIGHT - 1;
 	}
+
+    /* Set the dirty flag */
+    scr->dirty = 1;
 }
 
 /*
@@ -93,5 +96,6 @@ void screen_init(struct screen *scr)
 {
     memset(scr->buf, ' ', sizeof(scr->buf));
 	scr->pos_x = scr->pos_y = 0;
+    scr->dirty = 1;
 }
 

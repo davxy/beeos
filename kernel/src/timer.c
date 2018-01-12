@@ -20,7 +20,6 @@
 #include "timer.h"
 #include "proc.h"
 
-/* Clock ticks since system startup. */
 unsigned long timer_ticks = 0;
 
 unsigned long timer_freq;

@@ -150,6 +150,7 @@ void tty_change(int i)
 {
     if (i >= 0 && i < TTYS_CONSOLE) {
         tty_curr = i;
+        scr_table[i].dirty = 1;
         //screen_update(&scr_table[i]);
     }
 }
@@ -207,10 +208,12 @@ static void tty_struct_init(struct tty_st *tty, dev_t dev)
 
 struct timer_event refresh_tm;
 
+
 void refresh_func(void *_unused)
 {
-    screen_update(&scr_table[tty_curr]);
-    timer_event_add(&refresh_tm);
+    if (scr_table[tty_curr].dirty != 0)
+        screen_update(&scr_table[tty_curr]);
+    timer_event_mod(&refresh_tm, timer_ticks + msecs_to_ticks(25));
 }
 
 
@@ -226,7 +229,7 @@ void tty_init(void)
 
     uart_init();
 
-    timer_event_init(&refresh_tm, refresh_func, NULL, msecs_to_ticks(25));
+    timer_event_init(&refresh_tm, refresh_func, NULL, timer_ticks + msecs_to_ticks(100));
     timer_event_add(&refresh_tm);
 }
 
