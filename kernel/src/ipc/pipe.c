@@ -103,7 +103,8 @@ static int pipe_read(struct inode *inode, void *buf,
 done:
     spinlock_unlock(&pnode->queue.lock);
     n = count-left;
-    if (n > 0) /* signal if something has been read */
+    /* Notify if something has been read or a writer MUST be woken up */
+    if (n > 0 || (pnode->base.ref == 1 && pnode->queued_writers > 0))
         cond_broadcast(&pnode->queue);
     return n;
 }
@@ -170,7 +171,8 @@ static int pipe_write(struct inode *inode, const void *buf,
     }
     spinlock_unlock(&pnode->queue.lock);
     n = count - left;
-    if (n > 0) /* Signal if something has been written */
+    /* Notify if something has been written or a reader MUST be woken up */
+    if (n > 0 || (pnode->base.ref == 1 && pnode->queued_readers > 0))
         cond_broadcast(&pnode->queue);
     return n;
 }
