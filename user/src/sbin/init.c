@@ -21,9 +21,12 @@
 #include <unistd.h>
 #include <stdlib.h>
 #include <stddef.h>
+#include <string.h>
 #include <signal.h>
 #include <sys/wait.h>
 #include <sys/stat.h>
+
+#define NTTY    4
 
 void sigchld(int signo)
 {
@@ -49,15 +52,18 @@ void sigchld(int signo)
     }
 }
 
-#define NSH 2
 
 pid_t spawn_shell(void)
 {
+    static char n = '1';
+    char tty[10];
     char *sh_argv[] = { "/bin/sh", NULL };
-    char *sh_envp[] = { "SHELL=/bin/sh", "PATH=.:/bin:/sbin", NULL };
+    char *sh_envp[] = { "SHELL=/bin/sh", "PATH=.:/bin:/sbin", tty, NULL };
     pid_t pid;
 
-    printf("Spawn shell\n");
+    strcpy(tty, "TTY=ttyX");
+    tty[7] = n++;
+    printf("Spawn shell: %s\n", tty);
 
     pid = fork();
     if (pid == 0) {
@@ -71,11 +77,11 @@ int main(int argc, char *argv[])
 {
     int status;
     pid_t pid;
-    pid_t sh_pid[NSH];
+    pid_t sh_pid[NTTY];
     int i;
 
     /* Create virtual console devices */
-    for (i = 1; i <= 2; i++) {
+    for (i = 1; i <= NTTY; i++) {
         if (mknod("console", S_IFCHR | 0644, 0x0500 + i) < 0)
             return 1;
     }
@@ -83,14 +89,14 @@ int main(int argc, char *argv[])
     if (signal(SIGCHLD, sigchld) < 0)
         perror("signal");
 
-    for (i = 0; i < 2; i++) {
+    for (i = 0; i < NTTY; i++) {
         if ((sh_pid[i] = spawn_shell()) < 0)
             return -1;
     }
 
     while (1) {
         pid = wait(&status);
-        for (i = 0; i < NSH; i++) {
+        for (i = 0; i < NTTY; i++) {
             if (pid == sh_pid[i]) {
                 spawn_shell();
                 break;
