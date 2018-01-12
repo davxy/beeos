@@ -89,7 +89,6 @@ static void children_give(struct task *child)
          * This may happen if the process is waiting on a pipe that has
          * been closed on the other side.
          */
-        sys_kill(t->pid, SIGINT);
         t = list_container(t->sibling.next, struct task, sibling);
     } while (t != child);
 
@@ -117,9 +116,6 @@ void sys_exit(int status)
         list_delete(lnk);    /* Remove from current process timers */
         tm = list_container(lnk, struct timer_event, plink); 
         timer_event_del(tm); /* Remove from the global queue */
-        // TODO: fix memory leak
-        // Almost every timer is a dynamic structure. How to determine
-        // it??? Use a flag within a timer???
     }
 
     /* close all open files */

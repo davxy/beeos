@@ -26,18 +26,7 @@
 #include "kprintf.h"
 #include <stdint.h>
 #include <string.h>
-
-#ifndef __arm__
 #include "arch/x86/vmem.h"
-#else
-/* 
- * Temporary code. This must be the behaviour for every machine
- * type where we do not support virtual memory.
- */
-#define phys_to_virt(ptr) (ptr)
-#define virt_to_phys(ptr) (ptr)
-#define KVBASE 0
-#endif
 
 /* Memory alignment */
 #define ALIGN_VALUE         sizeof(void *)

@@ -28,12 +28,7 @@
 #include <limits.h>
 #include <sys/types.h>
 #include <signal.h>
-
-#ifndef __arm__
 #include "arch/x86/task.h"
-#else
-#include "arch/arm/task.h"
-#endif
 
 #define TASK_RUNNING    1
 #define TASK_SLEEPING   2
@@ -70,6 +65,7 @@ struct task
     struct sigaction    signals[SIGNALS_NUM];   /**< Signal handlers */
     struct list_link    timers;         /**< Process running timer events */
     struct timer_event  alarm;          /**< Alarm timer event (pre-allocated) */
+    struct list_link    condw;          /**< Conditional wait */
 };
 
 struct task *task_create(void);

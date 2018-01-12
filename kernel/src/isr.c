@@ -58,10 +58,8 @@ void isr_handler(struct isr_frame *ifr)
     isr_handlers[num]();
 
     /* For IRQs send EOI to the PIC */
-#ifndef __arm__     // TODO move this to the isr_stub
     if (32 <= num && num <= 47)
         pic_eoi(num);
-#endif
 
     if (need_resched)
     {
@@ -74,11 +72,9 @@ void isr_handler(struct isr_frame *ifr)
      * Do not handle nested signals (sfr should be null) and
      * handle signals only before return to user code (CS check).
      */
-#ifndef __arm__
     if (!sigisemptyset(&current_task->sigpend) &&
             current_task->arch.sfr == NULL && (ifr->cs & 0x3) == 0x3)
         do_signal();
-#endif
 
     /* Eventually restore the previous ifr */
     current_task->arch.ifr = previfr;

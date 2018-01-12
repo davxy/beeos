@@ -49,6 +49,7 @@ int main(int argc, char *argv[])
         sleep(5);
         printf("[parent] Wake-up\n");
         /* parent */
+        printf("[parent] Close read-end (fd[0])\nn");
         close(fd[0]);
         printf("[parent] Write to pipe\n");
         write(fd[1], "hello world\n", 12);
@@ -60,7 +61,7 @@ int main(int argc, char *argv[])
     {
         /* child */
         printf("[child] pid: %d, pgrp: %d\n", getpid(), getpgid(0));
-        printf("[child] Close pipe fd[1]\n");
+        printf("[child] Close write-end (fd[1])\n");
         close(fd[1]);
         n = read(fd[0], line, MAXLINE);
         printf("[child] Read from pipe\n");

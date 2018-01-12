@@ -21,9 +21,12 @@
 #include <unistd.h>
 #include <stdlib.h>
 #include <stddef.h>
+#include <string.h>
 #include <signal.h>
 #include <sys/wait.h>
 #include <sys/stat.h>
+
+#define NTTY    4
 
 void sigchld(int signo)
 {
@@ -49,37 +52,56 @@ void sigchld(int signo)
     }
 }
 
+
+pid_t spawn_shell(void)
+{
+    static char n = '1';
+    char tty[10];
+    char *sh_argv[] = { "/bin/sh", NULL };
+    char *sh_envp[] = { "SHELL=/bin/sh", "PATH=.:/bin:/sbin", tty, NULL };
+    pid_t pid;
+
+    strcpy(tty, "TTY=ttyX");
+    tty[7] = n++;
+    printf("Spawn shell: %s\n", tty);
+
+    pid = fork();
+    if (pid == 0) {
+        if (execve(sh_argv[0], sh_argv, sh_envp) < 0)
+            return -1;
+    }
+    return pid;
+}
+
 int main(int argc, char *argv[])
 {
-    pid_t pid;
     int status;
-    char *sh_argv[] = { "/bin/sh", NULL };
-    char *sh_envp[] = { "SHELL=/bin/sh", "PATH=.:/bin:/sbin", NULL };
+    pid_t pid;
+    pid_t sh_pid[NTTY];
+    int i;
 
-    if (mknod("console", S_IFCHR | 0644, 0x0501) < 0)
-        return 1;
-
+    /* Create virtual console devices */
+    for (i = 1; i <= NTTY; i++) {
+        if (mknod("console", S_IFCHR | 0644, 0x0500 + i) < 0)
+            return 1;
+    }
+    
     if (signal(SIGCHLD, sigchld) < 0)
         perror("signal");
 
-    while (1)
-    {
+    for (i = 0; i < NTTY; i++) {
+        if ((sh_pid[i] = spawn_shell()) < 0)
+            return -1;
+    }
+
+    while (1) {
         pid = wait(&status);
-        if (pid < 0)
-        {
-            /* exhausted the children, spawn a shell */
-            pid = fork();
-            if (fork < 0)
-                return 1;
-            
-            if (pid == 0)
-            {
-                if (execve(sh_argv[0], sh_argv, sh_envp) < 0)
-                    return 1;
+        for (i = 0; i < NTTY; i++) {
+            if (pid == sh_pid[i]) {
+                spawn_shell();
+                break;
             }
         }
-        else
-            printf("[init] child (%d) exit status: %d\n", pid, status);
     }
 
     return 0;

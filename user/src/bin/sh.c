@@ -40,9 +40,15 @@ const char *host = "beeos";
 
 static void print_prompt(void)
 {
+    char *tty;
+    
+    tty = getenv("TTY");
+    if (tty == NULL)
+        tty = "tty?";
+
     if (getcwd(cwd, PATH_MAX) < 0)
         perror("getcwd");
-    printf("%s@%s:%s$ ", user, host, cwd);
+    printf("%s@%s:%s$ ", tty, host, cwd);
 }
 
 static void sigint(int signo)
@@ -82,7 +88,8 @@ static int execute(int argc, char *argv[])
 
     /* check built-in commands first */
     if (strcmp(cmd, "exit") == 0) {
-        exit(0);
+        if (getppid() != 1)
+            exit(0);
     } else if (strcmp(cmd, "cd") == 0) {
         if ((status = chdir(argv[1])) < 0)
             printf("sh: cd: %s\n", strerror(errno));
@@ -179,7 +186,7 @@ int main(int argc, char *argv[])
     sigset_t mask;
 
     setpgid(0, 0);
-    tcsetpgrp(STDOUT_FILENO, getpid());
+    //tcsetpgrp(STDOUT_FILENO, getpid());
     
     /* Be sure that SIGCHLD is unblocked */
     (void)sigemptyset(&mask);

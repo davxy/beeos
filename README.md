@@ -1,6 +1,7 @@
 BeeOS
 =====
 
+
 README
 ------
 
@@ -15,11 +16,20 @@ README
   Once you've mastered the BeeOS sources it will be a lot easier to start 
   hacking with more complex projects like Linux.
 
+
+### Prerequisites
+
+- gcc
+- binutils
+- make
+- qemu (qemu-system-x86)
+
+
 ### Quickstart
 
 1. `make all`
 
-    This will build the kernel, standard library (libc), user utility
+    This command will build the kernel, standard library (libc), user utility
     library (libu) and user applications.
 
 2. `(cd misc && sudo ./mkfs.sh)`
@@ -29,6 +39,7 @@ README
 3. `(cd misc && ./qemu.sh)`
 
     Starts qemu and BeeOS.
+
 
 ### Implemented Milestones
   
@@ -42,8 +53,8 @@ README
     - Syscalls
     - Virtual Memory
     - Virtual File System (ext2 and custom initrd)
-    - SLAB  memory allocator
-    - Buddy memory allocator
+    - SLAB  allocator
+    - Buddy allocator
     - Timer queues
 
 **IPC**
@@ -60,8 +71,14 @@ README
 **Drivers**
 
     - TTY
+    - Screen
     - Ramdisk
     - Keyboard
+
+**Other**
+
+    - Multi TTY console
+
 
 CONTRIBUTIONS
 -------------

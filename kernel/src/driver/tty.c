@@ -20,21 +20,29 @@
 #include "tty.h"
 #include "dev.h"
 #include "proc.h"
+#include "screen.h"
+#include "timer.h"
 
-void console_putchar(int c);
 void uart_putchar(int c);
 void uart_init(void);
 
 #define TTYS_CONSOLE    4
-#define TTYS_SERIAL     0
-#define TTYS_TOTAL      (TTYS_CONSOLE + TTYS_SERIAL)
+#define TTYS_TOTAL      TTYS_CONSOLE
 
-struct tty_st tty_table[TTYS_TOTAL];
+static struct tty_st tty_table[TTYS_TOTAL];
+static struct screen scr_table[TTYS_TOTAL];
+static unsigned int tty_curr;
 
 int tty_read(dev_t dev, int couldblock)
 {
-    struct tty_st *tty = &tty_table[0];
+    struct tty_st *tty;
     int c = -1;
+    int i = minor(dev) - 1;
+
+    if (major(dev) != major(DEV_CONSOLE) || i >= TTYS_TOTAL)
+        return -1;
+
+    tty = &tty_table[i];
 
     spinlock_lock(&tty->rcond.lock);
 
@@ -52,55 +60,40 @@ int tty_read(dev_t dev, int couldblock)
     return c;
 }
 
-
-void tty_putchar(int c)
+void tty_putchar(dev_t dev, int c)
 {
-//    if ((dev & 0xFF00) != (major(DEV_CONSOLE) << 8))
-//        return;
+    int i;
+    struct screen *scr;
+
+    i = minor(dev) - 1;
+    if (major(dev) != major(DEV_CONSOLE) || i >= TTYS_TOTAL)
+        return;
+    scr = &scr_table[i];
+
+    screen_putchar(scr, c);
+    //if (i == tty_curr)
+    //    screen_update(scr);
+
+    /* Useful for debug */
     uart_putchar(c);
-#ifndef __arm__
-    console_putchar(c);
-#endif
 }
 
-/// TODO: create a common double ended queue structure
-ssize_t tty_read2(void *buf, size_t n)
-{
-    struct tty_st *tty = &tty_table[0];
-
-    spinlock_lock(&tty->rcond.lock);
-    while (tty->rpos >= tty->wpos)
-    {
-        tty->rpos = tty->wpos = 0;
-        cond_wait(&tty->rcond);
-    }
-    if (tty->rpos < tty->wpos) 
-    {
-        if (tty->wpos - tty->rpos < n)
-            n = tty->wpos - tty->rpos;
-        memcpy(buf, &tty->rbuf[tty->rpos], n);
-        tty->rpos += n;
-    }
-    spinlock_unlock(&tty->rcond.lock);
-    return -1;
-}
-
-ssize_t tty_write(void *buf, size_t n)
+ssize_t tty_write(dev_t dev, void *buf, size_t n)
 {
     size_t i; 
     for (i = 0; i < n; i++)
-        tty_putchar(((uint8_t *)buf)[i]);
+        tty_putchar(dev, ((uint8_t *)buf)[i]);
     return (ssize_t)n;
 }
 
 pid_t tty_getpgrp(void)
 {
-    return tty_table[0].pgrp;
+    return tty_table[tty_curr].pgrp;
 }
 
 int tty_setpgrp(pid_t pgrp)
 {
-    tty_table[0].pgrp = pgrp;
+    tty_table[tty_curr].pgrp = pgrp;
     return 0;
 }
 
@@ -114,7 +107,7 @@ void tty_update(char c)
 {
     char *echo_buf = &c;
     size_t echo_siz = 1;
-    struct tty_st *tty = &tty_table[0];
+    struct tty_st *tty = &tty_table[tty_curr];
 
     spinlock_lock(&tty->rcond.lock);
     
@@ -153,6 +146,36 @@ void tty_update(char c)
         dev_io(0, tty->dev, DEV_WRITE, 0, echo_buf, echo_siz, NULL);
 }
 
+void tty_change(int i)
+{
+    if (i >= 0 && i < TTYS_CONSOLE) {
+        tty_curr = i;
+        scr_table[i].dirty = 1;
+        //screen_update(&scr_table[i]);
+    }
+}
+
+dev_t tty_get(void)
+{
+    int i;
+
+    for (i = 0; i < TTYS_TOTAL; i++) {
+        if (tty_table[i].pgrp == 0) {
+            tty_table[i].pgrp = current_task->pgid;
+            return tty_table[i].dev;
+        }
+    }
+    return (dev_t)-1;
+}
+
+void tty_put(dev_t dev)
+{
+    int i = minor(dev) - 1;
+
+    if (major(dev) != major(DEV_CONSOLE) || i >= TTYS_TOTAL)
+        return;
+    tty_table[i].pgrp = 0;
+}
 
 static void tty_attr_init(struct termios *termptr)
 {
@@ -183,13 +206,30 @@ static void tty_struct_init(struct tty_st *tty, dev_t dev)
     tty_attr_init(&tty->attr);
 }
 
+struct timer_event refresh_tm;
+
+
+void refresh_func(void *_unused)
+{
+    if (scr_table[tty_curr].dirty != 0)
+        screen_update(&scr_table[tty_curr]);
+    timer_event_mod(&refresh_tm, timer_ticks + msecs_to_ticks(25));
+}
+
+
 void tty_init(void)
 {
     int i;
 
-    for (i = 0; i < TTYS_CONSOLE; i++)
-        tty_struct_init(&tty_table[i], DEV_CONSOLE + i);
+    for (i = 0; i < TTYS_CONSOLE; i++) {
+        tty_struct_init(&tty_table[i], DEV_CONSOLE + i + 1);
+        screen_init(&scr_table[i]);
+    }
+    tty_curr = 0;
 
     uart_init();
+
+    timer_event_init(&refresh_tm, refresh_func, NULL, timer_ticks + msecs_to_ticks(100));
+    timer_event_add(&refresh_tm);
 }
 

@@ -302,11 +302,11 @@ static void kbd_handler(void)
         kbd_status ^= KBD_STATUS_CAPS_LCK;
         break;
     default:
-        if (!(c & 0x80))
+        if ((c & 0x80) == 0)
         {
-            if (kbd_status & KBD_STATUS_CTRL) {
+            if ((kbd_status & KBD_STATUS_CTRL) != 0) {
                 c = kbd_map1[c];
-                kprintf("C^%c\n", c);
+                /*kprintf("C^%c\n", c);*/
                 switch (c) {
                 case 'c':
                 case 'C':
@@ -315,6 +315,11 @@ static void kbd_handler(void)
                     break;
                 }
                 c = '\0';
+            }
+            else if ((kbd_status & KBD_STATUS_ALT) != 0) {
+                /*kprintf("ALT + %c (0x%x)\n", c, c);*/
+                tty_change(c - 0x3B);
+                return;
             }
             else if (((kbd_status & KBD_STATUS_SHIFT) != 0) 
                     ^ ((kbd_status & KBD_STATUS_CAPS_LCK) != 0))

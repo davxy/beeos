@@ -53,7 +53,7 @@ ssize_t dev_io_tty(pid_t pid, dev_t dev, int rw, off_t off,
         }
     }
     else
-        n = tty_write(buf, size);
+        n = tty_write(dev, buf, size);
 
     return n;
 }

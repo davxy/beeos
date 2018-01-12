@@ -20,10 +20,7 @@
 #include "proc.h"
 #include <unistd.h>
 #include <errno.h>
-
-#ifndef __arm__
 #include "arch/x86/paging.h"
-#endif
 
 
 void *sys_sbrk(intptr_t incr)

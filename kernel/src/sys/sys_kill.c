@@ -56,7 +56,11 @@ int sys_kill(pid_t pid, int sig)
                 {
                     /* check if the process must be awake */
                     if (t->state == TASK_SLEEPING)
+                    {
+                        if (!list_empty(&t->condw))
+                            list_delete(&t->condw);
                         t->state = TASK_RUNNING;
+                    }
                 }
             }
             break;

@@ -41,14 +41,20 @@ struct tty_st
 void tty_init(void);
 int tty_read(dev_t dev, int couldblock);
 
-void tty_putchar(int c);
+//void tty_putchar(int c);
 
-ssize_t tty_write(void *buf, size_t n);
+ssize_t tty_write(dev_t dev, void *buf, size_t n);
 
 /* Write a character to tty */
 void tty_update(char c);
 
+void tty_change(int n);
+
 pid_t tty_getpgrp(void);
 int tty_setpgrp(pid_t pgrp);
+
+dev_t tty_get(void);
+void tty_put(dev_t dev);
+
 
 #endif /* _BEEOS_DRIVER_TTY_H_ */

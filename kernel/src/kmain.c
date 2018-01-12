@@ -26,7 +26,6 @@
 #include "proc.h"
 #include "driver/tty.h"
 #include "fs/vfs.h"
-#include "cpuinfo.h"
 #include "proc/task.h"
 #include "dev.h"
 #include <string.h>
@@ -40,16 +39,12 @@ void kmain(void)
 {
     struct sb *sb;
 
-    kprintf("BeeOS v%d.%d.%d - %s\n\n", 
-            BEEOS_MAJOR, BEEOS_MINOR, BEEOS_PATCH, BEEOS_CODENAME);
-
     /*
      * Core
      */
     
     kmalloc_init();
     isr_init();
-    cpuinfo_init();
 
     /*
      * Primary
@@ -65,24 +60,20 @@ void kmain(void)
      * Initialization finished
      */
 
-    kprintf("mounting root fs\n");
+    kprintf("BeeOS v%d.%d.%d - %s\n\n", 
+            BEEOS_MAJOR, BEEOS_MINOR, BEEOS_PATCH, BEEOS_CODENAME);
+    kprintf("Mounting root fs\n");
     sb = vfs_sb_create(ROOT_DEV, ROOT_FS_TYPE);
     if (sb == NULL)
-        panic("unable to mount root file system");
+        panic("Unable to mount root file system");
     current_task->cwd = sb->root;
+
+    kprintf("\n");
 
     /*
      * Fork and start the init process
      */
 
-#if 0
-    if (sys_fork() == 0)
-    {
-        init();
-        panic("init returned");
-    }
-#endif
-    void init_start(void);
     init_start();
 
     /*
