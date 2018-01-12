@@ -8,37 +8,21 @@ Tasks
 Fix
 ---
 
-- SIGINT to a process waiting for input that will never arrive.
-
-To reproduce:
-
-1. Create a pipe
-2. Fork
-3. Parent sleep for N seconds
-4. Child waits for input on the other side
-5. CTRL-C before parent wakeup.
-
-The parent is killed by the SIGINT.
-The child is waked up by the SIGINT.
-The child returns to sleep "forever" (becomes an init child)
-
-Also... Change the process group.
-
 
 Missing milestones
 ------------------
 
 - On-demand paging (for user stack and heap)
-~ ARM port.
-~ Serial driver
+- ARM port.
+- Serial driver
 - TTY attributes (termios)
 - Networking
+
 
 Generic coding rules
 --------------------
 
 - Document code using Doxygen syntax.
-- No more that 80 characters rows.
-- Braces on newlines
+- No more that 80 characters columns.
 - No typedef on structures except for the POSIX defined ones
 

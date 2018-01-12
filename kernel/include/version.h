@@ -21,11 +21,12 @@
 #define _BEEOS_VERSION_H_
 
 #define BEEOS_MAJOR       0
-#define BEEOS_MINOR       0
-#define BEEOS_PATCH       2
+#define BEEOS_MINOR       1
+#define BEEOS_PATCH       0
 #define BEEOS_VERSION \
     (((BEEOS_MAJOR) << 16) + ((BEEOS_MINOR) << 8) + (BEEOS_PATCH))
 
-#define BEEOS_CODENAME    "stoneage"
+#define BEEOS_CODENAME    "StoneAge"
 
 #endif /* _BEEOS_VERSION_H_ */
+

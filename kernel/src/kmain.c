@@ -68,6 +68,8 @@ void kmain(void)
         panic("Unable to mount root file system");
     current_task->cwd = sb->root;
 
+    kprintf("\n");
+
     /*
      * Fork and start the init process
      */

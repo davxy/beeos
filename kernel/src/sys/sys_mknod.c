@@ -26,8 +26,6 @@ int sys_mknod(const char *pathname, mode_t mode, dev_t dev)
 {
     struct inode *inode;
 
-    kprintf("MKNOD %s\n", pathname);
-    
     inode = fs_namei(pathname);
     if (inode != NULL)
     {
