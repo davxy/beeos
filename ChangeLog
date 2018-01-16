@@ -9,13 +9,14 @@ This project adheres to "Semantic Versioning" (http://semver.org)
 
 Features
 
-- Multi-tty terminal (Alt-Fx to switch).
+- Multi-tty terminal (Alt-Fn to switch).
 - Screen timed refresh and only on dirty backbuffers.
 
 Bugfix
 
-- Remove task from conditional variables vait queue before sent signals.
-- Wake up readers (writers) waiting on a pipe without writers (readers).
+- Remove task from conditional variables wait queue before send signals.
+- Wake up readers (writers) waiting on a pipe without writers (readers) to
+  avoid starvation.
 
 
 ################################################################################
