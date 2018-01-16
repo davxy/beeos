@@ -1,28 +1,80 @@
-Tasks
------
+TODO List
+=========
 
-~ Isolate machine specific code.
-~ Better dump syscall to print system informations.
-  Accepts a parameter with the things to dump.
+Todo items are divided in tasks, features and milestones.
 
-Fix
----
+A **tasks** is a modification and/or an addition that usually improves an
+existing feature.
 
+A **feature** is a modification that is usually tangible to the end user.
+Thus, a feature adds value to the whole project from the user perspective.
+To be implemented, a feature is commonly divided in, possibly parallelizable,
+smaller tasks.
 
-Missing milestones
-------------------
-
-- On-demand paging (for user stack and heap)
-- ARM port.
-- Serial driver
-- TTY attributes (termios)
-- Networking
+A **milestone** is a notable feature. Adds huge value to the whole project.
 
 
-Generic coding rules
---------------------
+Note: features and milestones that are prefixed with a '~' in place of a '-'
+where previously started, thus some code is available as a base start.
+Code is available in the corresponding branch.
 
-- Document code using Doxygen syntax.
+If you wish to contribute, even for a small typo fix or documentation, feel
+free to contact the author for further informations.
+
+All contributions to the project will be listed in the AUTHORS document.
+
+
+### Generic coding rules
+
+- (Try) to document code supposed to be shared across transaction units using
+  Doxygen syntax.
 - No more that 80 characters columns.
-- No typedef on structures except for the POSIX defined ones
+- No `typedef`s for structures except for the POSIX defined ones.
+- Use `underscore_case` (e.g. No CamelCase) except for the POSIX defined
+  structures
 
+
+Kernel
+------
+
+### Milestones
+
+  ~ ARM port, possibly Rasp-Pi first (feat/arm)
+  - Serial driver attached to a tty
+  ~ PCI driver (feat/socket)
+  ~ Networking (feat/socket)
+  - Ext2 write support
+  - mknod, devfs and mount it in the /dev/ directory.
+
+### Minor
+
+  - Better 'sys_dump' syscall to print system informations.
+    Accepts a parameter with the things to dump.
+  - Remove the "dev_io" call in the sys_write syscall. Use fs_write (VFS).
+    Consequently the dev_ramdisk.c and dev_tty.c should be removed.
+  - At startup open ttys based on the '/etc/tty' file.
+  - Spot and signal deadcode.
+
+### Major tasks
+
+  - On page faults happened in user space expand the address space only if 
+    allowed (stask/heap expansion). (function: page_fault_handler)
+  - Better isolation of machine architecture specific code.
+  - Process address space "Copy on Write"
+  - TTY attributes (termios) and tty code improvement.
+
+
+User applications
+-----------------
+
+  - 'ps' user program to get running process informations.
+  - 'env' user program to get environment informations (easy).
+  - Any standard *nix applications are welcome, put them in `/bin/
+  - Non standard useful applications should be placed in `/usr/local/bin`.
+  - Testing applications should be placed in `/test` directory.
+
+
+Known Bugs
+----------
+
+  No known bugs
