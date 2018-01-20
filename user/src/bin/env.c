@@ -26,27 +26,10 @@
 int main(int argc, char *argv[])
 {
     int i;
-    char buf[256];
-    char *value;
 
     i = 0;
     while (environ[i] != NULL)
         printf("%s\n", environ[i++]);
 
-    while (1)
-    {
-        printf("Write an environment variable ('q' to exit)\n> ");
-        if (fgets(buf, 256, stdin))
-        {
-            if (strcmp(buf, "q") == 0)
-                break;
-            value = getenv(buf);
-            if (value)
-                printf("%s value is %s\n", buf, value);
-            else
-                printf("Undefined\n");
-        }
-    }
-    
     return 0;
 }
