@@ -241,6 +241,8 @@ int access(const char *path, int amode);
 
 int pause(void);
 
+int gethostname(char *name, size_t len);
+
 static inline unsigned int alarm(unsigned int seconds)
 {
     return syscall(__NR_alarm, seconds);

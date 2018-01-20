@@ -3,4 +3,6 @@ local_sources := environ.c \
 				 execlp.c \
 				 execvpe.c \
 				 access.c \
-				 pause.c
+				 pause.c \
+				 gethostname.c
+

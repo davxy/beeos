@@ -35,21 +35,32 @@ static char cwd[PATH_MAX];
 static pid_t fgpid = -1;
 static int fgterm;
 
-const char *user = "guest";
-const char *host = "beeos";
+/* Default prompt values */
+const char *host;
+const char *user;
 
-static void print_prompt(void)
+#define DEFAULT_USER    "anon"
+#define DEFAULT_HOST    "localhost"
+
+static void set_prompt_values(void)
 {
-    char *tty;
-    
-    tty = getenv("TTY");
-    if (tty == NULL)
-        tty = "tty?";
+    user = getenv("USER");
+    if (user == NULL) {
+        user = DEFAULT_USER;
+        setenv("USER", DEFAULT_USER, 0);
+        printf("warning: USER variable was not defined\n");
+    }
 
-    if (getcwd(cwd, PATH_MAX) < 0)
-        perror("getcwd");
-    printf("%s@%s:%s$ ", tty, host, cwd);
+    /* Read the host name */
+    host = getenv("HOSTNAME");
+    if (host == NULL)
+    {
+        host = DEFAULT_HOST;
+        setenv("HOSTNAME", DEFAULT_HOST, 0);
+        printf("warning: HOSTNAME variable was not defined\n");
+    }
 }
+
 
 static void sigint(int signo)
 {
@@ -142,6 +153,7 @@ static int execute(int argc, char *argv[])
     return status;
 }
 
+
 static int interactive(void)
 {
     int fd;
@@ -166,8 +178,15 @@ static int interactive(void)
     dup(0); /* stdout (fd=2) */
     dup(0); /* stderr (fd=3) */
 
+    /* USER@HOST */
+    set_prompt_values();
+
     while (1) {
-        print_prompt();
+
+        if (getcwd(cwd, PATH_MAX) < 0)
+            perror("getcwd");
+        printf("%s@%s:%s$ ", user, host, cwd);
+
         if (fgets(cmd, CMD_MAX, stdin)) {
             argc = 0;
             argv[argc++] = strtok(cmd, " ");

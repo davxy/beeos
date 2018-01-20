@@ -52,6 +52,29 @@ static char *push_all(uintptr_t *base, char *sp, const char *str[],
     return sp;
 }
 
+/*
+ * Populates the user-space stack with a valid argv and envp pointers.
+ * The stack requires the final user-stack addresses but actually the structure
+ * is constructed using a chunk of memory allocated in kernel space (via
+ * kmalloc). Thus every address stored in the user-stack is adjusted using
+ * a 'delta' value. This delta is the difference between the top of the
+ * kernel-resident version of the stack  and the top of the user space version
+ * (that is set equal to the constant KVBASE).
+ *
+ * Stack bottom elements to be populated:
+ *
+ *       [  NULL   ]   end of envp marker
+ *       [  ....   ]
+ *  +--> [ envp[0] ]
+ *  |    [  NULL   ]   end of argv marker
+ *  |    [  ...... ]
+ *  |    [ argv[0] ] <--+
+ *  +--- [ **envp  ]    |
+ *       [ **argv  ] ---+
+ *       [   argc  ]
+ *
+ * Note: passed argv and envp strings are copied on the top of the stack.
+*/
 static void stack_init(uintptr_t *base, const char *argv[], const char *envp[])
 {
     char *sp = (char *)base + ARG_MAX;
@@ -61,13 +84,11 @@ static void stack_init(uintptr_t *base, const char *argv[], const char *envp[])
     base[1] = (uintptr_t)&base[3] + delta;
 
     if (envp != NULL)
-    {
-        /* (+1) push above the argv null terminator */
-        sp = push_all(&base[4+base[0]], sp, envp, delta, NULL);
-        base[2] = (uintptr_t)&base[4+base[0]] + delta;
-    }
+        sp = push_all(&base[4 + base[0]], sp, envp, delta, NULL);
     else
-        base[2] = 0;
+        base[4 + base[0]] = 0;  /* Empty environment array */
+
+    base[2] = (uintptr_t)&base[4+base[0]] + delta;
 }
 
 
