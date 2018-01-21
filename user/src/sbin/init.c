@@ -25,41 +25,17 @@
 #include <signal.h>
 #include <sys/wait.h>
 #include <sys/stat.h>
+#include <fcntl.h>
 
 #define NTTY    4
 
 #define DEFAULT_HOSTNAME    "localhost"
 #define SHELL               "/bin/sh"
-#define PATH                ".:/bin:/sbin"
+#define PATH                "/bin:/sbin"
 
 
-#include <fcntl.h>
 
-void dev_test(void)
-{
-    int fd, n,i ;
-    char buf[64];
 
-    for (i = 0; i < sizeof(buf); i++)
-        buf[i] = i;
-
-    fd = open("/dev/zero", O_RDONLY, 0);
-    if (fd < 0)
-        perror("open /dev/zero");
-
-    n = read(fd, buf, sizeof(buf));
-    if (n != sizeof(buf))
-        perror("read error");
-
-    for (i = 0; i < sizeof(buf); i++) {
-        if (buf[i] != 0) {
-            printf("/dev/zero not worked!!!\n");
-            break;
-        }
-    }
-
-    close(fd);
-}
 
 void dev_init(void)
 {
@@ -75,8 +51,6 @@ void dev_init(void)
         perror("mknod /dev/tty4");
     if (mknod("/dev/initrd", S_IFBLK, makedev(0x01, 0xFA)) < 0)
         perror("mknod /dev/initrd");
-
-    dev_test();
 }
 
 
