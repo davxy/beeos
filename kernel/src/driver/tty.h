@@ -31,6 +31,7 @@ struct tty_st
 {
     dev_t dev;              /* Associated device */
     pid_t pgrp;             /* Foreground process group */
+    int refs;                /* References to this tty */
     struct termios attr;    /* termios attributes */
     struct cond rcond;      /* Read conditional variable */
     unsigned int rpos;      /* Input line position read */

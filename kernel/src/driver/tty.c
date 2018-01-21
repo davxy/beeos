@@ -59,14 +59,18 @@ void tty_change(int i)
 dev_t tty_get(void)
 {
     int i;
+    pid_t curr_pgid = current_task->pgid;
+    dev_t dev = (dev_t)-1;
 
     for (i = 0; i < TTYS_TOTAL; i++) {
-        if (tty_table[i].pgrp == 0) {
-            tty_table[i].pgrp = current_task->pgid;
-            return tty_table[i].dev;
+        if (tty_table[i].pgrp == 0 || tty_table[i].pgrp == curr_pgid) {
+            tty_table[i].pgrp = curr_pgid;
+            dev = tty_table[i].dev;
+            tty_table[i].refs++;
+            break;
         }
     }
-    return (dev_t)-1;
+    return dev;
 }
 
 void tty_put(dev_t dev)
@@ -77,7 +81,11 @@ void tty_put(dev_t dev)
         return;
     if (major(dev) != major(DEV_CONSOLE) || i >= TTYS_TOTAL)
         return;
-    tty_table[i].pgrp = 0;
+    if (tty_table[i].refs > 0) {
+        tty_table[i].refs--;
+        if (tty_table[i].refs == 0)
+            tty_table[i].pgrp = 0;
+    }
 }
 
 
