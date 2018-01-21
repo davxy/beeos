@@ -119,6 +119,7 @@ struct {
     { "tty2", DEV_CONSOLE2 },
     { "tty3", DEV_CONSOLE3 },
     { "tty4", DEV_CONSOLE4 },
+	{ "initrd", DEV_INITRD },
 };
 
 #define NDEVS (sizeof(dev_name_map)/sizeof(dev_name_map[0]))
@@ -196,6 +197,9 @@ static int devfs_readdir(struct inode *inode, unsigned int i,
         case DEV_CONSOLE4:
             name = "tty4";
             break;
+        case DEV_INITRD:
+        	name = "initrd";
+        	break;
         default:
             curr = curr->next;
             break;
@@ -269,20 +273,13 @@ ssize_t dev_io(dev_t dev, int rw, off_t off, void *buf, size_t size)
 	ssize_t n = 0;
     struct devfs_inode *inode = devfs_nodes;
 
-    if (dev == DEV_INITRD) /* FIXME: Temporary hack */
-    {
-        if (rw == DEV_READ)
-            n = ramdisk_read(buf, size, off);
-         else
-            n = ramdisk_write(buf, size, off);
-    }
-
     while (inode != NULL)
     {
         if (inode->base.dev == dev)
             break;
         inode = inode->next;
     }
+
     if (inode != NULL)
     {
         if (rw == DEV_READ)
@@ -290,5 +287,20 @@ ssize_t dev_io(dev_t dev, int rw, off_t off, void *buf, size_t size)
         else
             n = devfs_inode_write(&inode->base, buf, size, off);
     }
+    else if (dev == DEV_INITRD)
+    {
+    	/*
+    	 * Temporary hack?
+    	 * The initrd node is created by the 'init' process, but during early
+    	 * system startup the kernel requires to read from the ramdisk to load
+    	 * the init process (i.e. chicken and egg problem :) ).
+    	 */
+        kprintf("DIRECT\n");
+        if (rw == DEV_READ)
+            n = ramdisk_read(buf, size, off);
+         else
+            n = ramdisk_write(buf, size, off);
+    }
+
     return n;
 }

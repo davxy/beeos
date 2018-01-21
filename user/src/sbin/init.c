@@ -73,6 +73,8 @@ void dev_init(void)
         perror("mknod /dev/tty3");
     if (mknod("/dev/tty4", S_IFCHR, makedev(0x05, 0x04)) < 0)
         perror("mknod /dev/tty4");
+    if (mknod("/dev/initrd", S_IFBLK, makedev(0x01, 0xFA)) < 0)
+        perror("mknod /dev/initrd");
 
     dev_test();
 }
