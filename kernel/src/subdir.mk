@@ -6,7 +6,7 @@ local_sources := kmain.c \
 				 elf.c \
 				 timer.c
 
-dirs := dev driver fs mm proc sync sys ipc
+dirs := driver fs mm proc sync sys ipc
 
 ifeq ($(ARCH),x86)
 dirs += arch/x86

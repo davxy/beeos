@@ -42,10 +42,7 @@ ssize_t sys_read(int fdn, void *buf, size_t count)
 
     switch (file->inode->mode & S_IFMT) {
         case S_IFBLK:
-        case S_IFCHR:
-            // nr = fs_read(file->inode, buf, count, file->offset);
-            n = dev_io(0, file->inode->dev, DEV_READ, file->offset, 
-                       buf, count, NULL);
+            n = dev_io(file->inode->dev, DEV_READ, file->offset, buf, count);
             break;
         case S_IFDIR:
             n = file->offset/sizeof(struct dirent);
@@ -53,6 +50,7 @@ ssize_t sys_read(int fdn, void *buf, size_t count)
             if (n == 0)
                 n = sizeof(struct dirent);
             break;
+        case S_IFCHR:
         case S_IFREG:
         case S_IFIFO:
         case S_IFSOCK:

@@ -19,6 +19,7 @@
 
 #include "kprintf.h"
 #include "dev.h"
+#include "driver/tty.h"
 #include <stdio.h>
 #include <stddef.h>
 
@@ -33,8 +34,7 @@ int kvprintf(const char *fmt, va_list arg)
     if (n < 0)
         return -1;
     /* Write to the first console. */
-    dev_io (0, DEV_CONSOLE + 1, DEV_WRITE, 0, str, n, NULL);
-    return n;
+    return tty_write(DEV_CONSOLE1, str, n);
 }
 
 int kprintf(const char *fmt, ...)

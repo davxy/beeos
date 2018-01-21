@@ -172,7 +172,7 @@ static int interactive(void)
     if (signal(SIGCHLD, sigchld) < 0)
         perror("signal: SIGCHLD");
 
-    fd = open("console", O_RDWR, 0); /* stdin (fd=1) */
+    fd = open("/dev/tty", O_RDWR, 0); /* stdin (fd=1) */
     if (fd < 0)
         return -1;
     dup(0); /* stdout (fd=2) */

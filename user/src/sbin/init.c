@@ -32,6 +32,52 @@
 #define SHELL               "/bin/sh"
 #define PATH                ".:/bin:/sbin"
 
+
+#include <fcntl.h>
+
+void dev_test(void)
+{
+    int fd, n,i ;
+    char buf[64];
+
+    for (i = 0; i < sizeof(buf); i++)
+        buf[i] = i;
+
+    fd = open("/dev/zero", O_RDONLY, 0);
+    if (fd < 0)
+        perror("open /dev/zero");
+
+    n = read(fd, buf, sizeof(buf));
+    if (n != sizeof(buf))
+        perror("read error");
+
+    for (i = 0; i < sizeof(buf); i++) {
+        if (buf[i] != 0) {
+            printf("/dev/zero not worked!!!\n");
+            break;
+        }
+    }
+
+    close(fd);
+}
+
+void dev_init(void)
+{
+    if (mknod("/dev/zero", S_IFCHR, makedev(0x01, 0x05)) < 0)
+        perror("mknod /dev/zero");
+    if (mknod("/dev/tty1", S_IFCHR, makedev(0x05, 0x01)) < 0)
+        perror("mknod /dev/tty1");
+    if (mknod("/dev/tty2", S_IFCHR, makedev(0x05, 0x02)) < 0)
+        perror("mknod /dev/tty2");
+    if (mknod("/dev/tty3", S_IFCHR, makedev(0x05, 0x03)) < 0)
+        perror("mknod /dev/tty3");
+    if (mknod("/dev/tty4", S_IFCHR, makedev(0x05, 0x04)) < 0)
+        perror("mknod /dev/tty4");
+
+    dev_test();
+}
+
+
 /* Before fork */
 void env_init(void)
 {
@@ -104,6 +150,7 @@ void sigchld(int signo)
 }
 
 
+
 int main(int argc, char *argv[])
 {
     int status;
@@ -111,16 +158,11 @@ int main(int argc, char *argv[])
     pid_t sh_pid[NTTY];
     int i;
 
-    /* Create virtual console devices */
-    for (i = 1; i <= NTTY; i++) {
-        if (mknod("console", S_IFCHR | 0644, 0x0500 + i) < 0)
-            return 1;
-    }
-    
     if (signal(SIGCHLD, sigchld) < 0)
         perror("signal");
 
     env_init();
+    dev_init();
 
     for (i = 0; i < NTTY; i++) {
         if ((sh_pid[i] = spawn_shell(i + 1)) < 0)

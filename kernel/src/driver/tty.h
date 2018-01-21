@@ -39,11 +39,10 @@ struct tty_st
 };
 
 void tty_init(void);
-int tty_read(dev_t dev, int couldblock);
 
-//void tty_putchar(int c);
+ssize_t tty_read(dev_t dev, void *buf, size_t size);
 
-ssize_t tty_write(dev_t dev, void *buf, size_t n);
+ssize_t tty_write(dev_t dev, const void *buf, size_t n);
 
 /* Write a character to tty */
 void tty_update(char c);

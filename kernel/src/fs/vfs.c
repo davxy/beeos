@@ -269,7 +269,7 @@ struct inode *fs_namei(const char *path)
         return NULL;
 
     if (*path == '/')
-        ip = idup(current_task->cwd->sb->root);
+        ip = idup(current_task->root);
     else
         ip = idup(current_task->cwd);
 

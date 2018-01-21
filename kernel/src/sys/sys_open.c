@@ -26,6 +26,7 @@
 #include <errno.h>
 #include <limits.h>
 #include <string.h>
+#include <stdio.h>
 
 void *fs_file_alloc(void);
 
@@ -34,6 +35,7 @@ int sys_open(const char *pathname, int flags, mode_t mode)
     int fdn;
     struct file *file;
     struct inode *inode;
+    char buf[16];
 
     if (pathname == NULL)
         return -EINVAL;
@@ -44,8 +46,15 @@ int sys_open(const char *pathname, int flags, mode_t mode)
     if (fdn == OPEN_MAX)
         return -EMFILE; /* Too many open files. */
 
+    if (strcmp(pathname, "/dev/tty") == 0)
+    {
+    	dev_t dev = tty_get();
+    	snprintf(buf, sizeof(buf), "/dev/tty%d", minor(dev));
+    	pathname = buf;
+    }
 
     // TODO : temporary just to allow to proceed
+#if 0
     if (strcmp(pathname, "console") == 0)
     {
         inode = kmalloc(sizeof(struct inode), 0);
@@ -56,10 +65,11 @@ int sys_open(const char *pathname, int flags, mode_t mode)
     }
     else
     {
+#endif
         inode = fs_namei(pathname);
         if (inode == NULL)
             return -ENOENT;
-    }
+ //   }
 
     file = fs_file_alloc();
     if (!file)

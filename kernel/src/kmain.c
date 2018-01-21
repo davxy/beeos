@@ -26,14 +26,18 @@
 #include "proc.h"
 #include "driver/tty.h"
 #include "fs/vfs.h"
+#include "fs/devfs.h"
 #include "proc/task.h"
 #include "dev.h"
 #include <string.h>
 #include <stdio.h>
 #include <unistd.h>
 
+
+
 #define ROOT_FS_TYPE    "ext2"
 #define ROOT_DEV        DEV_INITRD
+
 
 void kmain(void)
 {
@@ -56,6 +60,7 @@ void kmain(void)
     tty_init();
     syscall_init();
 
+
     /*
      * Initialization finished
      */
@@ -67,8 +72,11 @@ void kmain(void)
     if (sb == NULL)
         panic("Unable to mount root file system");
     current_task->cwd = sb->root;
+    current_task->root = sb->root;
 
     kprintf("\n");
+
+    devfs_init();
 
     /*
      * Fork and start the init process
