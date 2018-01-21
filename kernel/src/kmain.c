@@ -60,6 +60,13 @@ void kmain(void)
     tty_init();
     syscall_init();
 
+    sb = devfs_init();
+    if (sb == NULL)
+        panic("Unable to create dev file system");
+    current_task->cwd = sb->root;
+    current_task->root = sb->root;
+
+    sys_mknod("/initrd", S_IFBLK, DEV_INITRD);
 
     /*
      * Initialization finished
@@ -67,16 +74,18 @@ void kmain(void)
 
     kprintf("BeeOS v%d.%d.%d - %s\n\n", 
             BEEOS_MAJOR, BEEOS_MINOR, BEEOS_PATCH, BEEOS_CODENAME);
+
     kprintf("Mounting root fs\n");
     sb = vfs_sb_create(ROOT_DEV, ROOT_FS_TYPE);
     if (sb == NULL)
-        panic("Unable to mount root file system");
+        panic("Unable to create root file system");
     current_task->cwd = sb->root;
     current_task->root = sb->root;
 
     kprintf("\n");
 
-    devfs_init();
+    void sys_mount(const char *source, const char *target);
+    sys_mount("dev", "/dev");
 
     /*
      * Fork and start the init process
@@ -90,4 +99,3 @@ void kmain(void)
 
     idle();
 }
-

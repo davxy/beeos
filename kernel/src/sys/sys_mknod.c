@@ -35,7 +35,10 @@ static void get_parent_dir(char *parent, const char *filepath)
         if (filepath[i] == '/')
             break;
     }
-    strncpy(parent, filepath, i);
+    if (i > 0)
+        strncpy(parent, filepath, i);
+    else
+        parent[i++] = '/';
     parent[i] = '\0';
 }
 

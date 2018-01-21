@@ -43,8 +43,8 @@ struct devfs_inode {
 static ssize_t devfs_inode_read(struct inode *inode, void *buf,
                                 size_t count, off_t offset)
 {
-	ssize_t n;
-	dev_t dev = inode->dev;
+    ssize_t n;
+    dev_t dev = inode->dev;
 
 #ifdef DEBUG_DEVFS
     kprintf(">>> devfs-read (dev=%04x)\n", inode->dev);
@@ -79,8 +79,8 @@ static ssize_t devfs_inode_read(struct inode *inode, void *buf,
 static ssize_t devfs_inode_write(struct inode *inode, const void *buf,
                                  size_t count, off_t offset)
 {
-	ssize_t n;
-	dev_t dev = inode->dev;
+    ssize_t n;
+    dev_t dev = inode->dev;
 
 #ifdef DEBUG_DEVFS
     kprintf(">>> devfs-write (dev=%04x)\n", inode->dev);
@@ -119,7 +119,7 @@ struct {
     { "tty2", DEV_CONSOLE2 },
     { "tty3", DEV_CONSOLE3 },
     { "tty4", DEV_CONSOLE4 },
-	{ "initrd", DEV_INITRD },
+    { "initrd", DEV_INITRD },
 };
 
 #define NDEVS (sizeof(dev_name_map)/sizeof(dev_name_map[0]))
@@ -198,8 +198,8 @@ static int devfs_readdir(struct inode *inode, unsigned int i,
             name = "tty4";
             break;
         case DEV_INITRD:
-        	name = "initrd";
-        	break;
+            name = "initrd";
+            break;
         default:
             curr = curr->next;
             break;
@@ -245,22 +245,40 @@ const struct sb_ops devfs_sb_ops =
     .inode_alloc = devfs_sb_inode_alloc,
 };
 
-void devfs_init(void)
+struct sb *devfs_init(void)
 {
     struct inode *root;
 
     devfs_nodes = NULL;
 
-    root = fs_namei("/dev");
-    if (root == NULL)
-    {
-        kprintf("Unable to mount devfs\nmount point \"/dev\" does not exits\n");
-        return;
-    }
+    root = devfs_sb_inode_alloc();
+    root->sb = &devfs_sb;
+    root->ops = &devfs_inode_ops;
+
     sb_init(&devfs_sb, 0, root, NULL);
     devfs_sb.ops = &devfs_sb_ops;
-    root->sb = &devfs_sb;   /* This should be a sort of mount.... FIXME */
-    root->ops = &devfs_inode_ops;
+
+    return &devfs_sb;
+}
+
+
+/*
+ * First... brutal approach
+ */
+int sys_mount(const char *source, const char *target)
+{
+    struct inode *idst, *isrc;
+
+    idst = fs_namei(target);
+
+    if (strcmp(source, "dev") != 0)
+        isrc = fs_namei(source);
+    else
+        isrc = devfs_sb.root;
+
+    idst->sb = isrc->sb;
+    idst->ops = isrc->ops;
+    return 0;
 }
 
 /*
@@ -270,7 +288,7 @@ void devfs_init(void)
  */
 ssize_t dev_io(dev_t dev, int rw, off_t off, void *buf, size_t size)
 {
-	ssize_t n = 0;
+    ssize_t n = 0;
     struct devfs_inode *inode = devfs_nodes;
 
     while (inode != NULL)
@@ -289,12 +307,12 @@ ssize_t dev_io(dev_t dev, int rw, off_t off, void *buf, size_t size)
     }
     else if (dev == DEV_INITRD)
     {
-    	/*
-    	 * Temporary hack?
-    	 * The initrd node is created by the 'init' process, but during early
-    	 * system startup the kernel requires to read from the ramdisk to load
-    	 * the init process (i.e. chicken and egg problem :) ).
-    	 */
+        /*
+         * Temporary hack?
+         * The initrd node is created by the 'init' process, but during early
+         * system startup the kernel requires to read from the ramdisk to load
+         * the init process (i.e. chicken and egg problem :) ).
+         */
         kprintf("DIRECT\n");
         if (rw == DEV_READ)
             n = ramdisk_read(buf, size, off);

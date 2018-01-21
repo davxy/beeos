@@ -21,6 +21,8 @@
 #ifndef BEEOS_FS_DEVFS_H_
 #define BEEOS_FS_DEVFS_H_
 
-void devfs_init(void);
+#include "fs/vfs.h"
+
+struct sb *devfs_init(void);
 
 #endif /* BEEOS_FS_DEVFS_H_ */
