@@ -14,9 +14,13 @@ smaller tasks.
 A **milestone** is a notable feature. Adds huge value to the whole project.
 
 
-Note: features and milestones that are prefixed with a '~' in place of a '-'
-where previously started, thus some code is available as a base start.
-Code is available in the corresponding branch.
+### Note
+
+Features/tasks prefixed with a '~' in place of a '-' where previously
+started, thus some code is still available as a base start. Code is available
+in the corresponding branch.
+
+For features/tasks prefixed with a 'X' there is an active work in progress.
 
 If you wish to contribute, even for a small typo fix or documentation, feel
 free to contact the author for further informations.
@@ -37,44 +41,89 @@ All contributions to the project will be listed in the AUTHORS document.
 Kernel
 ------
 
-### Milestones
-
-  ~ ARM port, possibly Rasp-Pi first (feat/arm)
-  - Serial driver attached to a tty
-  ~ PCI driver (feat/socket)
-  ~ Networking (feat/socket)
-  - Ext2 write support
-  - mknod, devfs and mount it in the /dev/ directory.
-
 ### Minor
 
   - Better 'sys_dump' syscall to print system informations.
     Accepts a parameter with the things to dump.
-  - Remove the "dev_io" call in the sys_write syscall. Use fs_write (VFS).
-    Consequently the dev_ramdisk.c and dev_tty.c should be removed.
   - At startup open ttys based on the '/etc/tty' file.
-  - Spot and signal deadcode.
+  - Send kprintf to a special tty linked to the serial
+  - Kernel log file
+  - Spot and signal deadcode/bugs.
 
 ### Major tasks
 
+  - dentry objects to navigate the VFS (see vfs notes below)
+  ! MISRA-C 2012/2004 review to evaluate violations.
   - On page faults happened in user space expand the address space only if 
     allowed (stask/heap expansion). (function: page_fault_handler)
   - Better isolation of machine architecture specific code.
   - Process address space "Copy on Write"
   - TTY attributes (termios) and tty code improvement.
 
+### Milestones
+
+  ! mknod, devfs and mount it in the /dev/ directory.
+  - VFS refactory
+  ~ ARM port, possibly Rasp-Pi first (feat/arm)
+  - Serial driver attached to a tty
+  ~ PCI driver (feat/socket)
+  ~ Networking (feat/socket)
+  - Ext2 write support
 
 User applications
 -----------------
 
   - 'ps' user program to get running process informations.
-  - 'env' user program to get environment informations (easy).
   - Any standard *nix applications are welcome, put them in `/bin/
   - Non standard useful applications should be placed in `/usr/local/bin`.
   - Testing applications should be placed in `/test` directory.
+  - Pipe commands
+  - Output redirection
 
 
 Known Bugs
 ----------
 
   No known bugs
+
+
+Notes
+-----
+
+### VFS implementation...
+
+In the task struct, in place of the inode *root, *pwd, insert
+struct dentry *root, dentry *pwd;
+
+There are dentries even for EVERY file (not only directories)
+
+    struct dentry {
+        char            name[];
+        list_link       subdirs;
+        struct dentry   *parent;    /* Points to itself in case of root of a fs */
+        struct inode    *inode;   /* in a dir this is unused. */
+        int             mounted;  /* how many fs are mounted here */
+    }
+
+If dentry is a mount point then inode points to the root of mounted fs.
+In the inode inset a list_link dentry (can be part of severan dentries).
+https://www.win.tue.nl/~aeb/linux/lk/lk-8.html
+http://www.fieldses.org/~bfields/kernel/vfs.txt <---- leggi!!!
+
+    struct vfsmount {
+        struct inode    *mntpt; /* mount point */
+        struct inode    *root;  /* mounted fs root */
+        list_link       link;   /* link of mounted filesystems */
+    }
+
+Store dentry,vfsmount in a hash table for fast lookups:
+ dentry->inode = vfsmount->mntpoint ? Then proceed with vfsmount->root
+Possible something is mounted above the found root dentry.
+Thus repeat the process to see if there is a vfsmount with mntpt == the found root.
+(this process is performed by "namei"... implement follow_mount() )
+
+NOTE: the same fs can be mounted in multiple places.
+Thus the vfsmount should be a tree!!!  And the task should bookkeep in what node
+is of the vfs tree in order to step back.
+For now just allow a fs to be mounted in only one place at a time.
+
