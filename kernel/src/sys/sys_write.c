@@ -29,27 +29,24 @@
 
 ssize_t sys_write(int fdn, const void *buf, size_t count)
 {
-    ssize_t n = 0;
+    ssize_t n;
     struct file *file;
 
-    if (OPEN_MAX <= fdn || !current_task->fd[fdn].file)
+    if (OPEN_MAX <= fdn || current_task->fd[fdn].file == NULL)
         return -EBADF;
 
     file = current_task->fd[fdn].file;
 
     switch (file->inode->mode & S_IFMT) {
         case S_IFBLK:
-            n = dev_io(file->inode->dev, DEV_WRITE, file->offset,
-                    (void *)buf, count);
-            break;
-        case S_IFDIR:
-            n = -EBADF;
-            break;
         case S_IFCHR:
         case S_IFREG:
         case S_IFIFO:
         case S_IFSOCK:
             n = fs_write(file->inode, buf, count, file->offset);
+            break;
+        case S_IFDIR:
+            n = -EBADF;
             break;
         default:
             n = -1;

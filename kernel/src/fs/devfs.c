@@ -281,14 +281,9 @@ int sys_mount(const char *source, const char *target)
     return 0;
 }
 
-/*
- * Dinosaurus...
- *
- * PLEASE!!! KILL ME!!!
- */
-ssize_t dev_io(dev_t dev, int rw, off_t off, void *buf, size_t size)
+
+static struct inode *dev_to_inode(dev_t dev)
 {
-    ssize_t n = 0;
     struct devfs_inode *inode = devfs_nodes;
 
     while (inode != NULL)
@@ -297,28 +292,28 @@ ssize_t dev_io(dev_t dev, int rw, off_t off, void *buf, size_t size)
             break;
         inode = inode->next;
     }
+    return (struct inode *)inode;
+}
 
+ssize_t devfs_read(dev_t dev, void *buf, size_t size, off_t off)
+{
+    ssize_t n = -1;
+    struct inode *inode;
+
+    inode = dev_to_inode(dev);
     if (inode != NULL)
-    {
-        if (rw == DEV_READ)
-            n = devfs_inode_read(&inode->base, buf, size, off);
-        else
-            n = devfs_inode_write(&inode->base, buf, size, off);
-    }
-    else if (dev == DEV_INITRD)
-    {
-        /*
-         * Temporary hack?
-         * The initrd node is created by the 'init' process, but during early
-         * system startup the kernel requires to read from the ramdisk to load
-         * the init process (i.e. chicken and egg problem :) ).
-         */
-        kprintf("DIRECT\n");
-        if (rw == DEV_READ)
-            n = ramdisk_read(buf, size, off);
-         else
-            n = ramdisk_write(buf, size, off);
-    }
-
+        n = devfs_inode_read(inode, buf, size, off);
     return n;
 }
+
+ssize_t devfs_write(dev_t dev, const void *buf, size_t size, off_t off)
+{
+    ssize_t n = -1;
+    struct inode *inode;
+
+    inode = dev_to_inode(dev);
+    if (inode != NULL)
+        n = devfs_inode_write(inode, buf, size, off);
+    return n;
+}
+

@@ -210,7 +210,7 @@ void tty_update(char c)
     spinlock_unlock(&tty->rcond.lock);
 
     if ((tty->attr.c_lflag & ECHO) != 0 && echo_siz != 0)
-        dev_io(tty->dev, DEV_WRITE, 0, echo_buf, echo_siz);
+        tty_write(tty->dev, echo_buf, echo_siz);
 }
 
 
