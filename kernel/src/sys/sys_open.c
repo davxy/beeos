@@ -40,18 +40,22 @@ int sys_open(const char *pathname, int flags, mode_t mode)
     if (pathname == NULL)
         return -EINVAL;
 
+    if (strcmp(pathname, "/dev/tty") == 0)
+    {
+        dev_t dev = tty_get();
+        snprintf(buf, sizeof(buf), "/dev/tty%d", minor(dev));
+        pathname = buf;
+    }
+
+    inode = fs_namei(pathname);
+    if (inode == NULL)
+        return -ENOENT;
+
     for (fdn = 0; fdn < OPEN_MAX; fdn++)
         if (current_task->fd[fdn].file == NULL)
             break;
     if (fdn == OPEN_MAX)
         return -EMFILE; /* Too many open files. */
-
-    if (strcmp(pathname, "/dev/tty") == 0)
-    {
-    	dev_t dev = tty_get();
-    	snprintf(buf, sizeof(buf), "/dev/tty%d", minor(dev));
-    	pathname = buf;
-    }
 
     // TODO : temporary just to allow to proceed
 #if 0
