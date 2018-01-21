@@ -40,6 +40,7 @@ void sb_init(struct sb *sb, dev_t dev, struct inode *root,
 {
     sb->dev = dev;
     sb->root = root;
+    sb->mnt = sb;
     sb->ops = ops;
 }
 

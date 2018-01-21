@@ -42,6 +42,7 @@ struct sb
 {
     dev_t dev;              /** Device */
     struct inode *root;     /** Root inode */
+    struct sb    *mnt;      /** Mount point superblock */
     const struct sb_ops *ops;     /** Superblock operations */
 };
 
