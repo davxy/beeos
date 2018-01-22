@@ -26,14 +26,18 @@
 #include "proc.h"
 #include "driver/tty.h"
 #include "fs/vfs.h"
+#include "fs/devfs.h"
 #include "proc/task.h"
 #include "dev.h"
 #include <string.h>
 #include <stdio.h>
 #include <unistd.h>
 
+
+
 #define ROOT_FS_TYPE    "ext2"
 #define ROOT_DEV        DEV_INITRD
+
 
 void kmain(void)
 {
@@ -56,19 +60,34 @@ void kmain(void)
     tty_init();
     syscall_init();
 
+    kprintf("BeeOS v%d.%d.%d - %s\n\n",
+            BEEOS_MAJOR, BEEOS_MINOR, BEEOS_PATCH, BEEOS_CODENAME);
+
+    /*
+     * DEVFS is temporary mounted as system root.
+     * To create the initrd node (used to read the real fs from the disk.
+     */
+
+    sb = devfs_init();
+    if (sb == NULL)
+        panic("Unable to create dev file system");
+    current_task->cwd = sb->root;
+    current_task->root = sb->root;
+    /* Initrd node */
+    sys_mknod("/initrd", S_IFBLK, DEV_INITRD);
+
     /*
      * Initialization finished
      */
 
-    kprintf("BeeOS v%d.%d.%d - %s\n\n", 
-            BEEOS_MAJOR, BEEOS_MINOR, BEEOS_PATCH, BEEOS_CODENAME);
-    kprintf("Mounting root fs\n");
     sb = vfs_sb_create(ROOT_DEV, ROOT_FS_TYPE);
     if (sb == NULL)
-        panic("Unable to mount root file system");
+        panic("Unable to create root file system");
     current_task->cwd = sb->root;
+    current_task->root = sb->root;
 
-    kprintf("\n");
+    void sys_mount(const char *source, const char *target);
+    sys_mount("dev", "/dev");
 
     /*
      * Fork and start the init process
@@ -82,4 +101,3 @@ void kmain(void)
 
     idle();
 }
-

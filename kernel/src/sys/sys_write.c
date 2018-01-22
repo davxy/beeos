@@ -19,6 +19,7 @@
 
 #include "sys.h"
 #include "dev.h"
+#include "fs/devfs.h"
 #include "fs/vfs.h"
 #include "proc.h"
 #include <stddef.h>
@@ -28,31 +29,24 @@
 
 ssize_t sys_write(int fdn, const void *buf, size_t count)
 {
-    ssize_t n = 0;
+    ssize_t n;
     struct file *file;
 
-    if (OPEN_MAX <= fdn || !current_task->fd[fdn].file)
+    if (OPEN_MAX <= fdn || current_task->fd[fdn].file == NULL)
         return -EBADF;
 
     file = current_task->fd[fdn].file;
 
-    /* temporary */
-    if (!file->inode)
-        return -1;
-
     switch (file->inode->mode & S_IFMT) {
         case S_IFBLK:
         case S_IFCHR:
-            n = dev_io(0, file->inode->dev, DEV_WRITE, file->offset, 
-                       (void *)buf, count, NULL);
-            break;
-        case S_IFDIR:
-            n = -EBADF;
-            break;
         case S_IFREG:
         case S_IFIFO:
         case S_IFSOCK:
             n = fs_write(file->inode, buf, count, file->offset);
+            break;
+        case S_IFDIR:
+            n = -EBADF;
             break;
         default:
             n = -1;

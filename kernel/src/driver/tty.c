@@ -22,6 +22,8 @@
 #include "proc.h"
 #include "screen.h"
 #include "timer.h"
+#include <errno.h>
+
 
 void uart_putchar(int c);
 void uart_init(void);
@@ -33,12 +35,67 @@ static struct tty_st tty_table[TTYS_TOTAL];
 static struct screen scr_table[TTYS_TOTAL];
 static unsigned int tty_curr;
 
-int tty_read(dev_t dev, int couldblock)
+
+pid_t tty_getpgrp(void)
+{
+    return tty_table[tty_curr].pgrp;
+}
+
+int tty_setpgrp(pid_t pgrp)
+{
+    tty_table[tty_curr].pgrp = pgrp;
+    return 0;
+}
+
+
+void tty_change(int i)
+{
+    if (i >= 0 && i < TTYS_CONSOLE) {
+        tty_curr = i;
+        scr_table[i].dirty = 1;
+    }
+}
+
+dev_t tty_get(void)
+{
+    int i;
+    pid_t curr_pgid = current_task->pgid;
+    dev_t dev = (dev_t)-1;
+
+    for (i = 0; i < TTYS_TOTAL; i++) {
+        if (tty_table[i].pgrp == 0 || tty_table[i].pgrp == curr_pgid) {
+            tty_table[i].pgrp = curr_pgid;
+            dev = tty_table[i].dev;
+            tty_table[i].refs++;
+            break;
+        }
+    }
+    return dev;
+}
+
+void tty_put(dev_t dev)
+{
+    int i = minor(dev) - 1;
+    
+    if (i == 0)
+        return;
+    if (major(dev) != major(DEV_CONSOLE) || i >= TTYS_TOTAL)
+        return;
+    if (tty_table[i].refs > 0) {
+        tty_table[i].refs--;
+        if (tty_table[i].refs == 0)
+            tty_table[i].pgrp = 0;
+    }
+}
+
+
+
+static int tty_read_wait(dev_t dev, int couldblock)
 {
     struct tty_st *tty;
     int c = -1;
     int i = minor(dev) - 1;
-
+    
     if (major(dev) != major(DEV_CONSOLE) || i >= TTYS_TOTAL)
         return -1;
 
@@ -60,7 +117,38 @@ int tty_read(dev_t dev, int couldblock)
     return c;
 }
 
-void tty_putchar(dev_t dev, int c)
+
+ssize_t tty_read(dev_t dev, void *buf, size_t size)
+{
+    ssize_t n = 0;
+    int key;
+    uint8_t *buf8 = (uint8_t *)buf;
+
+    while (n < size)
+    {
+        key = tty_read_wait(dev, (n == 0));
+        if (key == 0 && n == 0)
+        {
+            /* A single line contains zero: this is made by a VEOF
+             * character (^D), that is, the input is closed. */
+            break;
+        }
+        else if (key == -1 && n == 0)
+            /* At the moment, there is just nothing to read. */
+            return -EAGAIN;
+        else if (key == -1 && n > 0)
+            /* Finished to read */
+            break;
+        else
+            buf8[n] = key;
+        n++;
+    }
+    return n;
+}
+
+
+
+static void tty_putchar(dev_t dev, int c)
 {
     int i;
     struct screen *scr;
@@ -71,30 +159,17 @@ void tty_putchar(dev_t dev, int c)
     scr = &scr_table[i];
 
     screen_putchar(scr, c);
-    //if (i == tty_curr)
-    //    screen_update(scr);
 
     /* Useful for debug */
     uart_putchar(c);
 }
 
-ssize_t tty_write(dev_t dev, void *buf, size_t n)
+ssize_t tty_write(dev_t dev, const void *buf, size_t n)
 {
     size_t i; 
     for (i = 0; i < n; i++)
         tty_putchar(dev, ((uint8_t *)buf)[i]);
     return (ssize_t)n;
-}
-
-pid_t tty_getpgrp(void)
-{
-    return tty_table[tty_curr].pgrp;
-}
-
-int tty_setpgrp(pid_t pgrp)
-{
-    tty_table[tty_curr].pgrp = pgrp;
-    return 0;
 }
 
 
@@ -143,39 +218,9 @@ void tty_update(char c)
     spinlock_unlock(&tty->rcond.lock);
 
     if ((tty->attr.c_lflag & ECHO) != 0 && echo_siz != 0)
-        dev_io(0, tty->dev, DEV_WRITE, 0, echo_buf, echo_siz, NULL);
+        tty_write(tty->dev, echo_buf, echo_siz);
 }
 
-void tty_change(int i)
-{
-    if (i >= 0 && i < TTYS_CONSOLE) {
-        tty_curr = i;
-        scr_table[i].dirty = 1;
-        //screen_update(&scr_table[i]);
-    }
-}
-
-dev_t tty_get(void)
-{
-    int i;
-
-    for (i = 0; i < TTYS_TOTAL; i++) {
-        if (tty_table[i].pgrp == 0) {
-            tty_table[i].pgrp = current_task->pgid;
-            return tty_table[i].dev;
-        }
-    }
-    return (dev_t)-1;
-}
-
-void tty_put(dev_t dev)
-{
-    int i = minor(dev) - 1;
-
-    if (major(dev) != major(DEV_CONSOLE) || i >= TTYS_TOTAL)
-        return;
-    tty_table[i].pgrp = 0;
-}
 
 static void tty_attr_init(struct termios *termptr)
 {
@@ -209,7 +254,7 @@ static void tty_struct_init(struct tty_st *tty, dev_t dev)
 struct timer_event refresh_tm;
 
 
-void refresh_func(void *_unused)
+static void refresh_func(void *_unused)
 {
     if (scr_table[tty_curr].dirty != 0)
         screen_update(&scr_table[tty_curr]);
@@ -232,4 +277,9 @@ void tty_init(void)
     timer_event_init(&refresh_tm, refresh_func, NULL, timer_ticks + msecs_to_ticks(100));
     timer_event_add(&refresh_tm);
 }
+
+
+
+
+
 

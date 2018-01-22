@@ -172,11 +172,14 @@ static int interactive(void)
     if (signal(SIGCHLD, sigchld) < 0)
         perror("signal: SIGCHLD");
 
-    fd = open("console", O_RDWR, 0); /* stdin (fd=1) */
-    if (fd < 0)
-        return -1;
-    dup(0); /* stdout (fd=2) */
-    dup(0); /* stderr (fd=3) */
+    if (tcgetpgrp(0) != getpid()) /* Hack to check if already open by father...*/
+    {
+        fd = open("/dev/tty", O_RDWR, 0); /* stdin (fd=0) */
+        if (fd < 0)
+            return -1;
+        dup(0); /* stdout (fd=1) */
+        dup(0); /* stderr (fd=2) */
+    }
 
     /* USER@HOST */
     set_prompt_values();

@@ -22,10 +22,12 @@
 
 #include <sys/types.h>
 
-#define BLOCK_SIZE  512
 
 void ramdisk_init(void *addr, size_t size);
-ssize_t ramdisk_read_block(void *buf, size_t blocknum);
-ssize_t ramdisk_write_block(void *buf, size_t blocknum);
+
+ssize_t ramdisk_read(void *buf, size_t size, off_t off);
+
+ssize_t ramdisk_write(const void *buf, size_t size, off_t off);
+
 
 #endif /* _BEEOS_RAMDISK_H_ */

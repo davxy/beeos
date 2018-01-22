@@ -4,7 +4,7 @@ QEMU_X86=qemu-system-i386
 
 # Default command
 ARCH="x86"
-MEM=8
+MEM=12
 KERN="../kernel/build/$ARCH/kernel"
 
 while getopts "da:m:k:" opt; do

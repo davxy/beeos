@@ -44,5 +44,8 @@ typedef long int        off_t;
 typedef long int        blksize_t;
 typedef long int        blkcnt_t;
 
+#define makedev(maj, min)  ((((maj) & 0xFF) << 8) | ((min) & 0xFF))
+#define major(dev) (((dev) >> 8) & 0xFF)
+#define minor(dev) ((dev) & 0xFF)
 
 #endif /* _SYS_TYPES_H_ */

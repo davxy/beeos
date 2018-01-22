@@ -20,11 +20,32 @@
 #include "sys.h"
 #include "fs/vfs.h"
 #include "kprintf.h"
+#include <limits.h>
 #include <errno.h>
+#include <string.h>
+
+
+static void get_parent_dir(char *parent, const char *filepath)
+{
+    int i;
+
+    i = strlen(filepath);
+    while (i > 0) {
+        i--;
+        if (filepath[i] == '/')
+            break;
+    }
+    if (i > 0)
+        strncpy(parent, filepath, i);
+    else
+        parent[i++] = '/';
+    parent[i] = '\0';
+}
 
 int sys_mknod(const char *pathname, mode_t mode, dev_t dev)
 {
-    struct inode *inode;
+    struct inode *inode, *idir;
+    char parent[PATH_MAX];
 
     inode = fs_namei(pathname);
     if (inode != NULL)
@@ -33,13 +54,16 @@ int sys_mknod(const char *pathname, mode_t mode, dev_t dev)
         return -EEXIST; /* file exists */
     }
 
-    /* This is must be a superblock virtual fs function.
-     * For now... we assume that mknod is within only for devices */
-    static ino_t next_ino = 0;
-    inode = inode_create(dev, next_ino++);
+    get_parent_dir(parent, pathname);
+    idir = fs_namei(parent);
+    if (idir == NULL)
+        return -1;
 
-    /* At this point this new inode must be linked to the directory */
-    /* DEVFS is required */
+    inode = idir->sb->ops->inode_alloc();
+    inode->mode = mode;
+    inode->dev = dev;
+
+    iput(idir);
 
     return 0;
 }

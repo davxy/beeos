@@ -46,6 +46,7 @@ int task_init(struct task *task)
  
     /* file system */
     task->cwd = idup(current_task->cwd);
+    task->root = idup(current_task->root);
 
     /* duplicate valid file descriptors */
     memset(task->fd, 0, sizeof(task->fd));
@@ -98,6 +99,7 @@ int task_init(struct task *task)
 
 void task_deinit(struct task *task)
 {
+	//iput(task->root);
     task_arch_deinit(&task->arch);
 }
 
