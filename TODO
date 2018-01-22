@@ -14,19 +14,14 @@ smaller tasks.
 A **milestone** is a notable feature. Adds huge value to the whole project.
 
 
-### Note
-
-Features/tasks prefixed with a '~' in place of a '-' where previously
-started, thus some code is still available as a base start. Code is available
-in the corresponding branch.
-
-For features/tasks prefixed with a 'X' there is an active work in progress.
+Note: features and milestones that are prefixed with a '~' in place of a '-'
+where previously started, thus some code is available as a base start.
+Code is available in the corresponding branch.
 
 If you wish to contribute, even for a small typo fix or documentation, feel
 free to contact the author for further informations.
 
 All contributions to the project will be listed in the AUTHORS document.
-
 
 ### Generic coding rules
 
@@ -126,4 +121,3 @@ NOTE: the same fs can be mounted in multiple places.
 Thus the vfsmount should be a tree!!!  And the task should bookkeep in what node
 is of the vfs tree in order to step back.
 For now just allow a fs to be mounted in only one place at a time.
-
