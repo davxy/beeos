@@ -17,30 +17,17 @@
  * License along with BeeOS; if not, see <http://www.gnu/licenses/>.
  */
 
-#include "kprintf.h"
-#include "dev.h"
-#include "driver/tty.h"
-#include <stdio.h>
-#include <stddef.h>
 
-#define KPRINTF_BUFSIZ  64
+#ifndef BEEOS_FS_DEVFS_H_
+#define BEEOS_FS_DEVFS_H_
 
-int kvprintf(const char *fmt, va_list arg)
-{
-    char str[KPRINTF_BUFSIZ];
-    int n;
+#include "fs/vfs.h"
 
-    n = vsnprintf(str, KPRINTF_BUFSIZ, fmt, arg);
-    if (n < 0)
-        return -1;
-    /* Write to the first console. */
-    return tty_write(DEV_CONSOLE1, str, n);
-}
+struct sb *devfs_init(void);
 
-int kprintf(const char *fmt, ...)
-{
-    va_list ap;
 
-    va_start(ap, fmt);
-    return kvprintf(fmt, ap);
-}
+ssize_t devfs_read(dev_t dev, void *buf, size_t size, off_t off);
+
+ssize_t devfs_write(dev_t dev, const void *buf, size_t size, off_t off);
+
+#endif /* BEEOS_FS_DEVFS_H_ */

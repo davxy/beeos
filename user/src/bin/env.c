@@ -17,30 +17,19 @@
  * License along with BeeOS; if not, see <http://www.gnu/licenses/>.
  */
 
-#include "kprintf.h"
-#include "dev.h"
-#include "driver/tty.h"
+#include <unistd.h>
 #include <stdio.h>
 #include <stddef.h>
+#include <string.h>
+#include <stdlib.h>
 
-#define KPRINTF_BUFSIZ  64
-
-int kvprintf(const char *fmt, va_list arg)
+int main(int argc, char *argv[])
 {
-    char str[KPRINTF_BUFSIZ];
-    int n;
+    int i;
 
-    n = vsnprintf(str, KPRINTF_BUFSIZ, fmt, arg);
-    if (n < 0)
-        return -1;
-    /* Write to the first console. */
-    return tty_write(DEV_CONSOLE1, str, n);
-}
+    i = 0;
+    while (environ[i] != NULL)
+        printf("%s\n", environ[i++]);
 
-int kprintf(const char *fmt, ...)
-{
-    va_list ap;
-
-    va_start(ap, fmt);
-    return kvprintf(fmt, ap);
+    return 0;
 }

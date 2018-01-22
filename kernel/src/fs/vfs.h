@@ -42,6 +42,7 @@ struct sb
 {
     dev_t dev;              /** Device */
     struct inode *root;     /** Root inode */
+    struct sb    *mnt;      /** Mount point superblock */
     const struct sb_ops *ops;     /** Superblock operations */
 };
 
@@ -62,11 +63,14 @@ struct inode;
 typedef int (*inode_read_t)(struct inode *inode, void *buf, 
             size_t count, off_t offset);
 
+typedef int (*inode_write_t)(struct inode *inode, const void *buf,
+             size_t count, off_t offset);
+
+
 struct inode_ops
 {
-    inode_read_t read;
-    int (*write)(struct inode *inode, const void *buf, 
-            size_t count, off_t offset);
+    inode_read_t  read;
+    inode_write_t write;
     struct inode *(*lookup)(struct inode *dir, const char *name);
     int (*readdir)(struct inode *inode, unsigned int i,
             struct dirent *dent);

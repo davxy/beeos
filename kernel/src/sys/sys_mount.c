@@ -17,24 +17,31 @@
  * License along with BeeOS; if not, see <http://www.gnu/licenses/>.
  */
 
-#include "dev.h"
+#include "sys.h"
+#include "fs/vfs.h"
+#include "proc.h"
 #include <errno.h>
+#include <sys/stat.h>
 
-ssize_t dev_io(pid_t pid, dev_t dev, int rw, off_t off, 
-        void *buf, size_t size, int *eof)
+struct sb *devfs_sb_get(void);
+
+int sys_mount(const char *source, const char *target,
+              const char *filesystemtype, unsigned long mountflags,
+              const void *data)
 {
-    int dev_major = major(dev);
-    if (rw != DEV_READ && rw != DEV_WRITE)
-        return -EIO;
+    int res = 0;
+    struct inode *idst, *isrc;
 
-    switch (dev_major)
-    {
-        case major(DEV_TTY):
-        case major(DEV_CONSOLE):
-            return dev_io_tty(pid, dev, rw, off, buf, size, eof);
-        case major(DEV_INITRD):
-            return dev_io_ramdisk(pid, dev, rw, off, buf, size, eof);
-        default:
-            return -ENODEV;
-    }
+    idst = fs_namei(target);
+
+    if (strcmp(source, "dev") != 0)
+        isrc = fs_namei(source);
+    else
+        isrc = devfs_sb_get()->root;
+
+    isrc->sb->mnt = idst->sb;
+    idst->sb = isrc->sb;
+    idst->ops = isrc->ops;
+
+    return res;
 }

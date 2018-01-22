@@ -40,6 +40,7 @@ void sb_init(struct sb *sb, dev_t dev, struct inode *root,
 {
     sb->dev = dev;
     sb->root = root;
+    sb->mnt = sb;
     sb->ops = ops;
 }
 
@@ -269,7 +270,7 @@ struct inode *fs_namei(const char *path)
         return NULL;
 
     if (*path == '/')
-        ip = idup(current_task->cwd->sb->root);
+        ip = idup(current_task->root);
     else
         ip = idup(current_task->cwd);
 
