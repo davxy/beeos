@@ -54,7 +54,7 @@ README
     - Multitasking
     - Syscalls
     - Virtual Memory
-    - Virtual File System (ext2 and devfs)
+    - Virtual File System: ext2, devfs
     - SLAB  allocator
     - Buddy allocator
     - Timer queues

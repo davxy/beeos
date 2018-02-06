@@ -9,6 +9,8 @@ This project adheres to "Semantic Versioning" (http://semver.org)
 
 Features
 
+- VFS: devfs, allow to open initrd from user space
+- mknod syscall
 - gethostname library function (reads from "/etc/hostname")
 - First sys_mount implementation. Not exposed to the userspace yet.
 
