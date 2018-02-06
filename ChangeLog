@@ -5,13 +5,19 @@ This project adheres to "Semantic Versioning" (http://semver.org)
 
 ################################################################################
 
-[ Version 0.1.1 - Unreleased ]
+[ Version 0.1.1 - 2018-01-23 ]
 
 Features
 
 - VFS: devfs, allow to open initrd from user space
 - mknod syscall
 - gethostname library function (reads from "/etc/hostname")
+- First sys_mount implementation. Not exposed to the userspace yet.
+
+Improvements
+
+- Infamous 'dev_io' function has been removed.
+- Drivers calls directly reads and writes, eventually passing the dev_t value.
 
 Bugfix
 
@@ -22,6 +28,8 @@ User
 
 - Better shell that prints user and host using environment variables
 - 'env' program to display the environment variables.
+- 'init' creates devices in 'dev' filesystem mounted in '/dev' directory using
+  the mknod syscall: zero,tty1,tty2,tty3,tty4,initrd.
 
 ################################################################################
 
