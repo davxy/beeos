@@ -31,6 +31,7 @@ struct tty_st
 {
     dev_t dev;              /* Associated device */
     pid_t pgrp;             /* Foreground process group */
+    int refs;                /* References to this tty */
     struct termios attr;    /* termios attributes */
     struct cond rcond;      /* Read conditional variable */
     unsigned int rpos;      /* Input line position read */
@@ -39,11 +40,10 @@ struct tty_st
 };
 
 void tty_init(void);
-int tty_read(dev_t dev, int couldblock);
 
-//void tty_putchar(int c);
+ssize_t tty_read(dev_t dev, void *buf, size_t size);
 
-ssize_t tty_write(dev_t dev, void *buf, size_t n);
+ssize_t tty_write(dev_t dev, const void *buf, size_t n);
 
 /* Write a character to tty */
 void tty_update(char c);

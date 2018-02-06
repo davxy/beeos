@@ -61,18 +61,6 @@
 /** @} */
 
 
-#define makedev(maj, min) (((maj) << 8) | (min))
-#define major(dev) (((dev) >> 8) & 0xFF)
-#define minor(dev) ((dev) & 0xFF)
-
-ssize_t dev_io(pid_t pid, dev_t dev, int rw, off_t off, 
-        void *buf, size_t size, int *eof);
-
-ssize_t dev_io_tty(pid_t pid, dev_t dev, int rw, off_t off, 
-        void *buf, size_t size, int *eof);
-
-ssize_t dev_io_ramdisk(pid_t pid, dev_t dev, int rw, off_t off, 
-        void *buf, size_t size, int *eof);
-
+ssize_t dev_io(dev_t dev, int rw, off_t off, void *buf, size_t size);
 
 #endif /* _BEEOS_DEV_H_ */

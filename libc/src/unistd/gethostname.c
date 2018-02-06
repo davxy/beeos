@@ -17,36 +17,18 @@
  * License along with BeeOS; if not, see <http://www.gnu/licenses/>.
  */
 
-#include <unistd.h>
 #include <stdio.h>
-#include <stddef.h>
-#include <string.h>
-#include <stdlib.h>
 
-int main(int argc, char *argv[])
+int gethostname(char *name, size_t len)
 {
-    int i;
-    char buf[256];
-    char *value;
+    int res = -1;
+    FILE *fp;
 
-    i = 0;
-    while (environ[i] != NULL)
-        printf("%s\n", environ[i++]);
-
-    while (1)
+    if ((fp = fopen("/etc/hostname", "r")) != NULL)
     {
-        printf("Write an environment variable ('q' to exit)\n> ");
-        if (fgets(buf, 256, stdin))
-        {
-            if (strcmp(buf, "q") == 0)
-                break;
-            value = getenv(buf);
-            if (value)
-                printf("%s value is %s\n", buf, value);
-            else
-                printf("Undefined\n");
-        }
+        if (fgets(name, len, fp) != NULL)
+            res = 0;
+        fclose(fp);
     }
-    
-    return 0;
+    return res;
 }

@@ -5,17 +5,44 @@ This project adheres to "Semantic Versioning" (http://semver.org)
 
 ################################################################################
 
+[ Version 0.1.1 - 2018-01-23 ]
+
+Features
+
+- gethostname library function (reads from "/etc/hostname")
+- First sys_mount implementation. Not exposed to the userspace yet.
+
+Improvements
+
+- Infamous 'dev_io' function has been removed.
+- Drivers calls directly reads and writes, eventually passing the dev_t value.
+
+Bugfix
+
+- Critical fix in the sys_execve. Init process was started with a null
+  'environ' causing issues in case it decides to use getenv/setenv/putenv calls.
+
+User
+
+- Better shell that prints user and host using environment variables
+- 'env' program to display the environment variables.
+- 'init' creates devices in 'dev' filesystem mounted in '/dev' directory using
+  the mknod syscall: zero,tty1,tty2,tty3,tty4,initrd.
+
+################################################################################
+
 [ Version 0.1.0 - 2018-01-12 ]
 
 Features
 
-- Multi-tty terminal (Alt-Fx to switch).
+- Multi-tty terminal (Alt-Fn to switch).
 - Screen timed refresh and only on dirty backbuffers.
 
 Bugfix
 
-- Remove task from conditional variables vait queue before sent signals.
-- Wake up readers (writers) waiting on a pipe without writers (readers).
+- Remove task from conditional variables wait queue before send signals.
+- Wake up readers (writers) waiting on a pipe without writers (readers) to
+  avoid starvation.
 
 
 ################################################################################

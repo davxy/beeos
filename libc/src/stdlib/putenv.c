@@ -65,7 +65,8 @@ static int environ_relocate(int envlen)
     char **envp;
     size_t newsiz;
     
-    newsiz = (2+envlen) * sizeof(char *);
+    /* +2, one for the NULL and one for the new env variable */
+    newsiz = (2 + envlen) * sizeof(char *);
     if (!inheap)
         envp = malloc(newsiz);
     else

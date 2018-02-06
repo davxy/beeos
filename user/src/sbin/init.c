@@ -25,9 +25,82 @@
 #include <signal.h>
 #include <sys/wait.h>
 #include <sys/stat.h>
+#include <fcntl.h>
 
 #define NTTY    4
 
+#define DEFAULT_HOSTNAME    "localhost"
+#define SHELL               "/bin/sh"
+#define PATH                "/bin:/sbin"
+
+
+
+
+
+void dev_init(void)
+{
+    if (mknod("/dev/zero", S_IFCHR, makedev(0x01, 0x05)) < 0)
+        perror("mknod /dev/zero");
+    if (mknod("/dev/tty1", S_IFCHR, makedev(0x05, 0x01)) < 0)
+        perror("mknod /dev/tty1");
+    if (mknod("/dev/tty2", S_IFCHR, makedev(0x05, 0x02)) < 0)
+        perror("mknod /dev/tty2");
+    if (mknod("/dev/tty3", S_IFCHR, makedev(0x05, 0x03)) < 0)
+        perror("mknod /dev/tty3");
+    if (mknod("/dev/tty4", S_IFCHR, makedev(0x05, 0x04)) < 0)
+        perror("mknod /dev/tty4");
+    if (mknod("/dev/initrd", S_IFBLK, makedev(0x01, 0xFA)) < 0)
+        perror("mknod /dev/initrd");
+}
+
+
+/* Before fork */
+void env_init(void)
+{
+    char host[64];
+
+    if (gethostname(host, sizeof(host)) < 0) {
+        perror("gethostname");
+        strcpy(host, DEFAULT_HOSTNAME);
+    }
+
+    if (setenv("HOSTNAME", host, 1) < 0)
+        perror("setenv: HOSTNAME");
+}
+
+/* After fork */
+void env_update(int i)
+{
+    char tty[32];
+
+    snprintf(tty, sizeof(tty), "/dev/tty%d", i);
+
+    if (setenv("SHELL", SHELL, 1) < 0)
+        perror("setenv: SHELL");
+    if (setenv("PATH", PATH, 1) < 0)
+        perror("setenv: PATH");
+    if (setenv("TTY", tty, 1) < 0)
+        perror("setenv: TTY");
+}
+
+pid_t spawn_shell(int i)
+{
+    pid_t pid;
+
+    pid = fork();
+    if (pid == 0) {
+        env_update(i);
+
+        if (execl(SHELL, SHELL, NULL) < 0)
+            return -1;
+    }
+    return pid;
+}
+
+
+/*
+ * Collect death children status.
+ */
 void sigchld(int signo)
 {
     int status;
@@ -53,25 +126,6 @@ void sigchld(int signo)
 }
 
 
-pid_t spawn_shell(void)
-{
-    static char n = '1';
-    char tty[10];
-    char *sh_argv[] = { "/bin/sh", NULL };
-    char *sh_envp[] = { "SHELL=/bin/sh", "PATH=.:/bin:/sbin", tty, NULL };
-    pid_t pid;
-
-    strcpy(tty, "TTY=ttyX");
-    tty[7] = n++;
-    printf("Spawn shell: %s\n", tty);
-
-    pid = fork();
-    if (pid == 0) {
-        if (execve(sh_argv[0], sh_argv, sh_envp) < 0)
-            return -1;
-    }
-    return pid;
-}
 
 int main(int argc, char *argv[])
 {
@@ -80,17 +134,14 @@ int main(int argc, char *argv[])
     pid_t sh_pid[NTTY];
     int i;
 
-    /* Create virtual console devices */
-    for (i = 1; i <= NTTY; i++) {
-        if (mknod("console", S_IFCHR | 0644, 0x0500 + i) < 0)
-            return 1;
-    }
-    
     if (signal(SIGCHLD, sigchld) < 0)
         perror("signal");
 
+    env_init();
+    dev_init();
+
     for (i = 0; i < NTTY; i++) {
-        if ((sh_pid[i] = spawn_shell()) < 0)
+        if ((sh_pid[i] = spawn_shell(i + 1)) < 0)
             return -1;
     }
 
@@ -98,7 +149,7 @@ int main(int argc, char *argv[])
         pid = wait(&status);
         for (i = 0; i < NTTY; i++) {
             if (pid == sh_pid[i]) {
-                spawn_shell();
+                spawn_shell(i + 1);
                 break;
             }
         }

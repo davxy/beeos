@@ -8,13 +8,15 @@ README
   A simple and minimal "Unix-like" kernel trying to be POSIX compliant.
   (at least with regard to the implemented services).
 
-  The kernel is **NOT STABLE** and is a discontinuous work mainly used as
-  a didactical tool for operating systems and low level programming.
+  The kernel is **NOT STABLE** for production and is a discontinuous work
+  mainly used as a didactical tool for operating systems and low level
+  programming.
 
   Because of it's simplicity it can be used as a trampoline to start 
   digging with common operating system problems.
+
   Once you've mastered the BeeOS sources it will be a lot easier to start 
-  hacking with more complex projects like Linux.
+  hacking with more complex OS projects.
 
 
 ### Prerequisites
@@ -52,7 +54,7 @@ README
     - Multitasking
     - Syscalls
     - Virtual Memory
-    - Virtual File System (ext2 and custom initrd)
+    - Virtual File System (ext2 and devfs)
     - SLAB  allocator
     - Buddy allocator
     - Timer queues
@@ -84,6 +86,8 @@ CONTRIBUTIONS
 -------------
 
   All contributions to the project will be listed in the AUTHORS document.
+  
+  See the TODO document for tasks and missing features.
 
 
 CONTACT

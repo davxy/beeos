@@ -17,6 +17,14 @@ losetup /dev/loop0 disk.img
 mkdir -p tmp
 mount /dev/loop0 tmp
 
+# Copy the sysroot in the destination
+cp -r sysroot/* tmp/
+mkdir -p tmp/dev
+mkdir -p tmp/etc
+mkdir -p tmp/home
+cp ../README.md tmp/home/README
+cp ../TODO tmp/home/TODO
+
 # Create destination directories
 DIRS=`find $ROOT_SRC/* -type d | sed "s|$ROOT_SRC|tmp|g"`
 mkdir -p $DIRS

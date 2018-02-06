@@ -3,4 +3,5 @@ local_sources := ls.c \
 				 cat.c \
 				 echo.c \
 				 pwd.c \
-				 kill.c
+				 kill.c \
+				 env.c
