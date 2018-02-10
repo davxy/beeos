@@ -47,7 +47,7 @@ int sys_open(const char *pathname, int flags, mode_t mode)
         pathname = buf;
     }
 
-    inode = fs_namei(pathname);
+    inode = namei(pathname);
     if (inode == NULL)
         return -ENOENT;
 
@@ -70,7 +70,7 @@ int sys_open(const char *pathname, int flags, mode_t mode)
     else
     {
 #endif
-        inode = fs_namei(pathname);
+        inode = namei(pathname);
         if (inode == NULL)
             return -ENOENT;
  //   }

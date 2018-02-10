@@ -165,10 +165,8 @@ struct inode *devfs_lookup(struct inode *dir, const char *name)
     kprintf(">>> devfs-lookup: %s\n", name);
 #endif
 
-    if (strcmp(name, ".") == 0)
+    if (strcmp(name, ".") == 0 || strcmp(name, "..") == 0)
         return dir;
-    if (strcmp(name, "..") == 0)
-        return dir->sb->mnt->root;
 
     dev = name_to_dev(name);
     while (curr_link != &devfs_nodes)
@@ -201,10 +199,10 @@ static int devfs_readdir(struct inode *inode, unsigned int i,
     else if (i == 1)
         name = "..";
     else {
-    	if (i == 2)
-    		curr_link = devfs_nodes.next;
-    	if (curr_link != &devfs_nodes) {
-    		curr = list_container(curr_link, struct devfs_inode, link);
+        if (i == 2)
+            curr_link = devfs_nodes.next;
+        if (curr_link != &devfs_nodes) {
+            curr = list_container(curr_link, struct devfs_inode, link);
             name = dev_to_name(curr->base.dev);
             curr_link = curr_link->next;
             dent->d_ino = curr->base.ino;
@@ -227,7 +225,7 @@ static const struct inode_ops devfs_inode_ops =
 };
 
 
-static struct inode *devfs_sb_inode_alloc(void)
+static struct devfs_inode *devfs_sb_inode_alloc(void)
 {
     struct devfs_inode *inode;
     static int ino = 0;
@@ -239,13 +237,23 @@ static struct inode *devfs_sb_inode_alloc(void)
     inode->base.ops = &devfs_inode_ops;
     inode->base.sb = &devfs_sb;
     list_insert_before(&devfs_nodes, &inode->link);
-    return &inode->base;
+    return inode;
 }
+
+
+static void devfs_sb_inode_free(struct devfs_inode *inode)
+{
+    list_delete(&inode->link);
+    kfree(inode, sizeof(struct devfs_inode));
+}
+
 
 const struct sb_ops devfs_sb_ops =
 {
-    .inode_alloc = devfs_sb_inode_alloc,
+    .inode_alloc = (sb_inode_alloc_t) devfs_sb_inode_alloc,
+    .inode_free  = (sb_inode_free_t)  devfs_sb_inode_free,
 };
+
 
 struct sb *devfs_sb_get(void)
 {
@@ -254,16 +262,16 @@ struct sb *devfs_sb_get(void)
 
 struct sb *devfs_init(void)
 {
-    struct inode *root;
+    struct devfs_inode *root;
+    struct dentry *de;
 
     list_init(&devfs_nodes);
 
     root = devfs_sb_inode_alloc();
-    root->sb = &devfs_sb;
-    root->ops = &devfs_inode_ops;
+    root->base.mode = S_IFDIR;
 
-    sb_init(&devfs_sb, 0, root, NULL);
-    devfs_sb.ops = &devfs_sb_ops;
+    de = dentry_create("/", &root->base, NULL);
+    sb_init(&devfs_sb, 0, de, &devfs_sb_ops);
 
     return &devfs_sb;
 }

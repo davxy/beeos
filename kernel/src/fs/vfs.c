@@ -35,7 +35,7 @@ struct fs_type fs_list[] =
 
 #define FS_LIST_LEN (sizeof(fs_list)/sizeof(fs_list[0]))
 
-void sb_init(struct sb *sb, dev_t dev, struct inode *root,
+void sb_init(struct sb *sb, dev_t dev, struct dentry *root,
         const struct sb_ops *ops)
 {
     sb->dev = dev;
@@ -64,23 +64,12 @@ struct sb *vfs_sb_create(dev_t dev, const char *type)
 static struct slab_cache inode_cache;
 static struct slab_cache file_cache;
 
+
 #define INODE_HTABLE_BITS     3   /* 8 elements hash table (TODO change) */
 static struct htable_link *inode_htable[1 << INODE_HTABLE_BITS];
 
-#define KEY(dev,ino)    (((dev)<<16) + (ino))
+#define KEY(dev, ino)    (((dev) << 16) + (ino))
 
-int fs_init(void)
-{
-    slab_cache_init(&inode_cache, "inode-cache", sizeof(struct inode),
-            0, 0, NULL, NULL);
-
-    slab_cache_init(&file_cache, "file-cache", sizeof(struct file),
-            0, 0, NULL, NULL);
-
-    htable_init(inode_htable, INODE_HTABLE_BITS);
-    
-    return 0;
-}
 
 struct file *fs_file_alloc(void)
 {
@@ -100,56 +89,11 @@ struct inode *fs_inode_alloc(void)
 }
 
 
-/**
- * The VFS maintains an inode cache to speed up accesses to all of the 
- * mounted file systems. Every time a VFS inode is read from the inode cache 
- * the system saves an access to a physical device.
- * The VFS inode cache is implmented as a hash table whose entries are pointers
- * to lists of VFS inode which have the same hash value. The hash value of an
- * inode is calculated from its inode number and from the device identifier for
- * the underlying physical device containing the file system. Whenever the VFS
- * needs to access an inode, it first looks in the VFS inode cache. 
- * To find an inode in the cache, the system first calculates its hash value 
- * and then uses it as an index into the inode hash table. This gives it a 
- * pointer to a list of inodes with the same hash value. It then reads each 
- * inode in turn until it finds one with both the same inode number and the 
- * same device identifier as the one that it is searching for.
- *
- * If it can find the inode in the cache, its count is incremented to show that
- * it has another user and the file system access continues. Otherwise a free 
- * VFS inode must be found so that the file system can read the inode from 
- * memory. VFS has a number of choices about how to get a free inode. If the 
- * system may allocate more VFS inodes then this is what it does; it allocates 
- * kernel pages and breaks them up into new, free, inodes and puts them into 
- * the inode list. All of the system's VFS inodes are in a list pointed at by 
- * first_inode  as well as in the inode hash table. If the system already has 
- * all of the inodes that it is allowed to have, it must find an inode that is
- * a good candidate to be reused. Good candidates are inodes with a usage count
- * of zero; this indicates that the system is not currently using them. Really 
- * important VFS inodes, for example the root inodes of file systems always
- * have a usage count greater than zero and so are never candidates for reuse. 
- * Once a candidate for reuse has been located it is cleaned up. 
- * The VFS inode might be dirty and in this case it needs to be written back 
- * to the file system or it might be locked and in this case the system must 
- * wait for it to be unlocked before continuing. The candidate VFS inode must 
- * be cleaned up before it can be reused.
- * However the new VFS inode is found, a file system specific routine must be 
- * called to to fill it out from information read from the underlying real file
- * system. Whilst it is being filled out, the new VFS inode has a usage count 
- * of one and is locked so that nothing else accesses it until it contains 
- * valid information.
- * To get the VFS inode that is actually needed, the file system may need to 
- * access several other inodes. This happens when you read a directory; only 
- * the inode for the final directory is needed but the inodes for the 
- * intermediate directories must also be read. As the VFS inode cache is used 
- * and filled up, the less used inodes will be discarded and the more used
- * inodes will remain in the cache.
- */
-
 struct inode *inode_lookup(dev_t dev, ino_t ino)
 {
     struct inode *ip;
     struct htable_link *lnk;
+
     lnk = htable_lookup(inode_htable, KEY(dev,ino), INODE_HTABLE_BITS);
     while (lnk != NULL)
     {
@@ -164,6 +108,7 @@ struct inode *inode_lookup(dev_t dev, ino_t ino)
     return NULL;
 }
 
+
 void inode_init(struct inode *inode, dev_t dev, ino_t ino)
 {
     inode->dev = dev;
@@ -174,6 +119,9 @@ void inode_init(struct inode *inode, dev_t dev, ino_t ino)
     htable_insert(inode_htable, &inode->hlink, KEY(dev,ino), INODE_HTABLE_BITS);
 }
 
+
+
+#if 0
 struct inode *inode_create(dev_t dev, ino_t ino)
 {
     struct inode *inode;
@@ -213,12 +161,26 @@ void iput(struct inode *ip)
     }
 }
 
+
 struct inode *idup(struct inode *ip)
 {
     ip->ref++;
     return ip;
 }
 
+#else
+
+void iput(struct inode *ip)
+{
+
+}
+
+struct inode *idup(struct inode *ip)
+{
+    return ip;
+}
+
+#endif
 
 
 // Copy the next path element from path into name.
@@ -260,34 +222,169 @@ static const char *skipelem(const char *path, char *name)
     return path;
 }
 
+struct dentry *dentry_create(const char *name, struct inode *inode,
+                             struct dentry *parent)
+{
+    struct dentry *de;
 
-struct inode *fs_namei(const char *path)
+    de = kmalloc(sizeof(*de), 0);
+    if (!de)
+        return NULL;
+    strcpy(de->name, name);
+    de->inode = inode;
+    de->parent = (parent != NULL) ? parent : de;
+    list_init(&de->child);  /* Empty children list */
+    list_insert_after(&parent->child, &de->link); /* Insert in the parent child  list */
+    de->mounted = 0;
+    return de;
+}
+
+
+static struct list_link mounts;
+
+int do_mount(struct dentry *mntpt, struct dentry *root)
+{
+    struct vfsmount *mnt;
+
+    mnt = kmalloc(sizeof(*mnt), 0);
+    if (mnt == NULL)
+        return -1;
+    mnt->mntpt = mntpt;
+    mnt->root  = root;
+    list_insert_after(&mounts, &mnt->link);
+    mntpt->mounted = 1;
+    return 0;
+}
+
+
+struct dentry *follow_up(struct dentry *root)
+{
+    struct dentry *res = root;
+    struct vfsmount *mnt;
+    struct list_link *curr;
+
+    /* TODO: this is not efficient... use a hash map here */
+    curr = mounts.next;
+    while (curr != &mounts) {
+        mnt = list_container(curr, struct vfsmount, link);
+        if (mnt->root == res)
+        {
+            res = mnt->mntpt;
+            /* Reiterate to see if this is a also mount point */
+            curr = mounts.next;
+        } else {
+            curr = curr->next;
+        }
+    }
+    return res;
+}
+
+struct dentry *follow_down(struct dentry *mntpt)
+{
+    struct dentry *res = mntpt;
+    struct vfsmount *mnt;
+    struct list_link *curr;
+
+    /* TODO: this is not efficient... use a hash map here */
+    curr = mounts.next;
+    while (curr != &mounts) {
+        mnt = list_container(curr, struct vfsmount, link);
+        if (mnt->mntpt == res)
+        {
+            res = mnt->root;
+            /* Reiterate to see if this is a also mount point */
+            curr = mounts.next;
+        } else {
+            curr = curr->next;
+        }
+    }
+    return res;
+}
+
+
+struct dentry *dentry_lookup(struct dentry *dir, const char *name)
+{
+    struct list_link *curr;
+    struct dentry *curr_de, *res = NULL;
+
+    curr = dir->child.next;
+    while (curr != &dir->child) {
+        curr_de = list_container(curr, struct dentry, link);
+        if (strcmp(curr_de->name, name) == 0) {
+            res = curr_de;
+            break;
+        }
+        curr = curr->next;
+    }
+    return res;
+}
+
+
+struct dentry *named(const char *path)
 {
     char name[DIRSIZ];
-    struct inode *ip, *previp;
+    struct dentry *de, *tmp;
+    struct inode *inode;
 
     if (!path || *path == '\0')
         return NULL;
 
-    if (*path == '/')
-        ip = idup(current_task->root);
-    else
-        ip = idup(current_task->cwd);
+    de = (*path == '/') ? current_task->root : current_task->cwd;
 
     while ((path = skipelem(path, name)) != NULL)
     {
-        if (!S_ISDIR(ip->mode))
-        {
-            iput(ip);
+        if (!S_ISDIR(de->inode->mode))
             return NULL;
-        }
-        previp = ip;
-        ip = fs_lookup(ip, name);
-        iput(previp);
-        if (ip == NULL)
-            return NULL;
-        idup(ip);
-    }
 
-    return ip;
+        if (strcmp(name, ".") == 0) {
+            continue;
+        } else if (strcmp(name, "..") == 0) {
+            if (strcmp(de->name, "/") == 0)
+                de = follow_up(de);
+            de = de->parent;
+        } else {
+            if (de->mounted)
+                de = follow_down(de);
+            tmp = dentry_lookup(de, name);
+            if (tmp != NULL)
+                de = tmp;
+            else {
+                inode = fs_lookup(de->inode, name);
+                if (inode == NULL)
+                    return NULL;
+                de = dentry_create(name, inode, de);
+            }
+        }
+    }
+    if (S_ISDIR(de->inode->mode) && de->mounted)
+        de = follow_down(de);
+    return de;
+}
+
+struct inode *namei(const char *path)
+{
+    struct dentry *de;
+    struct inode  *ino = NULL;
+
+    de = named(path);
+    if (de != NULL)
+        ino = idup(de->inode);
+    return ino;
+}
+
+
+
+int fs_init(void)
+{
+    slab_cache_init(&inode_cache, "inode-cache", sizeof(struct inode),
+            0, 0, NULL, NULL);
+
+    slab_cache_init(&file_cache, "file-cache", sizeof(struct file),
+            0, 0, NULL, NULL);
+
+    htable_init(inode_htable, INODE_HTABLE_BITS);
+
+    list_init(&mounts);
+
+    return 0;
 }

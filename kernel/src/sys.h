@@ -85,6 +85,10 @@ int sys_chdir(const char *path);
 
 unsigned int sys_alarm(unsigned int seconds);
 
+int sys_mount(const char *source, const char *target,
+              const char *fs_type, unsigned long flags,
+              const void *data);
+
 void syscall_init(void);
 
 

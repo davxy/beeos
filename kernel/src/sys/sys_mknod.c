@@ -25,7 +25,8 @@
 #include <string.h>
 
 
-static void get_parent_dir(char *parent, const char *filepath)
+
+static void split_path(const char *filepath, char *parent, char *name)
 {
     int i;
 
@@ -35,35 +36,66 @@ static void get_parent_dir(char *parent, const char *filepath)
         if (filepath[i] == '/')
             break;
     }
-    if (i > 0)
+    if (i > 0) {
+    	int k = (*filepath == '/') ? 1 : 0;
         strncpy(parent, filepath, i);
-    else
+        strcpy(name, filepath + i + k);
+    } else {
         parent[i++] = '/';
+        if (filepath[i] != '\0') {
+            strcpy(name, filepath + i);
+        }
+        else {
+            name[0] = '.';
+            name[1] = '\0';
+        }
+    }
     parent[i] = '\0';
 }
 
+
+
 int sys_mknod(const char *pathname, mode_t mode, dev_t dev)
 {
-    struct inode *inode, *idir;
+    int res = 0;
+    struct dentry *dentry;
+    struct inode  *inew, *idir;
     char parent[PATH_MAX];
+    char name[NAME_MAX];
 
-    inode = fs_namei(pathname);
-    if (inode != NULL)
+    dentry = named(pathname);
+    if (dentry != NULL)
     {
-        iput(inode);
         return -EEXIST; /* file exists */
     }
 
-    get_parent_dir(parent, pathname);
-    idir = fs_namei(parent);
-    if (idir == NULL)
-        return -1;
+    split_path(pathname, parent, name);
 
-    inode = idir->sb->ops->inode_alloc();
-    inode->mode = mode;
-    inode->dev = dev;
+    dentry = named(parent);
+    if (dentry == NULL)
+        return -1;
+    idir = dentry->inode;
+
+    if (idir->sb->ops->inode_alloc != NULL)
+    {
+        inew = idir->sb->ops->inode_alloc();
+        inew->mode = mode;
+        inew->dev = dev;
+
+        dentry = dentry_create(name, inew, dentry);
+        if (dentry == NULL)
+        {
+            if (idir->sb->ops->inode_free != NULL)
+                idir->sb->ops->inode_free(inew);
+            res = -1;
+        }
+    }
+    else
+    {
+        res = -EROFS;
+    }
 
     iput(idir);
 
-    return 0;
+    return res;
 }

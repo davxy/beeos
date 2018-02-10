@@ -86,8 +86,7 @@ void kmain(void)
     current_task->cwd = sb->root;
     current_task->root = sb->root;
 
-    void sys_mount(const char *source, const char *target);
-    sys_mount("dev", "/dev");
+    sys_mount("dev", "/dev", "dev", 0, NULL);
 
     /*
      * Fork and start the init process

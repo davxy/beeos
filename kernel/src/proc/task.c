@@ -45,8 +45,11 @@ int task_init(struct task *task)
     task->sgid = current_task->sgid;
  
     /* file system */
-    task->cwd = idup(current_task->cwd);
-    task->root = idup(current_task->root);
+    idup(current_task->cwd->inode);
+    if (current_task->cwd != current_task->root)
+    	idup(current_task->root->inode);
+    task->cwd = current_task->cwd;
+    task->root = current_task->root;
 
     /* duplicate valid file descriptors */
     memset(task->fd, 0, sizeof(task->fd));

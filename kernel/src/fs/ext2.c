@@ -280,13 +280,11 @@ int ext2_sb_inode_read(struct inode *inode)
     return 0;
 }
 
-
 /* TODO */
 static const struct sb_ops ext2_sb_ops =
 {
     .inode_read = ext2_sb_inode_read,
 };
-
 
 
 struct sb *ext2_sb_create(dev_t dev)
@@ -325,7 +323,8 @@ struct sb *ext2_sb_create(dev_t dev)
     root->sb = &sb->base;
     ext2_sb_inode_read(root);
 
-    sb_init(&sb->base, dev, root, &ext2_sb_ops);
+    struct dentry *de = dentry_create("/", root, NULL);
+    sb_init(&sb->base, dev, de, &ext2_sb_ops);
 
     return &sb->base;
 }
