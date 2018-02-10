@@ -37,13 +37,13 @@ ssize_t sys_write(int fdn, const void *buf, size_t count)
 
     file = current_task->fd[fdn].file;
 
-    switch (file->inode->mode & S_IFMT) {
+    switch (file->dentry->inode->mode & S_IFMT) {
         case S_IFBLK:
         case S_IFCHR:
         case S_IFREG:
         case S_IFIFO:
         case S_IFSOCK:
-            n = fs_write(file->inode, buf, count, file->offset);
+            n = fs_write(file->dentry->inode, buf, count, file->offset);
             break;
         case S_IFDIR:
             n = -EBADF;

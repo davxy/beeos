@@ -29,7 +29,7 @@ int sys_fstat(int fdn, struct stat *buf)
     if (current_task->fd[fdn].file == NULL)
         return -EBADF;  /* Bad file descriptor */
 
-    inode = current_task->fd[fdn].file->inode;
+    inode = current_task->fd[fdn].file->dentry->inode;
     if (inode == NULL)
         return -ENOENT;
 

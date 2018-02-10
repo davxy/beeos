@@ -121,10 +121,10 @@ struct vfsmount {
 
 struct file
 {
-    int flags;          /**< File status flags and file access modes. */
-    int refs;           /**< Number of references. */
-    off_t offset;       /**< File position. */
-    struct inode *inode; /**< Dentry reference. */
+    int flags;              /**< File status flags and file access modes. */
+    int refs;               /**< Number of references. */
+    off_t offset;           /**< File position. */
+    struct dentry *dentry;  /**< Dentry reference. */
 };
 
 struct fd

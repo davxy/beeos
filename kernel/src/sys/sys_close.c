@@ -41,10 +41,10 @@ int sys_close(int fdn)
     file->refs--;
     if (file->refs == 0)
     {
-        iput(file->inode);  /* Before the NULL write!!! */
-        if (S_ISFIFO(file->inode->mode))
+        iput(file->dentry->inode);
+        if (S_ISFIFO(file->dentry->inode->mode))
             /* Wake up the other end, to allow EOF recv in user space */
-            fs_write(file->inode, NULL, 0, 0);
+            fs_write(file->dentry->inode, NULL, 0, 0);
 
         /* TODO VFS op required. iput of pipe_inode is different */
         fs_file_free(file);
