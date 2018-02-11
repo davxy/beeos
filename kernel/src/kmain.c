@@ -41,6 +41,7 @@
 
 void kmain(void)
 {
+    int res;
     struct sb *sb;
 
     /*
@@ -70,7 +71,7 @@ void kmain(void)
 
     sb = vfs_sb_create(0, "dev");
     if (sb == NULL)
-        panic("Unable to create dev file system");
+        panic("Unable to create dev fs");
     current_task->cwd = sb->root;
     current_task->root = sb->root;
 
@@ -87,7 +88,9 @@ void kmain(void)
     current_task->cwd = sb->root;
     current_task->root = sb->root;
 
-    sys_mount("dev", "/dev", "dev", 0, NULL);
+    res = sys_mount("dev", "/dev", "dev", 0, NULL);
+    if (res != 0)
+        kprintf("[warn] Unable to mount dev fs: %s\n", strerror(-res));
 
     /*
      * Fork and start the init process
