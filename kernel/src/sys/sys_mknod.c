@@ -82,7 +82,7 @@ int sys_mknod(const char *pathname, mode_t mode, dev_t dev)
         inew->mode = mode;
         inew->dev = dev;
 
-        dentry = dentry_create(name, inew, dentry);
+        dentry = dentry_create(name, inew, dentry, dentry->ops);
         if (dentry == NULL)
         {
             if (idir->sb->ops->inode_free != NULL)

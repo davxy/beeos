@@ -23,7 +23,7 @@
 
 #include "fs/vfs.h"
 
-struct sb *devfs_init(void);
+struct sb *devfs_sb_create(dev_t dev);
 
 
 ssize_t devfs_read(dev_t dev, void *buf, size_t size, off_t off);

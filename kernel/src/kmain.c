@@ -68,12 +68,13 @@ void kmain(void)
      * To create the initrd node (used to read the real fs from the disk.
      */
 
-    sb = devfs_init();
+    sb = vfs_sb_create(0, "dev");
     if (sb == NULL)
         panic("Unable to create dev file system");
     current_task->cwd = sb->root;
     current_task->root = sb->root;
-    /* Initrd node */
+
+    /* Initrd node needed to read data from disk */
     sys_mknod("/initrd", S_IFBLK, DEV_INITRD);
 
     /*

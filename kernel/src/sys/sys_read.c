@@ -46,7 +46,7 @@ ssize_t sys_read(int fdn, void *buf, size_t count)
             break;
         case S_IFDIR:
             n = file->offset/sizeof(struct dirent);
-            n = fs_readdir(file->dentry->inode, n, (struct dirent *)buf);
+            n = fs_readdir(file->dentry, n, (struct dirent *)buf);
             if (n == 0)
                 n = sizeof(struct dirent);
             break;

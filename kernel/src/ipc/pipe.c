@@ -225,7 +225,7 @@ int pipe_create(int pipefd[2])
     if (!file0 || !file1)
         return -1;
 
-    dentry = dentry_create("", inode, NULL);
+    dentry = dentry_create("", inode, NULL, NULL);
     if (dentry == NULL)
         return -1;
 

@@ -82,8 +82,6 @@ struct inode_ops
     inode_read_t  read;
     inode_write_t write;
     struct inode *(*lookup)(struct inode *dir, const char *name);
-    int (*readdir)(struct inode *inode, unsigned int i,
-            struct dirent *dent);
 };
 
 /** In-memory inode. */
@@ -103,6 +101,10 @@ struct inode
 };
 
 
+struct dentry_ops {
+    int (*readdir)(struct dentry *dir, unsigned int i, struct dirent *dent);
+};
+
 struct dentry {
     char name[NAME_MAX];    /* Name */
     struct inode *inode;    /* Inode */
@@ -110,6 +112,7 @@ struct dentry {
     struct list_link child; /* Children list (if is a dir) */
     struct list_link link;  /* Siblings link */
     int mounted;            /* Set to 1 if is a mount point */
+    const struct dentry_ops *ops; /* Dir entry operations */
 };
 
 struct vfsmount {
@@ -142,10 +145,10 @@ static inline struct inode *fs_lookup(struct inode *dir, const char *name)
     return iret;
 }
 
-static inline int fs_readdir(struct inode *dir, int i, struct dirent *dent)
+static inline int fs_readdir(struct dentry *dir, int i, struct dirent *dent)
 {
     int ret = -1;
-    if (S_ISDIR(dir->mode) && dir->ops->readdir)
+    if (S_ISDIR(dir->inode->mode) && dir->ops->readdir)
         ret = dir->ops->readdir(dir, i, dent);
     return ret;
 }
@@ -187,6 +190,6 @@ struct inode *inode_create(dev_t dev, ino_t ino);
 int do_mount(struct dentry *mntpt, struct dentry *root);
 
 struct dentry *dentry_create(const char *name, struct inode *inode,
-                             struct dentry *parent);
+                             struct dentry *parent, const struct dentry_ops *ops);
 
 #endif /* _BEEOS_FS_H_ */

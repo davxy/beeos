@@ -31,14 +31,16 @@
 //#define DEBUG_DEVFS
 
 
-static struct sb devfs_sb;
-
-static struct list_link devfs_nodes;
 
 struct devfs_inode {
     struct inode        base;
     struct list_link    link;
 };
+
+static struct list_link devfs_nodes;
+
+static struct sb devfs_sb;
+
 
 
 static ssize_t devfs_inode_read(struct inode *inode, void *buf,
@@ -139,20 +141,6 @@ static dev_t name_to_dev(const char *name)
     return dev;
 }
 
-static const char *dev_to_name(dev_t dev)
-{
-    int i;
-    const char *name = "?";
-
-    for (i = 0; i < NDEVS; i++) {
-        if (dev_name_map[i].dev == dev) {
-            name = dev_name_map[i].name;
-            break;
-        }
-    }
-    return name;
-}
-
 
 struct inode *devfs_lookup(struct inode *dir, const char *name)
 {
@@ -160,10 +148,6 @@ struct inode *devfs_lookup(struct inode *dir, const char *name)
     struct inode *inode = NULL;
     struct list_link *curr_link = devfs_nodes.next;
     dev_t dev;
-
-#ifdef DEBUG_DEVFS
-    kprintf(">>> devfs-lookup: %s\n", name);
-#endif
 
     if (strcmp(name, ".") == 0 || strcmp(name, "..") == 0)
         return dir;
@@ -182,47 +166,16 @@ struct inode *devfs_lookup(struct inode *dir, const char *name)
 }
 
 
-static int devfs_readdir(struct inode *inode, unsigned int i,
-                         struct dirent *dent)
-{
-	static struct list_link *curr_link;
-    int res = -1;
-    struct devfs_inode *curr;
-    const char *name = NULL;
-
-#ifdef DEBUG_DEVFS
-    kprintf(">>> devfs-readdir\n");
-#endif
-
-    if (i == 0)
-        name = ".";
-    else if (i == 1)
-        name = "..";
-    else {
-        if (i == 2)
-            curr_link = devfs_nodes.next;
-        if (curr_link != &devfs_nodes) {
-            curr = list_container(curr_link, struct devfs_inode, link);
-            name = dev_to_name(curr->base.dev);
-            curr_link = curr_link->next;
-            dent->d_ino = curr->base.ino;
-    	}
-    }
-
-    if (name) {
-        strncpy(dent->d_name, name, sizeof(dent->d_name));
-        res = 0;
-    }
-    return res;
-}
 
 static const struct inode_ops devfs_inode_ops =
 {
     .read    = devfs_inode_read,
     .write   = devfs_inode_write,
-    .readdir = devfs_readdir,
     .lookup  = devfs_lookup,
 };
+
+
+
 
 
 static struct devfs_inode *devfs_sb_inode_alloc(void)
@@ -248,33 +201,7 @@ static void devfs_sb_inode_free(struct devfs_inode *inode)
 }
 
 
-const struct sb_ops devfs_sb_ops =
-{
-    .inode_alloc = (sb_inode_alloc_t) devfs_sb_inode_alloc,
-    .inode_free  = (sb_inode_free_t)  devfs_sb_inode_free,
-};
 
-
-struct sb *devfs_sb_get(void)
-{
-	return &devfs_sb;
-}
-
-struct sb *devfs_init(void)
-{
-    struct devfs_inode *root;
-    struct dentry *de;
-
-    list_init(&devfs_nodes);
-
-    root = devfs_sb_inode_alloc();
-    root->base.mode = S_IFDIR;
-
-    de = dentry_create("/", &root->base, NULL);
-    sb_init(&devfs_sb, 0, de, &devfs_sb_ops);
-
-    return &devfs_sb;
-}
 
 static struct inode *dev_to_inode(dev_t dev)
 {
@@ -313,3 +240,69 @@ ssize_t devfs_write(dev_t dev, const void *buf, size_t size, off_t off)
     return n;
 }
 
+
+int devfs_dentry_readdir(struct dentry *dir, unsigned int i,
+                         struct dirent *dent)
+{
+    static struct list_link *curr_link;
+    struct dentry *curr;
+    int res = -1;
+    const char *name = NULL;
+
+    if (i == 0) {
+        name = ".";
+    }
+    else if (i == 1)
+        name = "..";
+    else {
+        if (i == 2)
+            curr_link = dir->child.next;
+        if (curr_link != &dir->child) {
+            curr = list_container(curr_link, struct dentry, link);
+            name = curr->name;
+            curr_link = curr_link->next;
+            dent->d_ino = curr->inode->ino;
+        }
+    }
+    if (name) {
+        strncpy(dent->d_name, name, sizeof(dent->d_name));
+        res = 0;
+    }
+    return res;
+}
+
+static const struct dentry_ops devfs_dentry_ops = {
+    .readdir = devfs_dentry_readdir,
+};
+
+
+
+const struct sb_ops devfs_sb_ops =
+{
+    .inode_alloc = (sb_inode_alloc_t) devfs_sb_inode_alloc,
+    .inode_free  = (sb_inode_free_t)  devfs_sb_inode_free,
+};
+
+
+struct sb *devfs_sb_get(void)
+{
+	return &devfs_sb;
+}
+
+
+struct sb *devfs_sb_create(dev_t dev)
+{
+    struct devfs_inode *root;
+    struct dentry *de;
+
+    list_init(&devfs_nodes);
+
+    root = devfs_sb_inode_alloc();
+    root->base.mode = S_IFDIR;
+    root->base.dev = dev;
+
+    de = dentry_create("/", &root->base, NULL, &devfs_dentry_ops);
+    sb_init(&devfs_sb, 0, de, &devfs_sb_ops);
+
+    return &devfs_sb;
+}

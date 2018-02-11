@@ -25,12 +25,14 @@
 
 
 struct sb *ext2_sb_create(dev_t dev);
+struct sb *devfs_sb_create(dev_t dev);
 
 // http://www.tldp.org/LDP/lki/lki-3.html
 
 struct fs_type fs_list[] =
 {
-    { "ext2",   ext2_sb_create }
+    { "ext2", ext2_sb_create },
+	{ "dev",  devfs_sb_create }
 };
 
 #define FS_LIST_LEN (sizeof(fs_list)/sizeof(fs_list[0]))
@@ -223,7 +225,7 @@ static const char *skipelem(const char *path, char *name)
 }
 
 struct dentry *dentry_create(const char *name, struct inode *inode,
-                             struct dentry *parent)
+                             struct dentry *parent, const struct dentry_ops *ops)
 {
     struct dentry *de;
 
@@ -234,8 +236,9 @@ struct dentry *dentry_create(const char *name, struct inode *inode,
     de->inode = inode;
     de->parent = (parent != NULL) ? parent : de;
     list_init(&de->child);  /* Empty children list */
-    list_insert_after(&parent->child, &de->link); /* Insert in the parent child  list */
+    list_insert_before(&parent->child, &de->link); /* Insert in the parent child  list */
     de->mounted = 0;
+    de->ops = ops;
     return de;
 }
 
@@ -352,7 +355,7 @@ struct dentry *named(const char *path)
                 inode = fs_lookup(de->inode, name);
                 if (inode == NULL)
                     return NULL;
-                de = dentry_create(name, inode, de);
+                de = dentry_create(name, inode, de, de->ops);
             }
         }
     }

@@ -236,9 +236,18 @@ static const struct inode_ops ext2_inode_ops =
 {
     .read = (inode_read_t)ext2_read,
     .lookup = ext2_lookup,
-    .readdir = ext2_readdir,
 };
 
+
+static int ext2_dentry_readdir(struct dentry *dir, unsigned int i,
+        struct dirent *dent)
+{
+    return ext2_readdir(dir->inode, i, dent);
+}
+
+static const struct dentry_ops ext2_dentry_ops = {
+    .readdir = ext2_dentry_readdir
+};
 
 /*
  * Fetch inode information from the device.
@@ -323,7 +332,7 @@ struct sb *ext2_sb_create(dev_t dev)
     root->sb = &sb->base;
     ext2_sb_inode_read(root);
 
-    struct dentry *de = dentry_create("/", root, NULL);
+    struct dentry *de = dentry_create("/", root, NULL, &ext2_dentry_ops);
     sb_init(&sb->base, dev, de, &ext2_sb_ops);
 
     return &sb->base;
