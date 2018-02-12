@@ -33,20 +33,17 @@ int sys_fstat(int fdn, struct stat *buf)
     if (inode == NULL)
         return -ENOENT;
 
-    buf->st_dev = inode->dev;
+    buf->st_dev = inode->sb->dev;
     buf->st_ino = inode->ino;
     buf->st_mode = inode->mode;
-    buf->st_nlink = 0;     // TODO
+    buf->st_nlink = 0; /* TODO */
     buf->st_uid = inode->uid;
     buf->st_gid = inode->gid;
-    if (S_ISBLK(inode->mode) || S_ISCHR(inode->mode))
-        buf->st_rdev = 0;   // TODO
-    else
-        buf->st_rdev = 0;
+    buf->st_rdev = inode->rdev;
     buf->st_size = inode->size;
-    buf->st_atime = 0;  // TODO
-    buf->st_mtime = 0;
-    buf->st_ctime = 0;
+    buf->st_atime = inode->atime;
+    buf->st_mtime = inode->mtime;
+    buf->st_ctime = inode->ctime;
     buf->st_blksize = 0;
     buf->st_blocks = 0;
 

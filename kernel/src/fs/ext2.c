@@ -52,25 +52,6 @@ uint32_t gd_block;
 uint32_t block_size;
 
 
-static struct inode *ext2_inode_create(dev_t dev, ino_t ino)
-{
-    struct ext2_inode *inode;
-    if ((inode = (struct ext2_inode *)inode_lookup(dev, ino)) != NULL)
-        return &inode->base;
-     
-    inode = kmalloc(sizeof(struct ext2_inode), 0);
-    if (!inode)
-        return NULL;
-    inode_init(&inode->base, dev, ino);
-    return &inode->base;
-}
-
-void ext2_inode_delete(struct inode *inode)
-{
-    kfree(inode, sizeof(struct ext2_inode));
-}
-
-
 static int offset_to_block(off_t offset, struct ext2_inode *inode,
         struct ext2_sb *sb)
 {
@@ -171,13 +152,12 @@ struct inode *ext2_lookup(struct inode *dir, const char *name)
             && strncmp(dirent->name, name, dirent->name_len) == 0)
         {
             /* TODO: iget first...?!?! (old comment... cannot remember :D) */
-            inode = inode_lookup(dir->dev, dirent->inode);
+            inode = inode_lookup(dir->sb->dev, dirent->inode);
             if (inode == NULL)
             {
-                inode = ext2_inode_create(dir->dev, dirent->inode);
-                inode->sb = dir->sb;
-                if (dir->sb->ops->inode_read(inode) != 0)
-                    ext2_inode_delete(inode);
+                inode = dir->sb->ops->inode_alloc(dir->sb);
+                inode_init(inode, dir->sb, dirent->inode, 0,
+                           dir->sb->dev, dir->ops);
             }
             break;
         }
@@ -249,6 +229,25 @@ static const struct dentry_ops ext2_dentry_ops = {
     .readdir = ext2_dentry_readdir
 };
 
+
+
+/******************************************************************************
+ *
+ * 	Superblock operations
+ *
+ */
+
+
+static struct inode *ext2_sb_inode_alloc(struct sb *sb)
+{
+    return kmalloc(sizeof(struct ext2_inode), 0);
+}
+
+void ext2_sb_inode_free(struct inode *inode)
+{
+    kfree(inode, sizeof(struct ext2_inode));
+}
+
 /*
  * Fetch inode information from the device.
  */
@@ -272,27 +271,32 @@ int ext2_sb_inode_read(struct inode *inode)
 
     inode->ops = &ext2_inode_ops;
     inode->mode = dnode.mode;
-    //inode->nlink = dnode.links_count;
     inode->uid = dnode.uid;
     inode->gid = dnode.gid;
     if (S_ISCHR(inode->mode) || S_ISBLK(inode->mode))
         inode->rdev  = dnode.block[0];
     inode->size = dnode.size;
-    //inode->atime 
-    //inode->dtime
-    //inode->mtime
-    //inode->blksize = 512; // sicuro???
-    //inode->blocks = (dnode.size-1)/inode->blksize+1;
+    inode->atime = dnode.atime;
+    inode->mtime = dnode.mtime;
+    inode->ctime = dnode.ctime;
+
+#if 0
+    inode->blksize = 512; // sure ???
+    inode->blocks = (dnode.size-1)/inode->blksize+1;
+#endif
+
     memcpy(((struct ext2_inode *)inode)->blocks, dnode.block,
             sizeof(dnode.block));
     
     return 0;
 }
 
-/* TODO */
+
 static const struct sb_ops ext2_sb_ops =
 {
-    .inode_read = ext2_sb_inode_read,
+    .inode_alloc = ext2_sb_inode_alloc,
+    .inode_free  = ext2_sb_inode_free,
+    .inode_read  = ext2_sb_inode_read,
 };
 
 
@@ -300,7 +304,8 @@ struct sb *ext2_sb_create(dev_t dev)
 {
     int n;
     struct ext2_sb *sb;
-    struct inode *root;
+    struct inode *iroot;
+    struct dentry *droot;
 
     if ((n = devfs_read(dev, &dsb, sizeof(dsb), 1024)) != sizeof(dsb))
         return NULL;
@@ -327,13 +332,15 @@ struct sb *ext2_sb_create(dev_t dev)
     if (devfs_read(dev, sb->gd_table, n, sb->block_size*(gd_block-1)) != n)
         return NULL;
 
-    /* Now that we can read inodes, we cache the root inode */
-    root = ext2_inode_create(dev, EXT2_ROOT_INO);
-    root->sb = &sb->base;
-    ext2_sb_inode_read(root);
+    droot = dentry_create("/", NULL, &ext2_dentry_ops);
 
-    struct dentry *de = dentry_create("/", root, NULL, &ext2_dentry_ops);
-    sb_init(&sb->base, dev, de, &ext2_sb_ops);
+    sb_init(&sb->base, dev, droot, &ext2_sb_ops);
+
+    /* Now that we can read inodes, we cache the root inode */
+    iroot = ext2_sb_inode_alloc(&sb->base);
+    inode_init(iroot, &sb->base, EXT2_ROOT_INO, S_IFDIR, dev, &ext2_inode_ops);
+
+    droot->inode = iroot;
 
     return &sb->base;
 }

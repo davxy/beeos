@@ -86,8 +86,7 @@ void fs_file_free(struct file *file)
 
 struct inode *fs_inode_alloc(void)
 {
-    struct inode *inode = slab_cache_alloc(&inode_cache, 0);
-    return inode;
+    return slab_cache_alloc(&inode_cache, 0);
 }
 
 
@@ -100,7 +99,7 @@ struct inode *inode_lookup(dev_t dev, ino_t ino)
     while (lnk != NULL)
     {
         ip = struct_ptr(lnk, struct inode, hlink);
-        if (ip->ref > 0 && ip->dev == dev && ip->ino == ino)
+        if (ip->ref > 0 && ip->sb->dev == dev && ip->ino == ino)
         {
             ip->ref++;
             return ip;
@@ -111,14 +110,24 @@ struct inode *inode_lookup(dev_t dev, ino_t ino)
 }
 
 
-void inode_init(struct inode *inode, dev_t dev, ino_t ino)
+void inode_init(struct inode *inode, struct sb *sb, ino_t ino, mode_t mode,
+                dev_t dev, const struct inode_ops *ops)
 {
-    inode->dev = dev;
-    inode->rdev = 0;
+    memset(inode, 0, sizeof(*inode));
+
+    inode->ops = ops;
     inode->ino = ino;
-    inode->ref = 1;
-    inode->sb = NULL;
-    htable_insert(inode_htable, &inode->hlink, KEY(dev,ino), INODE_HTABLE_BITS);
+    inode->mode = mode;
+    inode->sb  = sb;
+
+    if (S_ISBLK(mode) || S_ISCHR(mode))
+        inode->rdev = dev;
+
+    if (sb->ops->inode_read != NULL)
+        sb->ops->inode_read(inode);
+
+    htable_insert(inode_htable, &inode->hlink,
+                  KEY(inode->sb->dev, inode->ino), INODE_HTABLE_BITS);
 }
 
 
@@ -224,8 +233,8 @@ static const char *skipelem(const char *path, char *name)
     return path;
 }
 
-struct dentry *dentry_create(const char *name, struct inode *inode,
-                             struct dentry *parent, const struct dentry_ops *ops)
+struct dentry *dentry_create(const char *name, struct dentry *parent,
+                             const struct dentry_ops *ops)
 {
     struct dentry *de;
 
@@ -233,7 +242,7 @@ struct dentry *dentry_create(const char *name, struct inode *inode,
     if (!de)
         return NULL;
     strcpy(de->name, name);
-    de->inode = inode;
+    de->inode = NULL; /* May be without an inode */
     de->parent = (parent != NULL) ? parent : de;
     list_init(&de->child);  /* Empty children list */
     list_insert_before(&parent->child, &de->link); /* Insert in the parent child  list */
@@ -242,6 +251,11 @@ struct dentry *dentry_create(const char *name, struct inode *inode,
     return de;
 }
 
+void dentry_destroy(struct dentry *de)
+{
+    list_delete(&de->link);
+    kfree(de, sizeof(*de));
+}
 
 static struct list_link mounts;
 
@@ -351,11 +365,14 @@ struct dentry *named(const char *path)
             tmp = dentry_lookup(de, name);
             if (tmp != NULL)
                 de = tmp;
-            else {
+            else if (de->inode != NULL) {
                 inode = fs_lookup(de->inode, name);
                 if (inode == NULL)
                     return NULL;
-                de = dentry_create(name, inode, de, de->ops);
+                de = dentry_create(name, de, de->ops);
+                if (de == NULL)
+                    return NULL;
+                de->inode = inode;
             }
         }
     }

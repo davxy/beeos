@@ -74,28 +74,24 @@ int sys_mknod(const char *pathname, mode_t mode, dev_t dev)
     dentry = named(parent);
     if (dentry == NULL)
         return -1;
-    idir = dentry->inode;
+    idir = dentry->inode; /* increment refs */
 
-    if (idir->sb->ops->inode_alloc != NULL)
+    dentry = dentry_create(name, dentry, dentry->ops);
+    if (dentry == NULL)
+        return -1;
+
+    inew = vfs_mknod(idir, mode, dev);
+    if (inew != NULL)
     {
-        inew = idir->sb->ops->inode_alloc();
-        inew->mode = mode;
-        inew->dev = dev;
-
-        dentry = dentry_create(name, inew, dentry, dentry->ops);
-        if (dentry == NULL)
-        {
-            if (idir->sb->ops->inode_free != NULL)
-                idir->sb->ops->inode_free(inew);
-            res = -1;
-        }
+        dentry->inode = inew;
     }
     else
     {
-        res = -EROFS;
+        res = -1;
+        dentry_destroy(dentry);
     }
 
-    iput(idir);
+    iput(idir); /* decrement refs */
 
     return res;
 }
