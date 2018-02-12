@@ -197,11 +197,13 @@ struct inode *pipe_inode_create(void)
     return &pnode->base;
 }
 
+/* TODO : all error checking and rollback code is missing */
 
 int pipe_create(int pipefd[2])
 {
     int fd0, fd1;
     struct inode *inode;
+    struct dentry *dentry;
     struct file *file0, *file1;
 
     for (fd0 = 0; fd0 < OPEN_MAX; fd0++)
@@ -223,10 +225,15 @@ int pipe_create(int pipefd[2])
     if (!file0 || !file1)
         return -1;
 
+    dentry = dentry_create("", NULL, NULL);
+    if (dentry == NULL)
+        return -1;
+    dentry->inode = inode;
+
     file0->flags = O_RDONLY;
     file0->refs = 1;
     file0->offset = 0;
-    file0->inode = inode;
+    file0->dentry = dentry;
     *file1 = *file0;
     file1->flags = O_WRONLY;
 

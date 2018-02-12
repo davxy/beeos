@@ -105,7 +105,7 @@ int sys_execve(const char *path, const char *argv[], const char *envp[])
     if (current_task->arch.ifr == NULL || argv == NULL)
         return -EINVAL;
     
-    inode = fs_namei(path);
+    inode = namei(path);
     if (!inode)
         return -ENOENT;
 

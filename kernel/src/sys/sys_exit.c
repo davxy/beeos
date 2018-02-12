@@ -125,7 +125,7 @@ void sys_exit(int status)
             sys_close(i);
     }
 
-    iput(current_task->cwd);
+    iput(current_task->cwd->inode);
     current_task->cwd = NULL;
    
     /* Give children to init */

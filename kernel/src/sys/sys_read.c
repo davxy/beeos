@@ -36,17 +36,17 @@ ssize_t sys_read(int fdn, void *buf, size_t count)
 
     file = current_task->fd[fdn].file;
 
-    switch (file->inode->mode & S_IFMT) {
+    switch (file->dentry->inode->mode & S_IFMT) {
         case S_IFBLK:
         case S_IFCHR:
         case S_IFREG:
         case S_IFIFO:
         case S_IFSOCK:
-            n = fs_read(file->inode, buf, count, file->offset);
+            n = fs_read(file->dentry->inode, buf, count, file->offset);
             break;
         case S_IFDIR:
             n = file->offset/sizeof(struct dirent);
-            n = fs_readdir(file->inode, n, (struct dirent *)buf);
+            n = fs_readdir(file->dentry, n, (struct dirent *)buf);
             if (n == 0)
                 n = sizeof(struct dirent);
             break;

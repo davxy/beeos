@@ -50,8 +50,8 @@ struct task
     gid_t               egid;           /**< Effective group ID. */
     gid_t               sgid;           /**< Saved group ID. */
     int                 state;          /**< Process state. */
-    struct inode        *cwd;           /**< Current working directory. */
-    struct inode        *root;
+    struct dentry       *cwd;           /**< Current working directory. */
+    struct dentry       *root;
     struct fd           fd[OPEN_MAX];   /**< Open files. */  
     struct list_link    tasks;          /**< Tasks list link. */
     struct cond         chld_exit;      /**< Child exit condition */

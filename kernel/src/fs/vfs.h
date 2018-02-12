@@ -24,29 +24,39 @@
 #ifndef _BEEOS_FS_H_
 #define _BEEOS_FS_H_
 
-#include <htable.h>
+#include "htable.h"
+#include "list.h"
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <dirent.h>
 
+
+
+struct sb;
+
+typedef struct inode * (* sb_inode_alloc_t)(struct sb *sb);
+typedef void (* sb_inode_free_t)(struct inode *inode);
+typedef int (* sb_inode_read_t)(struct inode *inode);
+typedef int (* sb_inode_write_t)(struct inode *inode);
+
 struct sb_ops
 {
-    struct inode *(*inode_alloc)(void);
-    void (*inode_free)(struct inode *inode);
-    int (*inode_read)(struct inode *inode);
-    int (*inode_write)(struct inode *inode);
+    sb_inode_alloc_t   inode_alloc;
+    sb_inode_free_t    inode_free;
+    sb_inode_read_t    inode_read;
+    sb_inode_write_t   inode_write;
 };
 
 /** File system super block */
 struct sb
 {
-    dev_t dev;              /** Device */
-    struct inode *root;     /** Root inode */
-    struct sb    *mnt;      /** Mount point superblock */
-    const struct sb_ops *ops;     /** Superblock operations */
+    dev_t dev;                /** Device */
+    struct dentry *root;      /** Root dentry */
+    struct sb     *mnt;       /** Mount point superblock */
+    const struct sb_ops *ops; /** Superblock operations */
 };
 
-void sb_init(struct sb *sb, dev_t dev, struct inode *root,
+void sb_init(struct sb *sb, dev_t dev, struct dentry *root,
         const struct sb_ops *ops);
 
 struct sb *vfs_sb_create(dev_t dev, const char *name);
@@ -60,26 +70,30 @@ struct fs_type
 
 struct inode;
 
-typedef int (*inode_read_t)(struct inode *inode, void *buf, 
+typedef int (* inode_read_t)(struct inode *inode, void *buf,
             size_t count, off_t offset);
 
-typedef int (*inode_write_t)(struct inode *inode, const void *buf,
+typedef int (* inode_write_t)(struct inode *inode, const void *buf,
              size_t count, off_t offset);
+
+typedef struct inode *(* inode_mknod_t)(struct inode *idir, mode_t mode, dev_t dev);
+
+typedef struct inode *(* inode_lookup_t)(struct inode *udir, const char *name);
 
 
 struct inode_ops
 {
-    inode_read_t  read;
-    inode_write_t write;
-    struct inode *(*lookup)(struct inode *dir, const char *name);
-    int (*readdir)(struct inode *inode, unsigned int i,
-            struct dirent *dent);
+    inode_read_t    read;
+    inode_write_t   write;
+    inode_mknod_t   mknod;
+    inode_lookup_t  lookup;
 };
+
+
 
 /** In-memory inode. */
 struct inode
 {
-    dev_t       dev;    /* Device */
     dev_t       rdev;   /* Real device */
     mode_t      mode;   /* File type and permissions */
     uid_t       uid;    /* Ownner */
@@ -87,18 +101,42 @@ struct inode
     ino_t       ino;    /* Inode number */
     size_t      size;   /* File size in bytes. */
     int         ref;    /* Reference count. */
+    time_t      atime;  /* Access time */
+    time_t      mtime;  /* Modification time */
+    time_t      ctime;  /* Creation time */
     struct htable_link      hlink;
     struct sb   *sb;    /* Inode superblock */
     const struct inode_ops  *ops; /* VFS operations. */
 };
 
 
+struct dentry_ops {
+    int (*readdir)(struct dentry *dir, unsigned int i, struct dirent *dent);
+};
+
+struct dentry {
+    char name[NAME_MAX];    /* Name */
+    struct inode *inode;    /* Inode */
+    struct dentry *parent;  /* Parent directory */
+    struct list_link child; /* Children list (if is a dir) */
+    struct list_link link;  /* Siblings link */
+    int mounted;            /* Set to 1 if is a mount point */
+    const struct dentry_ops *ops; /* Dir entry operations */
+};
+
+struct vfsmount {
+    struct dentry *mntpt;   /**< mount point */
+    struct dentry *root;    /**< mount root */
+    struct list_link link;  /**< link in the mounts list */
+};
+
+
 struct file
 {
-    int flags;           /**< File status flags and file access modes. */
-    int refs;            /**< Number of references. */
-    off_t offset;        /**< File position. */
-    struct inode *inode; /**< Inode reference. */
+    int flags;              /**< File status flags and file access modes. */
+    int refs;               /**< Number of references. */
+    off_t offset;           /**< File position. */
+    struct dentry *dentry;  /**< Dentry reference. */
 };
 
 struct fd
@@ -108,18 +146,29 @@ struct fd
 };
 
 
-static inline struct inode *fs_lookup(struct inode *dir, const char *name)
+static inline struct inode *fs_lookup(struct inode *idir, const char *name)
 {
     struct inode *iret = 0;
-    if (S_ISDIR(dir->mode) && dir->ops->lookup)
-        iret = dir->ops->lookup(dir, name);
+
+    if (S_ISDIR(idir->mode) && idir->ops->lookup)
+        iret = idir->ops->lookup(idir, name);
     return iret;
 }
 
-static inline int fs_readdir(struct inode *dir, int i, struct dirent *dent)
+static inline struct inode *vfs_mknod(struct inode *idir, mode_t mode, dev_t dev)
+{
+    struct inode *iret = 0;
+
+    if (S_ISDIR(idir->mode) && idir->ops->mknod)
+        iret = idir->ops->mknod(idir, mode, dev);
+    return iret;
+}
+
+static inline int fs_readdir(struct dentry *dir, int i, struct dirent *dent)
 {
     int ret = -1;
-    if (S_ISDIR(dir->mode) && dir->ops->readdir)
+
+    if (S_ISDIR(dir->inode->mode) && dir->ops->readdir)
         ret = dir->ops->readdir(dir, i, dent);
     return ret;
 }
@@ -128,6 +177,7 @@ static inline ssize_t fs_read(struct inode *node, void *buf,
         size_t count, off_t offset)
 {
     int ret = -1;
+
     if (!S_ISDIR(node->mode) && node->ops->read)
         ret = node->ops->read(node, buf, count, offset);
     return ret;
@@ -142,17 +192,44 @@ static inline ssize_t fs_write(struct inode *node, const void *buf,
     return ret;
 }
 
+static inline struct inode *vfs_inode_alloc(struct sb *sb)
+{
+    struct inode *inode = NULL;
+
+    if (sb->ops->inode_alloc != NULL)
+        inode = sb->ops->inode_alloc(sb);
+    return inode;
+}
+
 int fs_init(void);
 
 
-struct inode *fs_namei(const char *pathname);
+
+struct inode *namei(const char *pathname);
+
+struct dentry *named(const char *pathname);
+
 
 struct inode *iget(dev_t dev, ino_t ino);
 struct inode *idup(struct inode *inode);
 void iput(struct inode *inode);
 
+
+
 struct inode *inode_lookup(dev_t dev, ino_t ino);
-void inode_init(struct inode *inode, dev_t dev, ino_t ino);
-struct inode *inode_create(dev_t dev, ino_t ino);
+
+void inode_init(struct inode *inode, struct sb *sb, ino_t ino, mode_t mode,
+                dev_t dev, const struct inode_ops *ops);
+
+
+
+struct dentry *dentry_create(const char *name, struct dentry *parent,
+                             const struct dentry_ops *ops);
+
+void dentry_destroy(struct dentry *de);
+
+
+int do_mount(struct dentry *mntpt, struct dentry *root);
+
 
 #endif /* _BEEOS_FS_H_ */
