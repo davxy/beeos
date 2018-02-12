@@ -42,11 +42,11 @@ ssize_t sys_read(int fdn, void *buf, size_t count)
         case S_IFREG:
         case S_IFIFO:
         case S_IFSOCK:
-            n = fs_read(file->dentry->inode, buf, count, file->offset);
+            n = vfs_read(file->dentry->inode, buf, count, file->offset);
             break;
         case S_IFDIR:
             n = file->offset/sizeof(struct dirent);
-            n = fs_readdir(file->dentry, n, (struct dirent *)buf);
+            n = vfs_readdir(file->dentry, n, (struct dirent *)buf);
             if (n == 0)
                 n = sizeof(struct dirent);
             break;

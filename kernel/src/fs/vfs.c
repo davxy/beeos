@@ -366,7 +366,7 @@ struct dentry *named(const char *path)
             if (tmp != NULL)
                 de = tmp;
             else if (de->inode != NULL) {
-                inode = fs_lookup(de->inode, name);
+                inode = vfs_lookup(de->inode, name);
                 if (inode == NULL)
                     return NULL;
                 de = dentry_create(name, de, de->ops);
@@ -394,7 +394,7 @@ struct inode *namei(const char *path)
 
 
 
-int fs_init(void)
+int vfs_init(void)
 {
     slab_cache_init(&inode_cache, "inode-cache", sizeof(struct inode),
             0, 0, NULL, NULL);

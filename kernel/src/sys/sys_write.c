@@ -43,7 +43,7 @@ ssize_t sys_write(int fdn, const void *buf, size_t count)
         case S_IFREG:
         case S_IFIFO:
         case S_IFSOCK:
-            n = fs_write(file->dentry->inode, buf, count, file->offset);
+            n = vfs_write(file->dentry->inode, buf, count, file->offset);
             break;
         case S_IFDIR:
             n = -EBADF;

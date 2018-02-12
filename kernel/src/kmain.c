@@ -55,7 +55,7 @@ void kmain(void)
      */
 
     timer_init(100);
-    fs_init();
+    vfs_init();
     scheduler_init();
     tty_init();
     syscall_init();

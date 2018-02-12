@@ -109,7 +109,7 @@ int sys_execve(const char *path, const char *argv[], const char *envp[])
     if (!inode)
         return -ENOENT;
 
-    if (fs_read(inode, &eh, sizeof(eh), 0) != sizeof(eh)
+    if (vfs_read(inode, &eh, sizeof(eh), 0) != sizeof(eh)
         || eh.magic != ELF_MAGIC)
         return -ENOEXEC;
 
@@ -141,7 +141,7 @@ int sys_execve(const char *path, const char *argv[], const char *envp[])
 
     for (i = 0, off = eh.phoff; i < eh.phnum; i++, off += sizeof(ph)) {
         
-        if (fs_read(inode, &ph, sizeof(ph), off) != sizeof(ph)) {
+        if (vfs_read(inode, &ph, sizeof(ph), off) != sizeof(ph)) {
             ret = -ENOEXEC;
             goto bad;
         }
@@ -170,7 +170,7 @@ int sys_execve(const char *path, const char *argv[], const char *envp[])
         }
 
         if (ph.filesz != 0) {
-            if ((ret = fs_read(inode, (void *)ph.vaddr, ph.filesz, ph.offset)) 
+            if ((ret = vfs_read(inode, (void *)ph.vaddr, ph.filesz, ph.offset))
                     != ph.filesz)
                 goto bad;
         }

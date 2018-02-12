@@ -21,8 +21,8 @@
  * http://www.tldp.org/LDP/tlk/ds/ds.html
  */
 
-#ifndef _BEEOS_FS_H_
-#define _BEEOS_FS_H_
+#ifndef BEEOS_VFS_H_
+#define BEEOS_VFS_H_
 
 #include "htable.h"
 #include "list.h"
@@ -59,6 +59,9 @@ struct sb
 void sb_init(struct sb *sb, dev_t dev, struct dentry *root,
         const struct sb_ops *ops);
 
+
+
+
 struct sb *vfs_sb_create(dev_t dev, const char *name);
 
 /** Initial file system descriptor */
@@ -68,18 +71,22 @@ struct fs_type
     struct sb *(*sb_create)(dev_t dev);
 };
 
+
+
+
+
 struct inode;
 
 typedef int (* inode_read_t)(struct inode *inode, void *buf,
             size_t count, off_t offset);
 
 typedef int (* inode_write_t)(struct inode *inode, const void *buf,
-             size_t count, off_t offset);
+            size_t count, off_t offset);
 
-typedef struct inode *(* inode_mknod_t)(struct inode *idir, mode_t mode, dev_t dev);
+typedef struct inode *(* inode_mknod_t)(struct inode *idir, mode_t mode,
+            dev_t dev);
 
 typedef struct inode *(* inode_lookup_t)(struct inode *udir, const char *name);
-
 
 struct inode_ops
 {
@@ -88,8 +95,6 @@ struct inode_ops
     inode_mknod_t   mknod;
     inode_lookup_t  lookup;
 };
-
-
 
 /** In-memory inode. */
 struct inode
@@ -110,8 +115,13 @@ struct inode
 };
 
 
+
+
+typedef int (* dentry_readdir_t)(struct dentry *dir, unsigned int i,
+            struct dirent *dent);
+
 struct dentry_ops {
-    int (*readdir)(struct dentry *dir, unsigned int i, struct dirent *dent);
+    dentry_readdir_t readdir;
 };
 
 struct dentry {
@@ -123,6 +133,9 @@ struct dentry {
     int mounted;            /* Set to 1 if is a mount point */
     const struct dentry_ops *ops; /* Dir entry operations */
 };
+
+
+
 
 struct vfsmount {
     struct dentry *mntpt;   /**< mount point */
@@ -146,7 +159,21 @@ struct fd
 };
 
 
-static inline struct inode *fs_lookup(struct inode *idir, const char *name)
+
+
+static inline struct inode *vfs_inode_alloc(struct sb *sb)
+{
+    struct inode *inode = NULL;
+
+    if (sb->ops->inode_alloc != NULL)
+        inode = sb->ops->inode_alloc(sb);
+    return inode;
+}
+
+
+
+
+static inline struct inode *vfs_lookup(struct inode *idir, const char *name)
 {
     struct inode *iret = 0;
 
@@ -164,16 +191,7 @@ static inline struct inode *vfs_mknod(struct inode *idir, mode_t mode, dev_t dev
     return iret;
 }
 
-static inline int fs_readdir(struct dentry *dir, int i, struct dirent *dent)
-{
-    int ret = -1;
-
-    if (S_ISDIR(dir->inode->mode) && dir->ops->readdir)
-        ret = dir->ops->readdir(dir, i, dent);
-    return ret;
-}
-
-static inline ssize_t fs_read(struct inode *node, void *buf,
+static inline ssize_t vfs_read(struct inode *node, void *buf,
         size_t count, off_t offset)
 {
     int ret = -1;
@@ -183,7 +201,7 @@ static inline ssize_t fs_read(struct inode *node, void *buf,
     return ret;
 }
 
-static inline ssize_t fs_write(struct inode *node, const void *buf,
+static inline ssize_t vfs_write(struct inode *node, const void *buf,
         size_t count, off_t offset)
 {
     int ret = -1;
@@ -192,27 +210,17 @@ static inline ssize_t fs_write(struct inode *node, const void *buf,
     return ret;
 }
 
-static inline struct inode *vfs_inode_alloc(struct sb *sb)
-{
-    struct inode *inode = NULL;
 
-    if (sb->ops->inode_alloc != NULL)
-        inode = sb->ops->inode_alloc(sb);
-    return inode;
+
+static inline int vfs_readdir(struct dentry *dir, int i, struct dirent *dent)
+{
+    int ret = -1;
+
+    if (S_ISDIR(dir->inode->mode) && dir->ops->readdir)
+        ret = dir->ops->readdir(dir, i, dent);
+    return ret;
 }
 
-int fs_init(void);
-
-
-
-struct inode *namei(const char *pathname);
-
-struct dentry *named(const char *pathname);
-
-
-struct inode *iget(dev_t dev, ino_t ino);
-struct inode *idup(struct inode *inode);
-void iput(struct inode *inode);
 
 
 
@@ -221,6 +229,12 @@ struct inode *inode_lookup(dev_t dev, ino_t ino);
 void inode_init(struct inode *inode, struct sb *sb, ino_t ino, mode_t mode,
                 dev_t dev, const struct inode_ops *ops);
 
+struct inode *namei(const char *pathname);
+
+struct inode *iget(dev_t dev, ino_t ino);
+struct inode *idup(struct inode *inode);
+void iput(struct inode *inode);
+
 
 
 struct dentry *dentry_create(const char *name, struct dentry *parent,
@@ -228,8 +242,15 @@ struct dentry *dentry_create(const char *name, struct dentry *parent,
 
 void dentry_destroy(struct dentry *de);
 
+struct dentry *named(const char *pathname);
+
+
 
 int do_mount(struct dentry *mntpt, struct dentry *root);
 
 
-#endif /* _BEEOS_FS_H_ */
+int vfs_init(void);
+
+
+
+#endif /* BEEOS_VFS_H_ */
