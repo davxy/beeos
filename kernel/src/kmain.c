@@ -41,7 +41,6 @@
 
 void kmain(void)
 {
-    int res;
     struct sb *sb;
 
     /*
@@ -75,7 +74,7 @@ void kmain(void)
     current_task->cwd = sb->root;
     current_task->root = sb->root;
 
-    /* Initrd node needed to read data from disk */
+    /* Initrd node created to read data from ramdisk */
     sys_mknod("/initrd", S_IFBLK, DEV_INITRD);
 
     /*
@@ -87,10 +86,6 @@ void kmain(void)
         panic("Unable to create root file system");
     current_task->cwd = sb->root;
     current_task->root = sb->root;
-
-    res = sys_mount("dev", "/dev", "dev", 0, NULL);
-    if (res != 0)
-        kprintf("[warn] Unable to mount dev fs: %s\n", strerror(-res));
 
     /*
      * Fork and start the init process

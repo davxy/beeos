@@ -25,6 +25,7 @@
 #include <signal.h>
 #include <sys/wait.h>
 #include <sys/stat.h>
+#include <sys/mount.h>
 #include <fcntl.h>
 
 #define NTTY    4
@@ -35,10 +36,12 @@
 
 
 
-
-
 void dev_init(void)
 {
+    if (mount("dev", "/dev", "dev", 0, NULL) < 0) {
+        perror("mount of dev fs failure");
+        return;
+    }
     if (mknod("/dev/zero", S_IFCHR, makedev(0x01, 0x05)) < 0)
         perror("mknod /dev/zero");
     if (mknod("/dev/tty1", S_IFCHR, makedev(0x05, 0x01)) < 0)
