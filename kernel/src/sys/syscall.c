@@ -56,6 +56,7 @@ static void *syscalls[] =
     [__NR_pipe]         = sys_pipe,
     [__NR_chdir]        = sys_chdir,
     [__NR_alarm]        = sys_alarm,
+    [__NR_mount]        = sys_mount,
     [__NR_info]         = sys_info,
 };
 
