@@ -34,13 +34,10 @@ int sys_chdir(const char *path)
     inode = dentry->inode;
 
     if (!S_ISDIR(inode->mode))
-    {
-        iput(inode);
         return -ENOTDIR;
-    }
 
-    iget(inode);
-    iput(current_task->cwd->inode);
+    dget(dentry);
+    dput(current_task->cwd);
     current_task->cwd = dentry;
     return 0;
 }
