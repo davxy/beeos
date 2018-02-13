@@ -73,6 +73,8 @@ void kmain(void)
         panic("Unable to create dev fs");
     current_task->cwd = sb->root;
     current_task->root = sb->root;
+    dget(sb->root);
+    dget(sb->root);
 
     /* Initrd node created to read data from ramdisk */
     sys_mknod("/initrd", S_IFBLK, DEV_INITRD);
@@ -86,6 +88,8 @@ void kmain(void)
         panic("Unable to create root file system");
     current_task->cwd = sb->root;
     current_task->root = sb->root;
+    dget(sb->root);
+    dget(sb->root);
 
     /*
      * Fork and start the init process
