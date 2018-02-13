@@ -209,6 +209,7 @@ struct dentry *dentry_create(const char *name, struct dentry *parent,
     if (!de)
         return NULL;
     strcpy(de->name, name);
+    de->ref = 0;
     de->inode = NULL; /* May be without an inode */
     de->parent = (parent != NULL) ? parent : de;
     list_init(&de->child);  /* Empty children list */
@@ -354,24 +355,19 @@ struct dentry *named(const char *path)
                 de = follow_down(de);
             tmp = dentry_lookup(de, name);
             if (tmp != NULL) {
-                inode = tmp->inode;
-                if (inode == NULL) {
-                    inode = vfs_mknod(de->inode, 0, de->inode->sb->dev);
-                    iget(inode);
-                }
                 de = tmp;
             } else if (de->inode != NULL) {
                 inode = vfs_lookup(de->inode, name);
                 if (inode == NULL)
                     return NULL;
-                iget(inode);
                 de = dentry_create(name, de, de->ops);
                 if (de == NULL)
                     return NULL;
-            }
-            else
+                de->inode = inode;
+                iget(inode);
+            } else
                 return NULL;
-            de->inode = inode;
+
         }
     }
     if (S_ISDIR(de->inode->mode) && de->mounted)
