@@ -33,20 +33,18 @@ int sys_close(int fdn)
     if (fdn < 0 || OPEN_MAX <= fdn || !current_task->fd[fdn].file)
         return -EBADF;
 
-
     file = current_task->fd[fdn].file;
     current_task->fd[fdn].file = NULL;
     current_task->fd[fdn].flags = 0;
 
-    file->refs--;
-    if (file->refs == 0)
+    file->ref--;
+    if (file->ref == 0)
     {
-        iput(file->dentry->inode);
+        /* Wake up the other end, to allow EOF recv in user space */
         if (S_ISFIFO(file->dentry->inode->mode))
-            /* Wake up the other end, to allow EOF recv in user space */
             vfs_write(file->dentry->inode, NULL, 0, 0);
+        dput(file->dentry);
 
-        /* TODO VFS op required. iput of pipe_inode is different */
         fs_file_free(file);
     }
 

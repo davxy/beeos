@@ -28,6 +28,7 @@
 #include <string.h>
 #include <stdio.h>
 
+
 void *fs_file_alloc(void);
 
 int sys_open(const char *pathname, int flags, mode_t mode)
@@ -61,11 +62,12 @@ int sys_open(const char *pathname, int flags, mode_t mode)
     if (!file)
         return -ENOMEM;
 
-    file->refs = 1;
+    file->ref = 1;
     file->offset = 0;
     file->dentry = dentry;
+    dget(dentry);
 
     current_task->fd[fdn].file = file;
-    
+
     return fdn;
 }

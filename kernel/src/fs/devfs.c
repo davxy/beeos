@@ -39,7 +39,7 @@ struct devfs_inode {
 
 static struct list_link devfs_nodes;
 
-static struct sb devfs_sb;
+static struct super_block devfs_sb;
 
 static int devfs_ino = 0;
 
@@ -49,10 +49,6 @@ static ssize_t devfs_inode_read(struct inode *inode, void *buf,
 {
     ssize_t n;
     dev_t rdev = inode->rdev;
-
-#ifdef DEBUG_DEVFS
-    kprintf(">>> devfs-read (dev=%04x)\n", inode->dev);
-#endif
 
     switch (rdev)
     {
@@ -171,10 +167,7 @@ struct inode *devfs_lookup(struct inode *dir, const char *name)
     return inode;
 }
 
-
-
-static const struct inode_ops devfs_inode_ops =
-{
+static const struct inode_ops devfs_inode_ops = {
     .read    = devfs_inode_read,
     .write   = devfs_inode_write,
     .mknod   = devfs_mknod,
@@ -183,14 +176,7 @@ static const struct inode_ops devfs_inode_ops =
 
 
 
-
-
-
-
-
-
-
-static struct devfs_inode *devfs_sb_inode_alloc(struct sb *sb)
+static struct devfs_inode *devfs_sb_inode_alloc(struct super_block *sb)
 {
     struct devfs_inode *inode;
 
@@ -202,23 +188,16 @@ static struct devfs_inode *devfs_sb_inode_alloc(struct sb *sb)
     return inode;
 }
 
-
 static void devfs_sb_inode_free(struct devfs_inode *inode)
 {
     list_delete(&inode->link);
     kfree(inode, sizeof(struct devfs_inode));
 }
 
-
-const struct sb_ops devfs_sb_ops =
-{
-    .inode_alloc = (sb_inode_alloc_t) devfs_sb_inode_alloc,
-    .inode_free  = (sb_inode_free_t)  devfs_sb_inode_free,
+const struct super_ops devfs_sb_ops = {
+    .inode_alloc = (super_inode_alloc_t) devfs_sb_inode_alloc,
+    .inode_free  = (super_inode_free_t)  devfs_sb_inode_free,
 };
-
-
-
-
 
 
 
@@ -296,13 +275,13 @@ static const struct dentry_ops devfs_dentry_ops = {
 
 
 
-struct sb *devfs_sb_get(void)
+struct super_block *devfs_sb_get(void)
 {
 	return &devfs_sb;
 }
 
 
-struct sb *devfs_sb_create(dev_t dev)
+struct super_block *devfs_super_create(dev_t dev)
 {
     struct devfs_inode *iroot;
     struct dentry *droot;
@@ -311,12 +290,14 @@ struct sb *devfs_sb_create(dev_t dev)
 
     droot = dentry_create("/", NULL, &devfs_dentry_ops);
 
-    sb_init(&devfs_sb, dev, droot, &devfs_sb_ops);
+    super_init(&devfs_sb, dev, droot, &devfs_sb_ops);
 
     iroot = devfs_sb_inode_alloc(&devfs_sb);
     inode_init(&iroot->base, &devfs_sb, ++devfs_ino, S_IFDIR, 0,
                &devfs_inode_ops);
+
     droot->inode = &iroot->base;
+    iget(droot->inode);
 
     return &devfs_sb;
 }

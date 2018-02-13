@@ -24,7 +24,7 @@
 #include <stdint.h>
 
 
-struct ext2_disk_sb
+struct ext2_disk_super_block
 {
     uint32_t inodes_count; //Count of inodes in fs
     uint32_t blocks_count; //Count of blocks in fs
@@ -104,7 +104,8 @@ struct ext2_disk_dirent
 #define EXT2_BOOT_LOADER_INO    5
 #define EXT2_UNDEL_DIR_INO      6
 
-/*
+
+#if 0
 struct ext2_aux
 {
     uint32_t size;
@@ -123,7 +124,10 @@ struct ext2_fs
     uint16_t dev;
     vfs_ops_t *ops;
 };
-*/
-struct sb *ext2_sb_create(dev_t dev);
+
+#endif
+
+
+struct super_block *ext2_super_create(dev_t dev);
 
 #endif /* _BEEOS_FS_EXT2_H_ */

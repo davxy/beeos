@@ -24,48 +24,49 @@
 #include "panic.h"
 
 
-struct sb *ext2_sb_create(dev_t dev);
-struct sb *devfs_sb_create(dev_t dev);
+struct super_block *ext2_super_create(dev_t dev);
+struct super_block *devfs_super_create(dev_t dev);
 
 // http://www.tldp.org/LDP/lki/lki-3.html
 
-struct fs_type fs_list[] =
+struct vfs_type fs_list[] =
 {
-    { "ext2", ext2_sb_create },
-	{ "dev",  devfs_sb_create }
+    { "ext2", ext2_super_create },
+	{ "dev",  devfs_super_create }
 };
 
 #define FS_LIST_LEN (sizeof(fs_list)/sizeof(fs_list[0]))
 
-void sb_init(struct sb *sb, dev_t dev, struct dentry *root,
-        const struct sb_ops *ops)
+
+
+void super_init(struct super_block *sb, dev_t dev, struct dentry *root,
+                const struct super_ops *ops)
 {
     sb->dev = dev;
     sb->root = root;
-    sb->mnt = sb;
     sb->ops = ops;
 }
 
-struct sb *vfs_sb_create(dev_t dev, const char *type)
+struct super_block *vfs_super_create(dev_t dev, const char *type)
 {
     int i;
-    struct sb *sb;
+    struct super_block *sb = NULL;
 
-    sb = NULL;
     for (i = 0; i < FS_LIST_LEN; i++)
     {
         if (strcmp(type, fs_list[i].name) == 0)
         {
-            sb = fs_list[i].sb_create(dev);
+            sb = fs_list[i].create(dev);
             break;
         }
     }
     return sb;
 }
 
+
+
 static struct slab_cache inode_cache;
 static struct slab_cache file_cache;
-
 
 #define INODE_HTABLE_BITS     3   /* 8 elements hash table (TODO change) */
 static struct htable_link *inode_htable[1 << INODE_HTABLE_BITS];
@@ -110,7 +111,7 @@ struct inode *inode_lookup(dev_t dev, ino_t ino)
 }
 
 
-void inode_init(struct inode *inode, struct sb *sb, ino_t ino, mode_t mode,
+void inode_init(struct inode *inode, struct super_block *sb, ino_t ino, mode_t mode,
                 dev_t dev, const struct inode_ops *ops)
 {
     memset(inode, 0, sizeof(*inode));
@@ -132,80 +133,44 @@ void inode_init(struct inode *inode, struct sb *sb, ino_t ino, mode_t mode,
 
 
 
-#if 0
-struct inode *inode_create(dev_t dev, ino_t ino)
-{
-    struct inode *inode;
-    inode = fs_inode_alloc();
-    if (inode == NULL)
-        return NULL;
-    inode_init(inode, dev, ino);
-    return inode;
-}
-
-struct inode *iget(dev_t dev, ino_t ino)
-{
-    struct inode *inode;
-
-    if ((inode = inode_lookup(dev, ino)) != NULL)
-        return inode;
-
-    inode = kmalloc(sizeof(*inode), 0);
-    if (!inode)
-        panic("iget: no free inodes");
-    inode_init(inode, dev, ino);
-    return inode;
-}
-
 void iput(struct inode *ip)
 {
-    ip->ref--;
+	ip->ref--;
+	kprintf("iput: ino=%d, ref=%d\n", ip->ino, ip->ref);
     if (ip->ref != 0)
         return;
+
     /* Check if was in the hash table (e.g. pipe inodes are not) */
     if (ip->hlink.pprev != NULL)
-    {
-        /* TODO temporary code... 
-         * If is a pipe the pipe_inode structure must be released differently */
-        htable_delete(&ip->hlink); 
+        htable_delete(&ip->hlink);
+
+    if (ip->sb->ops->inode_free != NULL)
+        ip->sb->ops->inode_free(ip);
+    else
         slab_cache_free(&inode_cache, ip);
-    }
 }
 
-
-struct inode *idup(struct inode *ip)
+void iget(struct inode *ip)
 {
-    ip->ref++;
-    return ip;
+	ip->ref++;
+	kprintf("idup: ino=%d, ref=%d\n", ip->ino, ip->ref);
 }
 
-#else
 
-void iput(struct inode *ip)
-{
-
-}
-
-struct inode *idup(struct inode *ip)
-{
-    return ip;
-}
-
-#endif
-
-
-// Copy the next path element from path into name.
-// Return a pointer to the element following the copied one.
-// The returned path has no leading slashes,
-// so the caller can check *path=='\0' to see if the name is the last one.
-// If no name to remove, return 0.
-//
-// Examples:
-//   skipelem("a/bb/c", name) = "bb/c", setting name = "a"
-//   skipelem("///a//bb", name) = "bb", setting name = "a"
-//   skipelem("a", name) = "", setting name = "a"
-//   skipelem("", name) = skipelem("////", name) = 0
-//
+/*
+ * Copy the next path element from path into name.
+ * Return a pointer to the element following the copied one.
+ * The returned path has no leading slashes,
+ * so the caller can check *path=='\0' to see if the name is the last one.
+ * If no name to remove, return 0.
+ *
+ * Examples:
+ *   skipelem("a/bb/c", name) = "bb/c", setting name = "a"
+ *   skipelem("///a//bb", name) = "bb", setting name = "a"
+ *   skipelem("a", name) = "", setting name = "a"
+ *   skipelem("", name) = skipelem("////", name) = 0
+ *
+ */
 #define DIRSIZ  64
 
 static const char *skipelem(const char *path, char *name)
@@ -233,6 +198,8 @@ static const char *skipelem(const char *path, char *name)
     return path;
 }
 
+
+
 struct dentry *dentry_create(const char *name, struct dentry *parent,
                              const struct dentry_ops *ops)
 {
@@ -251,11 +218,34 @@ struct dentry *dentry_create(const char *name, struct dentry *parent,
     return de;
 }
 
-void dentry_destroy(struct dentry *de)
+void dentry_delete(struct dentry *de)
 {
     list_delete(&de->link);
     kfree(de, sizeof(*de));
 }
+
+void dget(struct dentry *de)
+{
+    de->ref++;
+	kprintf("dget: (%s) ino=%d, iref=%d, dref=%d\n",
+			de->name, de->inode->ino, de->inode->ref, de->ref);
+
+}
+
+void dput(struct dentry *de)
+{
+    de->ref--;
+	kprintf("dput: (%s) ino=%d, iref=%d, dref=%d\n",
+			de->name, de->inode->ino, de->inode->ref, de->ref);
+    if (de->ref != 0)
+        return;
+
+    if (de->inode != NULL)
+        iput(de->inode);
+    dentry_delete(de);
+}
+
+
 
 static struct list_link mounts;
 
@@ -363,17 +353,25 @@ struct dentry *named(const char *path)
             if (de->mounted)
                 de = follow_down(de);
             tmp = dentry_lookup(de, name);
-            if (tmp != NULL)
+            if (tmp != NULL) {
+                inode = tmp->inode;
+                if (inode == NULL) {
+                    inode = vfs_mknod(de->inode, 0, de->inode->sb->dev);
+                    iget(inode);
+                }
                 de = tmp;
-            else if (de->inode != NULL) {
+            } else if (de->inode != NULL) {
                 inode = vfs_lookup(de->inode, name);
                 if (inode == NULL)
                     return NULL;
+                iget(inode);
                 de = dentry_create(name, de, de->ops);
                 if (de == NULL)
                     return NULL;
-                de->inode = inode;
             }
+            else
+                return NULL;
+            de->inode = inode;
         }
     }
     if (S_ISDIR(de->inode->mode) && de->mounted)
@@ -384,12 +382,13 @@ struct dentry *named(const char *path)
 struct inode *namei(const char *path)
 {
     struct dentry *de;
-    struct inode  *ino = NULL;
+    struct inode  *inode = NULL;
 
     de = named(path);
-    if (de != NULL)
-        ino = idup(de->inode);
-    return ino;
+    if (de != NULL) {
+        inode = de->inode;
+    }
+    return inode;
 }
 
 

@@ -41,7 +41,7 @@
 
 void kmain(void)
 {
-    struct sb *sb;
+    struct super_block *sb;
 
     /*
      * Core
@@ -68,7 +68,7 @@ void kmain(void)
      * To create the initrd node (used to read the real fs from the disk.
      */
 
-    sb = vfs_sb_create(0, "dev");
+    sb = vfs_super_create(0, "dev");
     if (sb == NULL)
         panic("Unable to create dev fs");
     current_task->cwd = sb->root;
@@ -81,7 +81,7 @@ void kmain(void)
      * Initialization finished
      */
 
-    sb = vfs_sb_create(ROOT_DEV, ROOT_FS_TYPE);
+    sb = vfs_super_create(ROOT_DEV, ROOT_FS_TYPE);
     if (sb == NULL)
         panic("Unable to create root file system");
     current_task->cwd = sb->root;

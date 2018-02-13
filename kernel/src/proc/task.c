@@ -25,6 +25,7 @@
 #include "panic.h"
 #include <string.h>
 
+
 int task_init(struct task *task)
 {
     static pid_t next_pid = 1;
@@ -45,11 +46,10 @@ int task_init(struct task *task)
     task->sgid = current_task->sgid;
  
     /* file system */
-    idup(current_task->cwd->inode);
-    if (current_task->cwd != current_task->root)
-    	idup(current_task->root->inode);
     task->cwd = current_task->cwd;
     task->root = current_task->root;
+    dget(task->cwd);
+    dget(task->root);
 
     /* duplicate valid file descriptors */
     memset(task->fd, 0, sizeof(task->fd));
@@ -58,9 +58,9 @@ int task_init(struct task *task)
         if (!current_task->fd[i].file)
             continue;
         task->fd[i] = current_task->fd[i];
-        task->fd[i].file->refs++;
+        task->fd[i].file->ref++;
     }
-    
+
     /* memory */
     task->brk = current_task->brk;
 
@@ -102,7 +102,8 @@ int task_init(struct task *task)
 
 void task_deinit(struct task *task)
 {
-	//iput(task->root);
+    dput(task->cwd);
+    dput(task->root);
     task_arch_deinit(&task->arch);
 }
 

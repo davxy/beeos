@@ -23,7 +23,7 @@
 #include <errno.h>
 #include <sys/stat.h>
 
-struct sb *devfs_sb_get(void);
+struct super_block *devfs_sb_get(void);
 
 int sys_mount(const char *source, const char *target,
               const char *fs_type, unsigned long flags,

@@ -229,11 +229,13 @@ int pipe_create(int pipefd[2])
     if (dentry == NULL)
         return -1;
     dentry->inode = inode;
+    iget(inode);
 
     file0->flags = O_RDONLY;
-    file0->refs = 1;
+    file0->ref = 1;
     file0->offset = 0;
     file0->dentry = dentry;
+    dget(dentry);
     *file1 = *file0;
     file1->flags = O_WRONLY;
 

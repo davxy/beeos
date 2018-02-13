@@ -39,7 +39,7 @@ int sys_chdir(const char *path)
         return -ENOTDIR;
     }
 
-    idup(inode);
+    iget(inode);
     iput(current_task->cwd->inode);
     current_task->cwd = dentry;
     return 0;
