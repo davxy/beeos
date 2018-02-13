@@ -76,20 +76,6 @@ int sys_mknod(const char *pathname, mode_t mode, dev_t dev)
         return -1;
     idir = dentry->inode;
 
-    dentry = dentry_create(name, dentry, dentry->ops);
-    if (dentry == NULL)
-        return -1;
-
-    inew = vfs_mknod(idir, mode, dev);
-    if (inew != NULL)
-    {
-        iget(inew);
-        dentry->inode = inew;
-    }
-    else
-    {
-        res = -1;
-        dentry_delete(dentry);
-    }
-    return res;
+    return vfs_mknod(idir, mode, dev);
 }
+
