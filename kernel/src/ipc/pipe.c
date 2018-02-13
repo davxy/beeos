@@ -186,6 +186,8 @@ static const struct inode_ops pipe_ops =
 struct inode *pipe_inode_create(void)
 {
     struct pipe_inode *pnode;
+
+    /* TODO... set a pipe sb here to allow correct inode release */
     pnode = kmalloc(sizeof(struct pipe_inode), 0);
     if (!pnode)
         return NULL;
@@ -236,6 +238,7 @@ int pipe_create(int pipefd[2])
     file0->offset = 0;
     file0->dentry = dentry;
     dget(dentry);
+    dget(dentry); /* Held by two files */
     *file1 = *file0;
     file1->flags = O_WRONLY;
 
