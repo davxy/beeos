@@ -136,7 +136,9 @@ void inode_init(struct inode *inode, struct super_block *sb, ino_t ino, mode_t m
 void iput(struct inode *ip)
 {
 	ip->ref--;
+#if 0
 	kprintf("iput: ino=%d, ref=%d\n", ip->ino, ip->ref);
+#endif
     if (ip->ref != 0)
         return;
 
@@ -153,7 +155,9 @@ void iput(struct inode *ip)
 void iget(struct inode *ip)
 {
 	ip->ref++;
+#if 0
 	kprintf("idup: ino=%d, ref=%d\n", ip->ino, ip->ref);
+#endif
 }
 
 
@@ -228,16 +232,19 @@ void dentry_delete(struct dentry *de)
 void dget(struct dentry *de)
 {
     de->ref++;
+#if 0
 	kprintf("dget: (%s) ino=%d, iref=%d, dref=%d\n",
 			de->name, de->inode->ino, de->inode->ref, de->ref);
-
+#endif
 }
 
 void dput(struct dentry *de)
 {
     de->ref--;
+#if 0
 	kprintf("dput: (%s) ino=%d, iref=%d, dref=%d\n",
 			de->name, de->inode->ino, de->inode->ref, de->ref);
+#endif
     if (de->ref != 0)
         return;
 

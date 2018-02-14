@@ -31,6 +31,7 @@
 #include "dev.h"
 #include <string.h>
 #include <stdio.h>
+#include <fcntl.h>
 #include <unistd.h>
 
 
@@ -39,14 +40,49 @@
 #define ROOT_DEV        DEV_INITRD
 
 
-void kmain(void)
+void mount_root(void)
 {
     struct super_block *sb;
+    struct dentry *de;
 
+    /*
+     * DEVFS is temporary mounted as system root.
+     * To create the initrd node (used to read the real fs from the disk.
+     */
+    sb = vfs_super_create(0, "dev");
+    if (sb == NULL)
+        panic("Unable to create dev fs");
+    current_task->cwd = sb->root;
+    current_task->root = sb->root;
+    dget(sb->root);
+    dget(sb->root);
+
+    /* Initrd node created to read data from ramdisk */
+    sys_mknod("/initrd", S_IFBLK, DEV_INITRD);
+    de = named("/initrd");
+    dget(de);
+    //sys_open("/initrd", O_RDONLY | O_CLOEXEC, 0);
+
+    /*
+     * Initialization finished
+     */
+
+    sb = vfs_super_create(ROOT_DEV, ROOT_FS_TYPE);
+    if (sb == NULL)
+        panic("Unable to create root file system");
+    current_task->cwd = sb->root;
+    current_task->root = sb->root;
+    dget(sb->root);
+    dget(sb->root);
+}
+
+
+void kmain(void)
+{
     /*
      * Core
      */
-    
+
     kmalloc_init();
     isr_init();
 
@@ -63,33 +99,7 @@ void kmain(void)
     kprintf("BeeOS v%d.%d.%d - %s\n\n",
             BEEOS_MAJOR, BEEOS_MINOR, BEEOS_PATCH, BEEOS_CODENAME);
 
-    /*
-     * DEVFS is temporary mounted as system root.
-     * To create the initrd node (used to read the real fs from the disk.
-     */
-
-    sb = vfs_super_create(0, "dev");
-    if (sb == NULL)
-        panic("Unable to create dev fs");
-    current_task->cwd = sb->root;
-    current_task->root = sb->root;
-    dget(sb->root);
-    dget(sb->root);
-
-    /* Initrd node created to read data from ramdisk */
-    sys_mknod("/initrd", S_IFBLK, DEV_INITRD);
-
-    /*
-     * Initialization finished
-     */
-
-    sb = vfs_super_create(ROOT_DEV, ROOT_FS_TYPE);
-    if (sb == NULL)
-        panic("Unable to create root file system");
-    current_task->cwd = sb->root;
-    current_task->root = sb->root;
-    dget(sb->root);
-    dget(sb->root);
+    mount_root();
 
     /*
      * Fork and start the init process

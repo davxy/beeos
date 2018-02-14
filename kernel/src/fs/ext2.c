@@ -172,14 +172,18 @@ end:
     return inode;
 }
 
-struct inode *ext2_mknod(struct inode *idir, mode_t mode, dev_t dev)
+int ext2_mknod(struct inode *idir, mode_t mode, dev_t dev)
 {
     struct inode *inode;
+    int res = -1;
 
     inode = idir->sb->ops->inode_alloc(idir->sb);
     if (inode != NULL)
+    {
         inode_init(inode, idir->sb, 0, mode, dev, idir->ops);
-    return inode;
+        res = 0;
+    }
+    return res;
 }
 
 static const struct inode_ops ext2_inode_ops =
@@ -254,13 +258,17 @@ static const struct dentry_ops ext2_dentry_ops = {
 static struct inode *ext2_super_inode_alloc(struct super_block *sb)
 {
 	struct inode *inode = kmalloc(sizeof(struct ext2_inode), 0);
+#if 0
     kprintf("Alloc: %p\n", inode);
+#endif
     return inode;
 }
 
 void ext2_super_inode_free(struct inode *inode)
 {
+#if 0
 	kprintf("Free : %p\n", inode);
+#endif
     kfree(inode, sizeof(struct ext2_inode));
 }
 

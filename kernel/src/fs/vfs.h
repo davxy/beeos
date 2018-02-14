@@ -87,7 +87,7 @@ typedef int (* inode_read_t)(struct inode *inode, void *buf,
 typedef int (* inode_write_t)(struct inode *inode, const void *buf,
             size_t count, off_t offset);
 
-typedef struct inode *(* inode_mknod_t)(struct inode *idir, mode_t mode,
+typedef int (* inode_mknod_t)(struct inode *idir, mode_t mode,
             dev_t dev);
 
 typedef struct inode *(* inode_lookup_t)(struct inode *udir, const char *name);
@@ -143,8 +143,9 @@ struct dentry {
 
 
 struct file {
-    int            flags;   /**< File status flags and file access modes. */
+    int            flags;   /**< File status flags and access modes. */
     int            ref;     /**< Reference counter. */
+    mode_t         mode;    /**< File mode when a new file is created */
     off_t          offset;  /**< File position. */
     struct dentry *dentry;  /**< Dentry reference. */
 };
@@ -183,13 +184,13 @@ static inline struct inode *vfs_lookup(struct inode *idir, const char *name)
     return iret;
 }
 
-static inline struct inode *vfs_mknod(struct inode *idir, mode_t mode, dev_t dev)
+static inline int vfs_mknod(struct inode *idir, mode_t mode, dev_t dev)
 {
-    struct inode *iret = 0;
+    int ret = -1;
 
     if (S_ISDIR(idir->mode) && idir->ops->mknod)
-        iret = idir->ops->mknod(idir, mode, dev);
-    return iret;
+        ret = idir->ops->mknod(idir, mode, dev);
+    return ret;
 }
 
 static inline ssize_t vfs_read(struct inode *node, void *buf,

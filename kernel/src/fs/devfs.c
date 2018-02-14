@@ -28,9 +28,6 @@
 #include <errno.h>
 
 
-//#define DEBUG_DEVFS
-
-
 
 struct devfs_inode {
     struct inode        base;
@@ -134,14 +131,18 @@ static dev_t name_to_dev(const char *name)
     return dev;
 }
 
-struct inode *devfs_mknod(struct inode *idir, mode_t mode, dev_t dev)
+int devfs_mknod(struct inode *idir, mode_t mode, dev_t dev)
 {
     struct inode *inode;
+    int res = -1;
 
     inode = idir->sb->ops->inode_alloc(idir->sb);
     if (inode != NULL)
+    {
         inode_init(inode, idir->sb, ++devfs_ino, mode, dev, idir->ops);
-    return inode;
+        res = 0;
+    }
+    return res;
 }
 
 struct inode *devfs_lookup(struct inode *dir, const char *name)
