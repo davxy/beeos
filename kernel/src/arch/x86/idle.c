@@ -18,6 +18,7 @@
  */
 
 #include "proc.h"
+#include "misc.h"
 
 /*
  * Kernel idle procedure.
@@ -30,8 +31,8 @@ void idle()
     {
         current_task->state = TASK_SLEEPING;
         scheduler();
-        asm volatile("sti");
-        asm volatile("hlt");
-        asm volatile("cli");
+        sti(); /* Enable interrupts */
+        hlt(); /* ...before halt the processor */
+        cli(); /* Disable interrupts in kernel code */
     }
 }

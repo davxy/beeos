@@ -20,7 +20,8 @@
 #ifndef _BEEOS_ARCH_X86_MISC_H_
 #define _BEEOS_ARCH_X86_MISC_H_
 
-#define sti() asm volatile ("sti")
-#define cli() asm volatile ("cli")
+#define sti() asm volatile("sti")
+#define cli() asm volatile("cli")
+#define hlt() asm volatile("hlt")
 
 #endif /* _BEEOS_ARCH_X86_MISC_H_ */
