@@ -17,8 +17,8 @@
  * License along with BeeOS; if not, see <http://www.gnu/licenses/>.
  */
 
-#ifndef _BEEOS_PANIC_H_
-#define _BEEOS_PANIC_H_
+#ifndef BEEOS_PANIC_H_
+#define BEEOS_PANIC_H_
 
 /**
  * Kernel panic. 
@@ -28,4 +28,5 @@
  */
 void panic(const char *fmt, ...);
 
-#endif /* _BEEOS_PANIC_H_ */
+#endif /* BEEOS_PANIC_H_ */
+

@@ -17,8 +17,8 @@
  * License along with BeeOS; if not, see <http://www.gnu/licenses/>.
  */
 
-#ifndef _BEEOS_ARCH_X86_PAGING_H_
-#define _BEEOS_ARCH_X86_PAGING_H_
+#ifndef BEEOS_ARCH_X86_PAGING_H_
+#define BEEOS_ARCH_X86_PAGING_H_
 
 #include "paging_bits.h"
 #include "vmem.h"
@@ -81,4 +81,5 @@ uint32_t page_unmap(void *virt, int retain);
  */
 void paging_init(void);
 
-#endif /* _BEEOS_ARCH_X86_PAGING_H_ */
+#endif /* BEEOS_ARCH_X86_PAGING_H_ */
+

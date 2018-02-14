@@ -17,17 +17,8 @@
  * License along with BeeOS; if not, see <http://www.gnu/licenses/>.
  */
 
-/**
- * @file    list.h
- * @brief   Double linked list
- * @date    Jan 27, 2015
- *
- * Circularly double linked list implementation.
- * Inspired by the Linux kernel lists.
- */
-
-#ifndef _BEEOS_LIST_H_
-#define _BEEOS_LIST_H_
+#ifndef BEEOS_LIST_H_
+#define BEEOS_LIST_H_
 
 #include <stddef.h>     /* offsetof */
 #include "util.h"
@@ -120,4 +111,5 @@ static inline void list_merge(struct list_link *list1, struct list_link *list2)
     ((type *) ((char *)(link) - offsetof(type,member)))
 
 
-#endif /* _BEEOS_LIST_H_ */
+#endif /* BEEOS_LIST_H_ */
+

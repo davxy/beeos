@@ -17,8 +17,8 @@
  * License along with BeeOS; if not, see <http://www.gnu/licenses/>.
  */
 
-#ifndef _BEEOS_DRIVER_SCREEN_H_
-#define _BEEOS_DRIVER_SCREEN_H_
+#ifndef BEEOS_DRIVER_SCREEN_H_
+#define BEEOS_DRIVER_SCREEN_H_
 
 #define SCREEN_WIDTH    80
 #define SCREEN_HEIGHT   25
@@ -64,5 +64,5 @@ void screen_putchar(struct screen *scr, int c);
 void screen_update(struct screen *scr);
 
 
-#endif /* _BEEOS_DRIVER_SCREEN_H_ */
+#endif /* BEEOS_DRIVER_SCREEN_H_ */
 

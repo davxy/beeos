@@ -21,8 +21,8 @@
  * http://www.tldp.org/LDP/tlk/ds/ds.html
  */
 
-#ifndef BEEOS_VFS_H_
-#define BEEOS_VFS_H_
+#ifndef BEEOS_FS_VFS_H_
+#define BEEOS_FS_VFS_H_
 
 #include "htable.h"
 #include "list.h"
@@ -258,5 +258,5 @@ int do_mount(struct dentry *mntpt, struct dentry *root);
 
 int vfs_init(void);
 
+#endif /* BEEOS_FS_VFS_H_ */
 
-#endif /* BEEOS_VFS_H_ */

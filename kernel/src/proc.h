@@ -17,8 +17,8 @@
  * License along with BeeOS; if not, see <http://www.gnu/licenses/>.
  */
 
-#ifndef _BEEOS_PROC_H_
-#define _BEEOS_PROC_H_
+#ifndef BEEOS_PROC_H_
+#define BEEOS_PROC_H_
 
 #include "proc/task.h"
 
@@ -51,5 +51,6 @@ void init_start(void);
  */
 void idle(void);
 
-#endif /* _BEEOS_PROC_H_ */
+#endif /* BEEOS_PROC_H_ */
+
 

@@ -17,8 +17,8 @@
  * License along with BeeOS; if not, see <http://www.gnu/licenses/>.
  */
 
-#ifndef _BEEOS_SYS_H_
-#define _BEEOS_SYS_H_
+#ifndef BEEOS_SYS_H_
+#define BEEOS_SYS_H_
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -92,4 +92,5 @@ int sys_mount(const char *source, const char *target,
 void syscall_init(void);
 
 
-#endif /* _BEEOS_SYS_H_ */
+#endif /* BEEOS_SYS_H_ */
+

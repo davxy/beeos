@@ -17,8 +17,8 @@
  * License along with BeeOS; if not, see <http://www.gnu/licenses/>.
  */
 
-#ifndef _BEEOS_TIMER_H_
-#define _BEEOS_TIMER_H_
+#ifndef BEEOS_TIMER_H_
+#define BEEOS_TIMER_H_
 
 #include "list.h"
 #include <stdint.h>
@@ -116,5 +116,6 @@ void timer_arch_init(unsigned int freq);
  */
 void timer_update(void);
 
-#endif /* _BEEOS_TIMER_H_ */
+#endif /* BEEOS_TIMER_H_ */
+
 

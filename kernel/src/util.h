@@ -17,8 +17,8 @@
  * License along with BeeOS; if not, see <http://www.gnu/licenses/>.
  */
 
-#ifndef _BEEOS_UTIL_H_
-#define _BEEOS_UTIL_H_
+#ifndef BEEOS_UTIL_H_
+#define BEEOS_UTIL_H_
 
 #include <stdint.h>
 #include <sys/types.h>
@@ -101,4 +101,5 @@ do { \
 #define struct_ptr(member_ptr, struct_type, member_name) \
     ((struct_type *)((char *)(member_ptr)-offsetof(struct_type,member_name)))
 
-#endif /* _BEEOS_UTIL_H_ */
+#endif /* BEEOS_UTIL_H_ */
+

@@ -24,8 +24,8 @@
  * word-width, the l-suffix functions are long-width.
  */
 
-#ifndef _BEEOS_ARCH_X86_IO_H_
-#define _BEEOS_ARCH_X86_IO_H_
+#ifndef BEEOS_ARCH_X86_IO_H_
+#define BEEOS_ARCH_X86_IO_H_
 
 #include <stdint.h> 
 
@@ -101,4 +101,5 @@ static inline uint32_t inl(uint16_t port)
     return val;
 }
 
-#endif /* _BEEOS_ARCH_X86_IO_H_ */
+#endif /* BEEOS_ARCH_X86_IO_H_ */
+

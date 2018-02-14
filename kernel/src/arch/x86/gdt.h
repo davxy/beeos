@@ -106,8 +106,8 @@
  * 	selectors at once.
  */
 
-#ifndef _BEEOS_ARCH_X86_GDT_H_
-#define _BEEOS_ARCH_X86_GDT_H_
+#ifndef BEEOS_ARCH_X86_GDT_H_
+#define BEEOS_ARCH_X86_GDT_H_
 
 #include <stdint.h>
 
@@ -141,4 +141,5 @@ struct gdt_reg
 void gdt_init(void);
 
 
-#endif /* _BEEOS_ARCH_X86_GDT_H_ */
+#endif /* BEEOS_ARCH_X86_GDT_H_ */
+

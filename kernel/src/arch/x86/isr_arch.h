@@ -17,8 +17,8 @@
  * License along with BeeOS; if not, see <http://www.gnu/licenses/>.
  */
 
-#ifndef _BEEOS_ARCH_X86_ISR_ARCH_H_
-#define _BEEOS_ARCH_X86_ISR_ARCH_H_
+#ifndef BEEOS_ARCH_X86_ISR_ARCH_H_
+#define BEEOS_ARCH_X86_ISR_ARCH_H_
 
 #include <stdint.h>
 
@@ -60,4 +60,5 @@ struct isr_frame
 #define ISR_COM1        36
 #define ISR_SYSCALL     128
 
-#endif /* _ARCH_X86_ISR_H_ */
+#endif /* BEEOS_ARCH_X86_ISR_ARCH_H_ */
+

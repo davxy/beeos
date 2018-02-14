@@ -17,8 +17,8 @@
  * License along with BeeOS; if not, see <http://www.gnu/licenses/>.
  */
 
-#ifndef _ELF_H_
-#define _ELF_H_
+#ifndef BEEOS_ELF_H_
+#define BEEOS_ELF_H_
 
 #include <stdint.h>
 
@@ -120,4 +120,5 @@ struct elf_file
 const char *elf_lookup_symbol(struct elf_file *elf, uint32_t addr);
 
 
-#endif /* _ELF_H_ */
+#endif /* BEEOS_ELF_H_ */
+

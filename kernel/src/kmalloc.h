@@ -17,8 +17,8 @@
  * License along with BeeOS; if not, see <http://www.gnu/licenses/>.
  */
 
-#ifndef KMALLOC_H
-#define KMALLOC_H
+#ifndef BEEOS_KMALLOC_H_
+#define BEEOS_KMALLOC_H_
 
 #include <stddef.h>
 
@@ -28,4 +28,5 @@ void kfree(void *ptr, size_t size);
 
 void kmalloc_init(void);
 
-#endif
+#endif /* BEEOS_KMALLOC_H_ */
+

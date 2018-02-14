@@ -17,8 +17,8 @@
  * License along with BeeOS; if not, see <http://www.gnu/licenses/>.
  */
 
-#ifndef _BEEOS_ARCH_X86_VMEM_H_
-#define _BEEOS_ARCH_X86_VMEM_H_
+#ifndef BEEOS_ARCH_X86_VMEM_H_
+#define BEEOS_ARCH_X86_VMEM_H_
 
 /*
  * Known virtual addresses
@@ -66,4 +66,5 @@ static inline void *virt_to_phys(void *addr)
 
 #endif /* __ASSEMBLER __ */
 
-#endif /* _BEEOS_ARCH_X86_VMEM_H_ */
+#endif /* BEEOS_ARCH_X86_VMEM_H_ */
+

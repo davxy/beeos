@@ -17,8 +17,8 @@
  * License along with BeeOS; if not, see <http://www.gnu/licenses/>.
  */
 
-#ifndef _BEEOS_MM_ZONE_H_
-#define _BEEOS_MM_ZONE_H_
+#ifndef BEEOS_MM_ZONE_H_
+#define BEEOS_MM_ZONE_H_
 
 #include "buddy.h"
 #include "list.h"
@@ -87,4 +87,5 @@ void zone_free(struct zone_st *ctx, void *ptr, int order);
  */
 void zone_dump(struct zone_st *ctx);
 
-#endif /* _BEEOS_MM_ZONE_H_ */
+#endif /* BEEOS_MM_ZONE_H_ */
+
