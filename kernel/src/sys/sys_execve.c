@@ -21,12 +21,14 @@
 #include "elf.h"
 #include "kmalloc.h"
 #include "proc.h"
+#include "sys.h"
 #include "arch/x86/paging.h"
-
 #include <sys/types.h>
 #include <stddef.h>
 #include <errno.h>
 #include <limits.h>
+#include <fcntl.h>
+
 
 static char *push(char *sp, const char *str)
 {
@@ -104,7 +106,7 @@ int sys_execve(const char *path, const char *argv[], const char *envp[])
 
     if (current_task->arch.ifr == NULL || argv == NULL)
         return -EINVAL;
-    
+
     inode = namei(path);
     if (!inode)
         return -ENOENT;
@@ -187,6 +189,18 @@ int sys_execve(const char *path, const char *argv[], const char *envp[])
     /* We assume that ARG_MAX is lass than PAGE_SIZE */
     current_task->arch.ifr->usr_esp = KVBASE-ARG_MAX;
     current_task->arch.ifr->eip = eh.entry;
+
+    /*
+     * Eventually close files with O_CLOEXEC flag enabled
+     */
+    for (i = 0; i < OPEN_MAX; i++)
+    {
+        if (current_task->fd[i].file == NULL ||
+           (current_task->fd[i].file->flags & O_CLOEXEC) == 0)
+            continue;
+        sys_close(i);
+    }
+
 
     /*
      * POSIX1. All signals are set to their default action unless the process

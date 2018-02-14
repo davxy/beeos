@@ -64,6 +64,8 @@ int sys_open(const char *pathname, int flags, mode_t mode)
 
     file->ref = 1;
     file->offset = 0;
+    file->mode = mode;
+    file->flags = flags;
     file->dentry = dentry;
     dget(dentry);
 

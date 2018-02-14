@@ -32,6 +32,7 @@
 #define O_TRUNC         01000       /**< Truncate if exists (not fcntl) */
 #define O_APPEND        02000       /**< Append if exists */
 #define O_NONBLOCK      04000       /**< Open in non blocking mode (read/write) */
+#define O_CLOEXEC       10000       /**< Close on exec */
 /** @} */
 
 /**
