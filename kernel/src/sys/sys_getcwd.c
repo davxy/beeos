@@ -22,40 +22,39 @@
 #include <errno.h>
 #include <string.h>
 
+
+struct dentry *follow_up(struct dentry *root);
+
+
 char *sys_getcwd(char *buf, size_t size)
 {
-    int i, j, status = 0;
+    int j;
     size_t slen;
-    struct dirent dent;
-    struct inode *icurr, *iparent;
+    struct dentry *curr;
 
     if (buf == NULL)
         return (char *)-EINVAL;
 
-    icurr = current_task->cwd;
+    curr = current_task->cwd;
+
     j = size;
-    do {
-        iparent = fs_lookup(icurr, "..");
-        if (iparent == icurr)
+    while (1) {
+        if (strcmp(curr->name, "/") == 0)
+            curr = follow_up(curr);
+        if (curr == curr->parent)
             break;
-        i = 0;
-        while ((status = fs_readdir(iparent, i++, &dent)) == 0)
-        {
-            if (dent.d_ino == icurr->ino)
-            {
-                slen = strlen(dent.d_name);
-                if (j - slen < 0)
-                    return (char *)-ENAMETOOLONG;
-                j -= slen;
-                memcpy(&buf[j], dent.d_name, slen);
-                if (j - 1 < 0)
-                    return (char *)-ENAMETOOLONG;
-                buf[--j] = '/';
-                icurr = iparent;
-                break;
-            }
-        }
-    } while (status == 0);
+
+        slen = strlen(curr->name);
+        if (j - slen < 0)
+            return (char *)-ENAMETOOLONG;
+        j -= slen;
+        memcpy(&buf[j], curr->name, slen);
+        if (j - 1 < 0)
+            return (char *)-ENAMETOOLONG;
+        buf[--j] = '/';
+
+        curr = curr->parent;
+    }
     if (j == size)
         buf[--j] = '/';
 

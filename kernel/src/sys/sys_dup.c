@@ -37,6 +37,6 @@ int sys_dup(int oldfd)
 
     current_task->fd[newfd] = current_task->fd[oldfd];
     current_task->fd[newfd].flags &= ~FD_CLOEXEC; /* Posix */
-    current_task->fd[newfd].file->refs++;
+    current_task->fd[newfd].file->ref++;
     return newfd;
 }

@@ -25,7 +25,8 @@
 #include <string.h>
 
 
-static void get_parent_dir(char *parent, const char *filepath)
+
+static void split_path(const char *filepath, char *parent, char *name)
 {
     int i;
 
@@ -35,35 +36,45 @@ static void get_parent_dir(char *parent, const char *filepath)
         if (filepath[i] == '/')
             break;
     }
-    if (i > 0)
+    if (i > 0) {
+    	int k = (*filepath == '/') ? 1 : 0;
         strncpy(parent, filepath, i);
-    else
+        strcpy(name, filepath + i + k);
+    } else {
         parent[i++] = '/';
+        if (filepath[i] != '\0') {
+            strcpy(name, filepath + i);
+        }
+        else {
+            name[0] = '.';
+            name[1] = '\0';
+        }
+    }
     parent[i] = '\0';
 }
 
+
+
 int sys_mknod(const char *pathname, mode_t mode, dev_t dev)
 {
-    struct inode *inode, *idir;
+    struct dentry *dentry;
+    struct inode  *idir;
     char parent[PATH_MAX];
+    char name[NAME_MAX];
 
-    inode = fs_namei(pathname);
-    if (inode != NULL)
+    dentry = named(pathname);
+    if (dentry != NULL)
     {
-        iput(inode);
         return -EEXIST; /* file exists */
     }
 
-    get_parent_dir(parent, pathname);
-    idir = fs_namei(parent);
-    if (idir == NULL)
+    split_path(pathname, parent, name);
+
+    dentry = named(parent);
+    if (dentry == NULL)
         return -1;
+    idir = dentry->inode;
 
-    inode = idir->sb->ops->inode_alloc();
-    inode->mode = mode;
-    inode->dev = dev;
-
-    iput(idir);
-
-    return 0;
+    return vfs_mknod(idir, mode, dev);
 }
+

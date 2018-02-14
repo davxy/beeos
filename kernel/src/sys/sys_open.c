@@ -28,13 +28,14 @@
 #include <string.h>
 #include <stdio.h>
 
+
 void *fs_file_alloc(void);
 
 int sys_open(const char *pathname, int flags, mode_t mode)
 {
     int fdn;
     struct file *file;
-    struct inode *inode;
+    struct dentry *dentry;
     char buf[16];
 
     if (pathname == NULL)
@@ -47,8 +48,8 @@ int sys_open(const char *pathname, int flags, mode_t mode)
         pathname = buf;
     }
 
-    inode = fs_namei(pathname);
-    if (inode == NULL)
+    dentry = named(pathname);
+    if (dentry == NULL)
         return -ENOENT;
 
     for (fdn = 0; fdn < OPEN_MAX; fdn++)
@@ -57,33 +58,16 @@ int sys_open(const char *pathname, int flags, mode_t mode)
     if (fdn == OPEN_MAX)
         return -EMFILE; /* Too many open files. */
 
-    // TODO : temporary just to allow to proceed
-#if 0
-    if (strcmp(pathname, "console") == 0)
-    {
-        inode = kmalloc(sizeof(struct inode), 0);
-        memset(inode, 0, sizeof(*inode));
-        inode->mode = S_IFCHR;
-        inode->dev = tty_get();
-        inode->ref = 1;
-    }
-    else
-    {
-#endif
-        inode = fs_namei(pathname);
-        if (inode == NULL)
-            return -ENOENT;
- //   }
-
     file = fs_file_alloc();
     if (!file)
         return -ENOMEM;
 
-    file->refs = 1;
+    file->ref = 1;
     file->offset = 0;
-    file->inode = inode;
+    file->dentry = dentry;
+    dget(dentry);
 
     current_task->fd[fdn].file = file;
-    
+
     return fdn;
 }

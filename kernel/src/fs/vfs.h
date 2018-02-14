@@ -21,138 +21,242 @@
  * http://www.tldp.org/LDP/tlk/ds/ds.html
  */
 
-#ifndef _BEEOS_FS_H_
-#define _BEEOS_FS_H_
+#ifndef BEEOS_VFS_H_
+#define BEEOS_VFS_H_
 
-#include <htable.h>
+#include "htable.h"
+#include "list.h"
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <dirent.h>
 
-struct sb_ops
-{
-    struct inode *(*inode_alloc)(void);
-    void (*inode_free)(struct inode *inode);
-    int (*inode_read)(struct inode *inode);
-    int (*inode_write)(struct inode *inode);
+
+/*
+ * Superblock declarations
+ */
+
+
+struct super_block;
+
+typedef struct inode * (* super_inode_alloc_t)(struct super_block *sb);
+typedef void (* super_inode_free_t)(struct inode *inode);
+typedef int (* super_inode_read_t)(struct inode *inode);
+typedef int (* super_inode_write_t)(struct inode *inode);
+
+struct super_ops {
+    super_inode_alloc_t   inode_alloc;
+    super_inode_free_t    inode_free;
+    super_inode_read_t    inode_read;
+    super_inode_write_t   inode_write;
 };
 
 /** File system super block */
-struct sb
+struct super_block
 {
-    dev_t dev;              /** Device */
-    struct inode *root;     /** Root inode */
-    struct sb    *mnt;      /** Mount point superblock */
-    const struct sb_ops *ops;     /** Superblock operations */
+    dev_t                   dev;  /** Device */
+    struct dentry          *root; /** Root dentry */
+    const struct super_ops *ops;  /** Superblock vfs operations */
 };
 
-void sb_init(struct sb *sb, dev_t dev, struct inode *root,
-        const struct sb_ops *ops);
+void super_init(struct super_block *sb, dev_t dev, struct dentry *root,
+                const struct super_ops *ops);
 
-struct sb *vfs_sb_create(dev_t dev, const char *name);
+/**
+ * Creates a file system super_block.
+ */
+struct super_block *vfs_super_create(dev_t dev, const char *name);
 
 /** Initial file system descriptor */
-struct fs_type
+struct vfs_type
 {
     const char *name;
-    struct sb *(*sb_create)(dev_t dev);
+    struct super_block *(* create)(dev_t dev);
 };
+
+
+
+/*
+ * Inode declarations.
+ */
 
 struct inode;
 
-typedef int (*inode_read_t)(struct inode *inode, void *buf, 
+typedef int (* inode_read_t)(struct inode *inode, void *buf,
             size_t count, off_t offset);
 
-typedef int (*inode_write_t)(struct inode *inode, const void *buf,
-             size_t count, off_t offset);
+typedef int (* inode_write_t)(struct inode *inode, const void *buf,
+            size_t count, off_t offset);
 
+typedef int (* inode_mknod_t)(struct inode *idir, mode_t mode,
+            dev_t dev);
 
-struct inode_ops
-{
-    inode_read_t  read;
-    inode_write_t write;
-    struct inode *(*lookup)(struct inode *dir, const char *name);
-    int (*readdir)(struct inode *inode, unsigned int i,
-            struct dirent *dent);
+typedef struct inode *(* inode_lookup_t)(struct inode *udir, const char *name);
+
+struct inode_ops {
+    inode_read_t    read;
+    inode_write_t   write;
+    inode_mknod_t   mknod;
+    inode_lookup_t  lookup;
 };
 
 /** In-memory inode. */
-struct inode
-{
-    dev_t       dev;    /* Device */
-    dev_t       rdev;   /* Real device */
-    mode_t      mode;   /* File type and permissions */
-    uid_t       uid;    /* Ownner */
-    gid_t       gid;    /* Group */
-    ino_t       ino;    /* Inode number */
-    size_t      size;   /* File size in bytes. */
-    int         ref;    /* Reference count. */
-    struct htable_link      hlink;
-    struct sb   *sb;    /* Inode superblock */
-    const struct inode_ops  *ops; /* VFS operations. */
+struct inode {
+    dev_t       rdev;   /**< Real device */
+    mode_t      mode;   /**< File type and permissions */
+    uid_t       uid;    /**< Owner user id */
+    gid_t       gid;    /**< Owner group id */
+    ino_t       ino;    /**< Inode number */
+    size_t      size;   /**< File size in bytes. */
+    int         ref;    /**< Reference counter. */
+    time_t      atime;  /**< Access time */
+    time_t      mtime;  /**< Modification time */
+    time_t      ctime;  /**< Creation time */
+    struct htable_link      hlink; /**< Link within the hash table */
+    struct super_block      *sb;   /**< Inode superblock */
+    const struct inode_ops  *ops;  /**< Inode vfs Operations */
 };
 
 
-struct file
-{
-    int flags;           /**< File status flags and file access modes. */
-    int refs;            /**< Number of references. */
-    off_t offset;        /**< File position. */
-    struct inode *inode; /**< Inode reference. */
+
+/*
+ * Dentry declarations.
+ */
+
+typedef int (* dentry_readdir_t)(struct dentry *dir, unsigned int i,
+            struct dirent *dent);
+
+struct dentry_ops {
+    dentry_readdir_t readdir; /**< Read directory */
 };
 
-struct fd
-{
-    int flags;          /**< File descriptor flags, currently FD_CLOEXEC. */
+struct dentry {
+    char              name[NAME_MAX];  /**< Name */
+    int               ref;             /**< Reference counter */
+    struct inode     *inode;           /**< Inode */
+    struct dentry    *parent;          /**< Parent directory */
+    struct list_link  child;           /**< Children list (if is a dir) */
+    struct list_link  link;            /**< Siblings link */
+    int               mounted;         /**< Set to 1 if is a mount point */
+    const struct dentry_ops *ops;      /**< Dentry vfs operations */
+};
+
+
+
+struct file {
+    int            flags;   /**< File status flags and access modes. */
+    int            ref;     /**< Reference counter. */
+    mode_t         mode;    /**< File mode when a new file is created */
+    off_t          offset;  /**< File position. */
+    struct dentry *dentry;  /**< Dentry reference. */
+};
+
+struct fd {
+    int         flags;  /**< File descriptor flags, currently FD_CLOEXEC. */
     struct file *file;  /**< Pointer to the file table. */
 };
 
+struct vfsmount {
+    struct dentry    *mntpt; /**< mount point */
+    struct dentry    *root;  /**< mount root */
+    struct list_link link;   /**< link in the mounts list */
+};
 
-static inline struct inode *fs_lookup(struct inode *dir, const char *name)
+
+
+
+static inline struct inode *vfs_inode_alloc(struct super_block *sb)
+{
+    struct inode *inode = NULL;
+
+    if (sb->ops->inode_alloc != NULL)
+        inode = sb->ops->inode_alloc(sb);
+    return inode;
+}
+
+
+
+static inline struct inode *vfs_lookup(struct inode *idir, const char *name)
 {
     struct inode *iret = 0;
-    if (S_ISDIR(dir->mode) && dir->ops->lookup)
-        iret = dir->ops->lookup(dir, name);
+
+    if (S_ISDIR(idir->mode) && idir->ops->lookup)
+        iret = idir->ops->lookup(idir, name);
     return iret;
 }
 
-static inline int fs_readdir(struct inode *dir, int i, struct dirent *dent)
+static inline int vfs_mknod(struct inode *idir, mode_t mode, dev_t dev)
 {
     int ret = -1;
-    if (S_ISDIR(dir->mode) && dir->ops->readdir)
-        ret = dir->ops->readdir(dir, i, dent);
+
+    if (S_ISDIR(idir->mode) && idir->ops->mknod)
+        ret = idir->ops->mknod(idir, mode, dev);
     return ret;
 }
 
-static inline ssize_t fs_read(struct inode *node, void *buf,
+static inline ssize_t vfs_read(struct inode *node, void *buf,
         size_t count, off_t offset)
 {
     int ret = -1;
+
     if (!S_ISDIR(node->mode) && node->ops->read)
         ret = node->ops->read(node, buf, count, offset);
     return ret;
 }
 
-static inline ssize_t fs_write(struct inode *node, const void *buf,
+static inline ssize_t vfs_write(struct inode *node, const void *buf,
         size_t count, off_t offset)
 {
     int ret = -1;
+
     if (!S_ISDIR(node->mode) && node->ops->write)
         ret = node->ops->write(node, buf, count, offset);
     return ret;
 }
 
-int fs_init(void);
 
 
-struct inode *fs_namei(const char *pathname);
+static inline int vfs_readdir(struct dentry *dir, int i, struct dirent *dent)
+{
+    int ret = -1;
 
-struct inode *iget(dev_t dev, ino_t ino);
-struct inode *idup(struct inode *inode);
-void iput(struct inode *inode);
+    if (S_ISDIR(dir->inode->mode) && dir->ops->readdir)
+        ret = dir->ops->readdir(dir, i, dent);
+    return ret;
+}
+
+
 
 struct inode *inode_lookup(dev_t dev, ino_t ino);
-void inode_init(struct inode *inode, dev_t dev, ino_t ino);
-struct inode *inode_create(dev_t dev, ino_t ino);
 
-#endif /* _BEEOS_FS_H_ */
+void inode_init(struct inode *inode, struct super_block *sb, ino_t ino,
+                mode_t mode, dev_t dev, const struct inode_ops *ops);
+
+struct inode *namei(const char *pathname);
+
+void iget(struct inode *inode);
+
+void iput(struct inode *inode);
+
+
+
+struct dentry *dentry_create(const char *name, struct dentry *parent,
+                             const struct dentry_ops *ops);
+
+void dentry_delete(struct dentry *de);
+
+struct dentry *named(const char *pathname);
+
+void dget(struct dentry *de);
+
+void dput(struct dentry *de);
+
+
+
+
+int do_mount(struct dentry *mntpt, struct dentry *root);
+
+
+int vfs_init(void);
+
+
+#endif /* BEEOS_VFS_H_ */

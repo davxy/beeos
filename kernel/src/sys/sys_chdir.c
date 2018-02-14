@@ -25,19 +25,19 @@
 
 int sys_chdir(const char *path)
 {
+    struct dentry *dentry;
     struct inode *inode;
 
-    inode = fs_namei(path);
-    if (inode == NULL)
+    dentry = named(path);
+    if (dentry == NULL)
         return -ENOENT;
+    inode = dentry->inode;
 
     if (!S_ISDIR(inode->mode))
-    {
-        iput(inode);
         return -ENOTDIR;
-    }
 
-    iput(current_task->cwd);
-    current_task->cwd = idup(inode);
+    dget(dentry);
+    dput(current_task->cwd);
+    current_task->cwd = dentry;
     return 0;
 }

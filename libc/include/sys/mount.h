@@ -17,28 +17,17 @@
  * License along with BeeOS; if not, see <http://www.gnu/licenses/>.
  */
 
-#include "sys.h"
-#include "fs/vfs.h"
-#include "proc.h"
-#include <errno.h>
-#include <sys/stat.h>
+#ifndef BEEOS_SYS_MOUNT_H_
+#define BEEOS_SYS_MOUNT_H_
 
-struct super_block *devfs_sb_get(void);
 
-int sys_mount(const char *source, const char *target,
-              const char *fs_type, unsigned long flags,
-              const void *data)
+#include <unistd.h>
+
+
+static inline int mount(const char *source, const char *target,
+         const char *fs_type, unsigned long flags, const void *data)
 {
-    struct dentry *dst, *src;
-
-    dst = named(target);
-    if (dst == NULL)
-        return -ENOENT;
-
-    if (strcmp(fs_type, "dev") == 0)
-        src = devfs_sb_get()->root;
-    else
-        src = named(source);
-
-    return do_mount(dst, src);
+    return syscall(__NR_mount, source, target, fs_type, flags, data);
 }
+
+#endif /* BEEOS_SYS_MOUNT_H_ */

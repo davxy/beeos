@@ -314,7 +314,7 @@ static void kbd_handler(void)
                     kill_tty_group();
                     break;
                 }
-                c = '\0';
+                c = '\n';
             }
             else if ((kbd_status & KBD_STATUS_ALT) != 0) {
                 /*kprintf("ALT + %c (0x%x)\n", c, c);*/

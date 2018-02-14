@@ -23,11 +23,13 @@
 
 #include "fs/vfs.h"
 
-struct sb *devfs_init(void);
+
+struct super_block *devfs_super_create(dev_t dev);
 
 
 ssize_t devfs_read(dev_t dev, void *buf, size_t size, off_t off);
 
 ssize_t devfs_write(dev_t dev, const void *buf, size_t size, off_t off);
+
 
 #endif /* BEEOS_FS_DEVFS_H_ */

@@ -41,7 +41,7 @@ off_t sys_lseek(int fd, off_t offset, int whence)
             newoffset = file->offset + offset;
             break;
         case SEEK_END:
-            newoffset = (off_t)file->inode->size + offset;
+            newoffset = (off_t)file->dentry->inode->size + offset;
             break;
         default:
             newoffset = -1;

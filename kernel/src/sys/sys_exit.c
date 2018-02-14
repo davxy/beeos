@@ -125,9 +125,6 @@ void sys_exit(int status)
             sys_close(i);
     }
 
-    iput(current_task->cwd);
-    current_task->cwd = NULL;
-   
     /* Give children to init */
     child = list_container(current_task->children.next,
                            struct task, children);

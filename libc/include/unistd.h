@@ -45,12 +45,6 @@
 #define __NR_tcgetpgrp      23
 #define __NR_tcsetpgrp      24
 #define __NR_fstat          28
-#define __NR_getppid        64
-#define __NR_getcwd         65
-#define __NR_getuid         102
-#define __NR_getgid         104
-#define __NR_setuid         105
-#define __NR_setgid         106
 #define __NR_sbrk           30
 #define __NR_nanosleep      31
 #define __NR_sigaction      32
@@ -61,7 +55,16 @@
 #define __NR_pipe           38
 #define __NR_chdir          39
 #define __NR_alarm          40
+#define __NR_mount          41
+#define __NR_getppid        64
+#define __NR_getcwd         65
+#define __NR_getuid         102
+#define __NR_getgid         104
+#define __NR_setuid         105
+#define __NR_setgid         106
+/* Custom info syscall */
 #define __NR_info           99
+
 
 #define STDIN_FILENO        0
 #define STDOUT_FILENO       1
