@@ -33,7 +33,6 @@
 #define TASK_RUNNING    1
 #define TASK_SLEEPING   2
 #define TASK_ZOMBIE     3
-#define TASK_READY      4
 
 #define SIGNALS_NUM     (SIGUNUSED+1)
 

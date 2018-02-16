@@ -53,7 +53,6 @@
 #define PAGE_TAB_MAP    0xFFC00000  /* Current page tables base vaddress */
 #define PAGE_DIR_MAP    0xFFFFF000  /* Current page directory vaddress */
 #define PAGE_TAB_MAP2   0xFF800000  /* Temporary page tables base vaddress */
-#define PAGE_DIR_MAP2   0xFFBFF000  /* Temporary page directory vaddress */
 #define PAGE_WILD       (PAGE_TAB_MAP2-4096) /* Temporary "wild" page */
 
 /* Virtual address to page directory index (virt / 4M) */

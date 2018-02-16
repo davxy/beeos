@@ -82,15 +82,7 @@ static inline int iswithin(uintptr_t b1, size_t sz1, uintptr_t b2, size_t sz2)
     return ((b1 <= b2) && (e1 >= e2));
 }
 
-#define SWAP(a, b) \
-do { \
-    (a) ^= (b); \
-    (b) ^= (a); \
-    (a) ^= (b); \
-} while(0)
-
 #define MIN(a, b) (((a) < (b)) ? (a) : (b))
-#define MAX(a, b) (((a) < (b)) ? (b) : (a))
 
 /**
  * Get a pointer to the struct start given a pointer to a member.
