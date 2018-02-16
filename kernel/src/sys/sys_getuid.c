@@ -20,7 +20,7 @@
 #include <sys/types.h>
 #include "proc.h"
 
-uid_t sys_getuid()
+uid_t sys_getuid(void)
 {
     return current_task->uid;
 }

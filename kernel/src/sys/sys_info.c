@@ -20,8 +20,8 @@
 #include "sys/types.h"
 #include "kprintf.h"
 
-void frame_dump();
-void proc_dump();
+void frame_dump(void);
+void proc_dump(void);
 
 int sys_info(int type)
 {

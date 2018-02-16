@@ -25,7 +25,7 @@
  * This endless procedure is executed by the first kernel process when
  * there is nothing useful to do.
  */
-void idle()
+void idle(void)
 {
     while (1)
     {

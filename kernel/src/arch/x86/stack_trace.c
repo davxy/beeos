@@ -21,9 +21,11 @@
 #include "elf.h"
 #include <stdint.h>
 
+#if 0
 extern struct elf_file kernel_elf;
+#endif
 
-void print_stack_trace()
+void print_stack_trace(void)
 {
     uint32_t *ebp, *eip;
     /* Get the current EBP value */
@@ -31,7 +33,10 @@ void print_stack_trace()
     while (ebp)
     {
         eip = ebp+1; 
-        kprintf("    [0x%x] %s\n", *eip, "");//elf_lookup_symbol(&kernel_elf, *eip));
+#if 0
+        elf_lookup_symbol(&kernel_elf, *eip));
+#endif
+        kprintf("    [0x%x] %s\n", *eip, "");
         ebp = (uint32_t *) *ebp;
     }
 }

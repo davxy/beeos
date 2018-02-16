@@ -20,7 +20,7 @@
 #include <sys/types.h>
 #include "proc.h"
 
-pid_t sys_getpid()
+pid_t sys_getpid(void)
 {
     return current_task->pid;
 }

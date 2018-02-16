@@ -20,7 +20,7 @@
 #include <sys/types.h>
 #include "proc.h"
 
-gid_t sys_getgid()
+gid_t sys_getgid(void)
 {
     return current_task->gid;
 }
