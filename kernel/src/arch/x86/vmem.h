@@ -27,6 +27,7 @@
 #define KVADDR      0xC0100000  /**< Kernel start virtual address */
 #define UVADDR      0x08000000  /**< User code stub virtual address */
 
+
 #ifndef __ASSEMBLER__
 
 /*
@@ -55,16 +56,7 @@ static inline void *virt_to_phys(void *addr)
     return (char *)addr - KVBASE;
 }
 
-#else
-
-/*
- * Same functionality as the above inline C functions but callable
- * from assembly code.
- */
-#define phys_to_virt(addr) ((addr) + KVBASE)
-#define virt_to_phys(addr) ((addr) - KVBASE)
-
-#endif /* __ASSEMBLER __ */
+#endif /* __ASSEMBLER__ */
 
 #endif /* BEEOS_ARCH_X86_VMEM_H_ */
 
