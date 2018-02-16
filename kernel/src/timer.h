@@ -42,8 +42,6 @@ static inline unsigned long ticks_to_msecs(unsigned long ticks)
     return (1000L / timer_freq) * ticks;
 }
 
-struct timer_event;
-
 /** Timer event callback signature. */
 typedef void (timer_event_t)(void *data);
 

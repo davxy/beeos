@@ -27,6 +27,7 @@
 #include <limits.h>
 #include <string.h>
 #include <stdio.h>
+#include <fcntl.h>
 
 
 void *fs_file_alloc(void);
@@ -53,7 +54,7 @@ int sys_open(const char *pathname, int flags, mode_t mode)
         return -ENOENT;
 
     for (fdn = 0; fdn < OPEN_MAX; fdn++)
-        if (current_task->fd[fdn].file == NULL)
+        if (current_task->fd[fdn].fil == NULL)
             break;
     if (fdn == OPEN_MAX)
         return -EMFILE; /* Too many open files. */
@@ -63,13 +64,14 @@ int sys_open(const char *pathname, int flags, mode_t mode)
         return -ENOMEM;
 
     file->ref = 1;
-    file->offset = 0;
+    file->off = 0;
     file->mode = mode;
-    file->flags = flags;
-    file->dentry = dentry;
+    file->flags = flags & ~O_CLOEXEC;
+    file->dent = dentry;
     dget(dentry);
 
-    current_task->fd[fdn].file = file;
+    current_task->fd[fdn].fil = file;
+    current_task->fd[fdn].flags = flags & O_CLOEXEC;
 
     return fdn;
 }

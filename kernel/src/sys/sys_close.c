@@ -30,20 +30,20 @@ int sys_close(int fdn)
     struct file *file;
 
     /* Validate file descriptor */
-    if (fdn < 0 || OPEN_MAX <= fdn || !current_task->fd[fdn].file)
+    if (fdn < 0 || OPEN_MAX <= fdn || !current_task->fd[fdn].fil)
         return -EBADF;
 
-    file = current_task->fd[fdn].file;
-    current_task->fd[fdn].file = NULL;
+    file = current_task->fd[fdn].fil;
+    current_task->fd[fdn].fil = NULL;
     current_task->fd[fdn].flags = 0;
 
     file->ref--;
     if (file->ref == 0)
     {
         /* Wake up the other end, to allow EOF recv in user space */
-        if (S_ISFIFO(file->dentry->inode->mode))
-            vfs_write(file->dentry->inode, NULL, 0, 0);
-        dput(file->dentry);
+        if (S_ISFIFO(file->dent->inod->mode))
+            vfs_write(file->dent->inod, NULL, 0, 0);
+        dput(file->dent);
 
         fs_file_free(file);
     }

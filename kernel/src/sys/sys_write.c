@@ -32,18 +32,18 @@ ssize_t sys_write(int fdn, const void *buf, size_t count)
     ssize_t n;
     struct file *file;
 
-    if (OPEN_MAX <= fdn || current_task->fd[fdn].file == NULL)
+    if (OPEN_MAX <= fdn || current_task->fd[fdn].fil == NULL)
         return -EBADF;
 
-    file = current_task->fd[fdn].file;
+    file = current_task->fd[fdn].fil;
 
-    switch (file->dentry->inode->mode & S_IFMT) {
+    switch (file->dent->inod->mode & S_IFMT) {
         case S_IFBLK:
         case S_IFCHR:
         case S_IFREG:
         case S_IFIFO:
         case S_IFSOCK:
-            n = vfs_write(file->dentry->inode, buf, count, file->offset);
+            n = vfs_write(file->dent->inod, buf, count, file->off);
             break;
         case S_IFDIR:
             n = -EBADF;
@@ -54,6 +54,6 @@ ssize_t sys_write(int fdn, const void *buf, size_t count)
     }
 
     if (n > 0)
-        file->offset += n;
+        file->off += n;
     return n;
 }

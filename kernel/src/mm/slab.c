@@ -89,7 +89,7 @@ static struct slab_cache *slab_slabctl_cache;
 static struct slab_cache *slab_bufctl_cache;
 
 
-static void *bufctl_hash_put(struct slab_cache *cache, struct bufctl *bufctl,
+static void *bufctl_hash_put(struct slab_cache *cache, struct bufctl *bctl,
         int loadcheck)
 {
     if (cache->hload == 0)
@@ -102,19 +102,11 @@ static void *bufctl_hash_put(struct slab_cache *cache, struct bufctl *bufctl,
         htable_init(cache->htable, fnzb(cache->hsize));
     }
 
-#if 0
-    if (loadcheck && (cache->hload == 0 || (float)cache->hload/cache->hsize >= 0.75f))
-    {
-        if (bufctl_hash_resize(cache, 1) < 0 && cache->hload == 0)
-            return NULL;
-    }
-#endif
-
-    htable_insert(cache->htable, &bufctl->hlink, (uintptr_t)bufctl->buf, 
+    htable_insert(cache->htable, &bctl->hlink, (uintptr_t)bctl->buf,
             fnzb(cache->hsize));
-    if (bufctl->hlink.next == NULL)
+    if (bctl->hlink.next == NULL)
         cache->hload++; /* added to an empty slot */
-    return bufctl->buf;
+    return bctl->buf;
 }
 
 static struct bufctl *bufctl_hash_get(struct slab_cache *cache, void *obj)
@@ -206,7 +198,7 @@ static struct slabctl *slab_space_alloc(struct slab_cache *cache, int flags)
     int i;
     void *obj;
     struct slabctl *slab;
-    struct bufctl *bufctl;
+    struct bufctl *bctl;
     size_t size;
     void *data;
     unsigned int order;
@@ -243,12 +235,12 @@ static struct slabctl *slab_space_alloc(struct slab_cache *cache, int flags)
     {
         if (cache->flags & SLAB_EMBED_BUFCTL)
         {
-            bufctl = BUF_TO_BUFCTL(obj, cache->objsize);
+            bctl = BUF_TO_BUFCTL(obj, cache->objsize);
         }
         else
         {
-            bufctl = slab_cache_alloc(slab_bufctl_cache, flags);
-            if (!bufctl)
+            bctl = slab_cache_alloc(slab_bufctl_cache, flags);
+            if (!bctl)
             {
                 /* temporary set to the allocated objects and undo */
                 unsigned int objs = slab->cache->slab_objs;
@@ -257,10 +249,10 @@ static struct slabctl *slab_space_alloc(struct slab_cache *cache, int flags)
                 slab->cache->slab_objs = objs;
                 return NULL;
             }
-            bufctl->buf = obj;
-            bufctl->slab = slab;
+            bctl->buf = obj;
+            bctl->slab = slab;
         }
-        bufctl_list_put(slab, bufctl);
+        bufctl_list_put(slab, bctl);
         if (cache->ctor)
             cache->ctor(obj);
     }

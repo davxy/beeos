@@ -214,7 +214,7 @@ struct dentry *dentry_create(const char *name, struct dentry *parent,
         return NULL;
     strcpy(de->name, name);
     de->ref = 0;
-    de->inode = NULL; /* May be without an inode */
+    de->inod = NULL; /* May be without an inode */
     de->parent = (parent != NULL) ? parent : de;
     list_init(&de->child);  /* Empty children list */
     list_insert_before(&parent->child, &de->link); /* Insert in the parent child  list */
@@ -248,8 +248,8 @@ void dput(struct dentry *de)
     if (de->ref != 0)
         return;
 
-    if (de->inode != NULL)
-        iput(de->inode);
+    if (de->inod != NULL)
+        iput(de->inod);
     dentry_delete(de);
 }
 
@@ -348,7 +348,7 @@ struct dentry *named(const char *path)
 
     while ((path = skipelem(path, name)) != NULL)
     {
-        if (!S_ISDIR(de->inode->mode))
+        if (!S_ISDIR(de->inod->mode))
             return NULL;
 
         if (strcmp(name, ".") == 0) {
@@ -363,21 +363,21 @@ struct dentry *named(const char *path)
             tmp = dentry_lookup(de, name);
             if (tmp != NULL) {
                 de = tmp;
-            } else if (de->inode != NULL) {
-                inode = vfs_lookup(de->inode, name);
+            } else if (de->inod != NULL) {
+                inode = vfs_lookup(de->inod, name);
                 if (inode == NULL)
                     return NULL;
                 de = dentry_create(name, de, de->ops);
                 if (de == NULL)
                     return NULL;
-                de->inode = inode;
+                de->inod = inode;
                 iget(inode);
             } else
                 return NULL;
 
         }
     }
-    if (S_ISDIR(de->inode->mode) && de->mounted)
+    if (S_ISDIR(de->inod->mode) && de->mounted)
         de = follow_down(de);
     return de;
 }
@@ -389,7 +389,7 @@ struct inode *namei(const char *path)
 
     de = named(path);
     if (de != NULL) {
-        inode = de->inode;
+        inode = de->inod;
     }
     return inode;
 }

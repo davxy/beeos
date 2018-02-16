@@ -28,20 +28,20 @@ off_t sys_lseek(int fd, off_t offset, int whence)
     struct file *file;
     off_t newoffset;
 
-    if (fd < 0 || OPEN_MAX <= fd || !current_task->fd[fd].file)
+    if (fd < 0 || OPEN_MAX <= fd || !current_task->fd[fd].fil)
         return -EBADF;
     
-    file = current_task->fd[fd].file;
+    file = current_task->fd[fd].fil;
     switch (whence)
     {
         case SEEK_SET:
             newoffset = offset;
             break;
         case SEEK_CUR:
-            newoffset = file->offset + offset;
+            newoffset = file->off + offset;
             break;
         case SEEK_END:
-            newoffset = (off_t)file->dentry->inode->size + offset;
+            newoffset = (off_t)file->dent->inod->size + offset;
             break;
         default:
             newoffset = -1;
@@ -50,6 +50,6 @@ off_t sys_lseek(int fd, off_t offset, int whence)
     
     if (newoffset < 0)
         return -EINVAL;
-    file->offset = newoffset;
-    return file->offset;
+    file->off = newoffset;
+    return file->off;
 }

@@ -47,9 +47,8 @@ struct ext2_inode
     uint32_t blocks[15]; /* pointers to blocks */
 };
 
-struct ext2_disk_super_block dsb;
-uint32_t gd_block;
-uint32_t block_size;
+static struct ext2_disk_super_block dsb;
+static uint32_t gd_block;
 
 
 static int offset_to_block(off_t offset, struct ext2_inode *inode,
@@ -239,7 +238,7 @@ end:
 static int ext2_dentry_readdir(struct dentry *dir, unsigned int i,
         struct dirent *dent)
 {
-    return ext2_readdir(dir->inode, i, dent);
+    return ext2_readdir(dir->inod, i, dent);
 }
 
 static const struct dentry_ops ext2_dentry_ops = {
@@ -364,8 +363,8 @@ struct super_block *ext2_super_create(dev_t dev)
     iroot = ext2_super_inode_alloc(&sb->base);
     inode_init(iroot, &sb->base, EXT2_ROOT_INO, S_IFDIR, dev, &ext2_inode_ops);
 
-    droot->inode = iroot;
-    iget(droot->inode);
+    droot->inod = iroot;
+    iget(droot->inod);
 
     return &sb->base;
 }

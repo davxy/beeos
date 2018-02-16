@@ -260,7 +260,7 @@ int devfs_dentry_readdir(struct dentry *dir, unsigned int i,
             curr = list_container(curr_link, struct dentry, link);
             name = curr->name;
             curr_link = curr_link->next;
-            dent->d_ino = curr->inode->ino;
+            dent->d_ino = curr->inod->ino;
         }
     }
     if (name) {
@@ -297,8 +297,8 @@ struct super_block *devfs_super_create(dev_t dev)
     inode_init(&iroot->base, &devfs_sb, ++devfs_ino, S_IFDIR, 0,
                &devfs_inode_ops);
 
-    droot->inode = &iroot->base;
-    iget(droot->inode);
+    droot->inod = &iroot->base;
+    iget(droot->inod);
 
     return &devfs_sb;
 }
