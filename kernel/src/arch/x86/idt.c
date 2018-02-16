@@ -75,8 +75,8 @@ void isr_46(void);
 void isr_47(void);
 void isr_128(void);
 
-static struct idt_entry idt_entries[256];
-static struct idt_reg   idt_reg;
+static struct idt_entry     idt_entries[256];
+static struct idt_register  idt_reg;
 
 /*
  * Initialize a single IDT entry

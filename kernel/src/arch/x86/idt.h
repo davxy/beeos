@@ -109,7 +109,7 @@ struct idt_entry
  * A struct describing a pointer to an array of interrupt handlers.
  * This is in a format suitable for giving to 'lidt'.
  */
-struct idt_reg
+struct idt_register
 {
 	uint16_t limit;
 	uint16_t base_lo;	/* The lower 16 bits of the first entry address. */
