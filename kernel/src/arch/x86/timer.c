@@ -38,7 +38,7 @@ static void timer_handler(void)
     timer_update();
 }
 
-void timer_arch_init(unsigned int frequency)
+void timer_arch_init(unsigned int freq)
 {
 	/* The value we send to the PIT is the value to divide it's input
 	 * clock (1193180 Hz) to get the required frequency. 
@@ -46,7 +46,7 @@ void timer_arch_init(unsigned int frequency)
 	 *
 	 * TIMER_FREQ/freq < 65536 => frequency > 18,20
 	 */
-	uint32_t divisor =  TIMER_FREQ/frequency;
+	uint32_t divisor =  TIMER_FREQ/freq;
 
 	outb(TIMER_IO_CMD, TIMER_OPMODE | TIMER_ACCESS);
 

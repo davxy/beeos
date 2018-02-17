@@ -27,15 +27,15 @@
 #include <limits.h>
 #include <fcntl.h>
 
-ssize_t sys_write(int fdn, const void *buf, size_t count)
+ssize_t sys_write(int fd, const void *buf, size_t count)
 {
     ssize_t n;
     struct file *file;
 
-    if (OPEN_MAX <= fdn || current_task->fd[fdn].fil == NULL)
+    if (OPEN_MAX <= fd || current_task->fds[fd].fil == NULL)
         return -EBADF;
 
-    file = current_task->fd[fdn].fil;
+    file = current_task->fds[fd].fil;
 
     switch (file->dent->inod->mode & S_IFMT) {
         case S_IFBLK:

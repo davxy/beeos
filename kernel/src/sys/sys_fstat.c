@@ -22,14 +22,14 @@
 #include "proc.h"
 #include <errno.h>
 
-int sys_fstat(int fdn, struct stat *buf)
+int sys_fstat(int fd, struct stat *buf)
 {
     struct inode *inode;
 
-    if (current_task->fd[fdn].fil == NULL)
+    if (current_task->fds[fd].fil == NULL)
         return -EBADF;  /* Bad file descriptor */
 
-    inode = current_task->fd[fdn].fil->dent->inod;
+    inode = current_task->fds[fd].fil->dent->inod;
     if (inode == NULL)
         return -ENOENT;
 

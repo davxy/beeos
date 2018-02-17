@@ -195,8 +195,8 @@ int sys_execve(const char *path, const char *argv[], const char *envp[])
      */
     for (i = 0; i < OPEN_MAX; i++)
     {
-        if (current_task->fd[i].fil == NULL ||
-           (current_task->fd[i].flags & O_CLOEXEC) == 0)
+        if (current_task->fds[i].fil == NULL ||
+           (current_task->fds[i].flags & O_CLOEXEC) == 0)
             continue;
         sys_close(i);
     }

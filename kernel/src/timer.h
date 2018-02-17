@@ -96,9 +96,9 @@ void timer_event_mod(struct timer_event *tm, unsigned long expires);
 /**
  * Initialize the timer event queue.
  *
- * @param fraq      Required timer frequency in Hz (greather than 18).
+ * @param freq      Required timer frequency in Hz (greather than 18).
  */
-void timer_init(unsigned int frequency);
+void timer_init(unsigned int freq);
 
 /**
  * Architecture dependent timer initialization.

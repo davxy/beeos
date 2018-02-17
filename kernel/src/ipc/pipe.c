@@ -209,10 +209,10 @@ int pipe_create(int pipefd[2])
     struct file *file0, *file1;
 
     for (fd0 = 0; fd0 < OPEN_MAX; fd0++)
-        if (current_task->fd[fd0].fil == NULL)
+        if (current_task->fds[fd0].fil == NULL)
             break;
     for (fd1 = fd0+1; fd1 < OPEN_MAX; fd1++)
-        if (current_task->fd[fd1].fil == NULL)
+        if (current_task->fds[fd1].fil == NULL)
             break;
     if (fd1 == OPEN_MAX)
         return -EMFILE; /* Too many open files */
@@ -242,8 +242,8 @@ int pipe_create(int pipefd[2])
     *file1 = *file0;
     file1->flags = O_WRONLY;
 
-    current_task->fd[fd0].fil = file0;
-    current_task->fd[fd1].fil = file1;
+    current_task->fds[fd0].fil = file0;
+    current_task->fds[fd1].fil = file1;
 
     pipefd[0] = fd0;
     pipefd[1] = fd1;

@@ -26,18 +26,18 @@ int sys_dup2(int oldfd, int newfd)
 {
     int status;
 
-    if (oldfd < 0 || oldfd >= OPEN_MAX || !current_task->fd[oldfd].fil)
+    if (oldfd < 0 || oldfd >= OPEN_MAX || !current_task->fds[oldfd].fil)
         return -EBADF; /* Invalid file descriptor */
 
     if (oldfd == newfd)
         return oldfd;
 
-    if (current_task->fd[newfd].fil && (status = sys_close(newfd)) < 0)
+    if (current_task->fds[newfd].fil && (status = sys_close(newfd)) < 0)
         return status; /* error set by sys_close */
         
-    current_task->fd[newfd] = current_task->fd[oldfd];
-    current_task->fd[newfd].flags &= ~FD_CLOEXEC; /* Posix required */
-    current_task->fd[newfd].fil->ref++;
+    current_task->fds[newfd] = current_task->fds[oldfd];
+    current_task->fds[newfd].flags &= ~FD_CLOEXEC; /* Posix required */
+    current_task->fds[newfd].fil->ref++;
     return newfd;
 }
 

@@ -48,11 +48,11 @@ int tty_setpgrp(pid_t pgrp)
 }
 
 
-void tty_change(int i)
+void tty_change(int n)
 {
-    if (i >= 0 && i < TTYS_CONSOLE) {
-        tty_curr = i;
-        scr_table[i].dirty = 1;
+    if (n >= 0 && n < TTYS_CONSOLE) {
+        tty_curr = n;
+        scr_table[n].dirty = 1;
     }
 }
 

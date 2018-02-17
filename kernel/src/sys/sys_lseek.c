@@ -28,10 +28,10 @@ off_t sys_lseek(int fd, off_t offset, int whence)
     struct file *file;
     off_t newoffset;
 
-    if (fd < 0 || OPEN_MAX <= fd || !current_task->fd[fd].fil)
+    if (fd < 0 || OPEN_MAX <= fd || !current_task->fds[fd].fil)
         return -EBADF;
     
-    file = current_task->fd[fd].fil;
+    file = current_task->fds[fd].fil;
     switch (whence)
     {
         case SEEK_SET:

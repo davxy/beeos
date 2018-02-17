@@ -56,7 +56,7 @@ struct zone_st
  * @param flags         Zone flags (e.g. ZONE_HIGH).
  * @return              On error -1 is returned.
  */
-int zone_init(struct zone_st *ctx, void *base, size_t size,
+int zone_init(struct zone_st *ctx, void *addr, size_t size,
         size_t frame_size, int flags);
 
 /**

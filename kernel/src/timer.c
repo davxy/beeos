@@ -83,9 +83,9 @@ void timer_update(void)
         need_resched = 1;
 }
 
-void timer_init(unsigned int frequency)
+void timer_init(unsigned int freq)
 {
-    timer_freq = frequency;
+    timer_freq = freq;
     list_init(&timer_events);
-    timer_arch_init(frequency);
+    timer_arch_init(freq);
 }

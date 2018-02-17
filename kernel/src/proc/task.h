@@ -51,7 +51,7 @@ struct task
     int                 state;          /**< Process state. */
     struct dentry       *cwd;           /**< Current working directory. */
     struct dentry       *root;
-    struct fd           fd[OPEN_MAX];   /**< Open files. */  
+    struct filedesc     fds[OPEN_MAX];  /**< Open files. */
     struct list_link    tasks;          /**< Tasks list link. */
     struct cond         chld_exit;      /**< Child exit condition */
     int                 counter;        /**< Remaining time slice for sched */

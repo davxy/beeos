@@ -22,6 +22,7 @@
 #include "kmalloc.h"
 #include "proc.h"
 #include "panic.h"
+#include <limits.h>
 
 
 struct super_block *ext2_super_create(dev_t dev);
@@ -47,14 +48,14 @@ void super_init(struct super_block *sb, dev_t dev, struct dentry *root,
     sb->ops = ops;
 }
 
-struct super_block *vfs_super_create(dev_t dev, const char *type)
+struct super_block *vfs_super_create(dev_t dev, const char *name)
 {
     int i;
     struct super_block *sb = NULL;
 
     for (i = 0; i < FS_LIST_LEN; i++)
     {
-        if (strcmp(type, fs_list[i].name) == 0)
+        if (strcmp(name, fs_list[i].name) == 0)
         {
             sb = fs_list[i].create(dev);
             break;
@@ -133,30 +134,30 @@ void inode_init(struct inode *inode, struct super_block *sb, ino_t ino, mode_t m
 
 
 
-void iput(struct inode *ip)
+void iput(struct inode *inod)
 {
-	ip->ref--;
+    inod->ref--;
 #if 0
-	kprintf("iput: ino=%d, ref=%d\n", ip->ino, ip->ref);
+	kprintf("iput: ino=%d, ref=%d\n", inod->ino, inod->ref);
 #endif
-    if (ip->ref != 0)
+    if (inod->ref != 0)
         return;
 
     /* Check if was in the hash table (e.g. pipe inodes are not) */
-    if (ip->hlink.pprev != NULL)
-        htable_delete(&ip->hlink);
+    if (inod->hlink.pprev != NULL)
+        htable_delete(&inod->hlink);
 
-    if (ip->sb->ops->inode_free != NULL)
-        ip->sb->ops->inode_free(ip);
+    if (inod->sb->ops->inode_free != NULL)
+        inod->sb->ops->inode_free(inod);
     else
-        slab_cache_free(&inode_cache, ip);
+        slab_cache_free(&inode_cache, inod);
 }
 
-void iget(struct inode *ip)
+void iget(struct inode *inod)
 {
-	ip->ref++;
+    inod->ref++;
 #if 0
-	kprintf("idup: ino=%d, ref=%d\n", ip->ino, ip->ref);
+	kprintf("idup: ino=%d, ref=%d\n", inod->ino, inod->ref);
 #endif
 }
 
@@ -175,8 +176,6 @@ void iget(struct inode *ip)
  *   skipelem("", name) = skipelem("////", name) = 0
  *
  */
-#define DIRSIZ  64
-
 static const char *skipelem(const char *path, char *name)
 {
     const char *s;
@@ -190,8 +189,8 @@ static const char *skipelem(const char *path, char *name)
     while(*path != '/' && *path != 0)
         path++;
     len = path - s;
-    if(len >= DIRSIZ)
-        memmove(name, s, DIRSIZ);
+    if(len >= NAME_MAX)
+        memmove(name, s, NAME_MAX);
     else
     {
         memmove(name, s, len);
@@ -337,11 +336,11 @@ struct dentry *dentry_lookup(struct dentry *dir, const char *name)
 
 struct dentry *named(const char *path)
 {
-    char name[DIRSIZ];
+    char name[NAME_MAX];
     struct dentry *de, *tmp;
     struct inode *inode;
 
-    if (!path || *path == '\0')
+    if (path == NULL || *path == '\0')
         return NULL;
 
     de = (*path == '/') ? current_task->root : current_task->cwd;
@@ -388,9 +387,8 @@ struct inode *namei(const char *path)
     struct inode  *inode = NULL;
 
     de = named(path);
-    if (de != NULL) {
+    if (de != NULL)
         inode = de->inod;
-    }
     return inode;
 }
 

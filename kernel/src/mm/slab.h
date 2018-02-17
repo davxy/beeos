@@ -55,7 +55,8 @@ void slab_cache_init(struct slab_cache *cache, const char *name,
 void slab_cache_deinit(struct slab_cache *cache);
 
 void *slab_cache_alloc(struct slab_cache *cache, int flags);
-void slab_cache_free(struct slab_cache *cache, void *ptr);
+
+void slab_cache_free(struct slab_cache *cache, void *obj);
 
 
 #endif /* BEEOS_MM_SLAB_H_ */

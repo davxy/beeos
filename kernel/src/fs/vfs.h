@@ -147,7 +147,7 @@ struct file {
     struct dentry *dent;    /**< Dentry reference. */
 };
 
-struct fd {
+struct filedesc {
     int          flags;  /**< File descriptor flags, currently FD_CLOEXEC. */
     struct file *fil;    /**< Pointer to the file table. */
 };
@@ -227,11 +227,11 @@ struct inode *inode_lookup(dev_t dev, ino_t ino);
 void inode_init(struct inode *inode, struct super_block *sb, ino_t ino,
                 mode_t mode, dev_t dev, const struct inode_ops *ops);
 
-struct inode *namei(const char *pathname);
+struct inode *namei(const char *path);
 
-void iget(struct inode *inode);
+void iget(struct inode *inod);
 
-void iput(struct inode *inode);
+void iput(struct inode *inod);
 
 
 
@@ -240,7 +240,7 @@ struct dentry *dentry_create(const char *name, struct dentry *parent,
 
 void dentry_delete(struct dentry *de);
 
-struct dentry *named(const char *pathname);
+struct dentry *named(const char *path);
 
 void dget(struct dentry *de);
 
