@@ -194,7 +194,7 @@ static void devfs_sb_inode_free(struct devfs_inode *inode)
     kfree(inode, sizeof(struct devfs_inode));
 }
 
-const struct super_ops devfs_sb_ops = {
+static const struct super_ops devfs_sb_ops = {
     .inode_alloc = (super_inode_alloc_t) devfs_sb_inode_alloc,
     .inode_free  = (super_inode_free_t)  devfs_sb_inode_free,
 };

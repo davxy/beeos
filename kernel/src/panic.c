@@ -21,17 +21,18 @@
 #include "kprintf.h"
 #include <stdarg.h>
 
-extern void freeze(void);
-extern void print_stack_trace(void);
 
 void panic(const char *fmt, ...)
 {
     va_list va;
+    extern void freeze(void);
 
     va_start(va, fmt);
     kprintf("*** kernel panic: ");
     kvprintf(fmt, va);
-//    print_stack_trace();
+#if 0
+    print_stack_trace();
+#endif
     kprintf("\n***\n");
     freeze();
 }

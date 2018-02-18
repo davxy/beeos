@@ -17,46 +17,11 @@
  * License along with BeeOS; if not, see <http://www.gnu/licenses/>.
  */
 
-#ifndef BEEOS_PROC_H_
-#define BEEOS_PROC_H_
-
-#include "proc/task.h"
-
-/* Default process timeslice (milliseconds) */
-#define SCHED_TIMESLICE     100
-
-extern struct task *current_task;
-extern struct task ktask;
-
-extern int need_resched;
+#ifndef BEEOS_IPC_PIPE_H_
+#define BEEOS_IPC_PIPE_H_
 
 
-void scheduler(void);
-
-void scheduler_init(void);
-
-/**
- * Process pending (non masked) signals.
- */
-int do_signal(void);
+int pipe_create(int pipefd[2]);
 
 
-/*
- * Start init user-mode process.
- */
-void init_start(void);
-
-/**
- * Idle procedure.
- * This is executed by the first kernel process (pid=0) after that the
- * init process (pid=1) has been started.
- */
-void idle(void);
-
-
-void proc_dump(void);
-
-
-#endif /* BEEOS_PROC_H_ */
-
-
+#endif /* BEEOS_IPC_PIPE_H_ */

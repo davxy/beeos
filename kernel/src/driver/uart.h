@@ -17,46 +17,13 @@
  * License along with BeeOS; if not, see <http://www.gnu/licenses/>.
  */
 
-#ifndef BEEOS_PROC_H_
-#define BEEOS_PROC_H_
+#ifndef BEEOS_DRIVER_UART_H_
+#define BEEOS_DRIVER_UART_H_
 
-#include "proc/task.h"
+int uart_getchar(void);
 
-/* Default process timeslice (milliseconds) */
-#define SCHED_TIMESLICE     100
+void uart_putchar(int c);
 
-extern struct task *current_task;
-extern struct task ktask;
+void uart_init(void);
 
-extern int need_resched;
-
-
-void scheduler(void);
-
-void scheduler_init(void);
-
-/**
- * Process pending (non masked) signals.
- */
-int do_signal(void);
-
-
-/*
- * Start init user-mode process.
- */
-void init_start(void);
-
-/**
- * Idle procedure.
- * This is executed by the first kernel process (pid=0) after that the
- * init process (pid=1) has been started.
- */
-void idle(void);
-
-
-void proc_dump(void);
-
-
-#endif /* BEEOS_PROC_H_ */
-
-
+#endif /* BEEOS_DRIVER_UART_H_ */
