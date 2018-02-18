@@ -17,6 +17,7 @@
  * License along with BeeOS; if not, see <http://www.gnu/licenses/>.
  */
 
+#include "pic.h"
 #include "io.h"
 #include <stdint.h>
 
@@ -70,17 +71,17 @@ void pic_unmask(int n)
  */
 void pic_init(void)
 {
-	/* Remap the IRQ table from 32 to 47 */
-	outb(PIC1_CMD, 0x11);
-	outb(PIC2_CMD, 0x11);
-	outb(PIC1_DATA, 0x20);
-	outb(PIC2_DATA, 0x28);
-	outb(PIC1_DATA, 0x04);
-	outb(PIC2_DATA, 0x02);
-	outb(PIC1_DATA, 0x01);
-	outb(PIC2_DATA, 0x01);
+    /* Remap the IRQ table from 32 to 47 */
+    outb(PIC1_CMD, 0x11);
+    outb(PIC2_CMD, 0x11);
+    outb(PIC1_DATA, 0x20);
+    outb(PIC2_DATA, 0x28);
+    outb(PIC1_DATA, 0x04);
+    outb(PIC2_DATA, 0x02);
+    outb(PIC1_DATA, 0x01);
+    outb(PIC2_DATA, 0x01);
 
     /* Mask all IRQs masked */
-	outb(PIC1_DATA, 0xFB);
+    outb(PIC1_DATA, 0xFB);
     outb(PIC2_DATA, 0xFF);
 }

@@ -17,8 +17,7 @@
  * License along with BeeOS; if not, see <http://www.gnu/licenses/>.
  */
 
-
-#include "vfs.h"
+#include "devfs.h"
 #include "dev.h"
 #include "driver/tty.h"
 #include "driver/ramdisk.h"
@@ -103,7 +102,7 @@ static ssize_t devfs_inode_write(struct inode *inode, const void *buf,
 }
 
 
-struct {
+static struct {
     const char *name;
     dev_t    dev;
 } dev_name_map[] = {
@@ -131,7 +130,7 @@ static dev_t name_to_dev(const char *name)
     return dev;
 }
 
-int devfs_mknod(struct inode *idir, mode_t mode, dev_t dev)
+static int devfs_mknod(struct inode *idir, mode_t mode, dev_t dev)
 {
     struct inode *inode;
     int res = -1;
@@ -145,7 +144,7 @@ int devfs_mknod(struct inode *idir, mode_t mode, dev_t dev)
     return res;
 }
 
-struct inode *devfs_lookup(struct inode *dir, const char *name)
+static struct inode *devfs_lookup(struct inode *dir, const char *name)
 {
     struct devfs_inode *curr;
     struct inode *inode = NULL;
@@ -158,10 +157,10 @@ struct inode *devfs_lookup(struct inode *dir, const char *name)
     dev = name_to_dev(name);
     while (curr_link != &devfs_nodes)
     {
-    	curr = list_container(curr_link, struct devfs_inode, link);
+        curr = list_container(curr_link, struct devfs_inode, link);
         if (curr->base.rdev == dev) {
-        	inode = &curr->base;
-        	break;
+            inode = &curr->base;
+            break;
         }
         curr_link = curr_link->next;
     }
@@ -209,7 +208,7 @@ static struct inode *dev_to_inode(dev_t dev)
 
     while (curr != &devfs_nodes)
     {
-    	inode = list_container(curr, struct devfs_inode, link);
+        inode = list_container(curr, struct devfs_inode, link);
         if (inode->base.rdev == dev)
             break;
         curr = curr->next;
@@ -240,8 +239,8 @@ ssize_t devfs_write(dev_t dev, const void *buf, size_t size, off_t off)
 }
 
 
-int devfs_dentry_readdir(struct dentry *dir, unsigned int i,
-                         struct dirent *dent)
+static int devfs_dentry_readdir(struct dentry *dir, unsigned int i,
+                                struct dirent *dent)
 {
     static struct list_link *curr_link;
     struct dentry *curr;
@@ -278,7 +277,7 @@ static const struct dentry_ops devfs_dentry_ops = {
 
 struct super_block *devfs_sb_get(void)
 {
-	return &devfs_sb;
+    return &devfs_sb;
 }
 
 

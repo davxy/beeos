@@ -17,18 +17,18 @@
  * License along with BeeOS; if not, see <http://www.gnu/licenses/>.
  */
 
-#include "kprintf.h"
+#include "sys.h"
 #include "proc.h"
+#include "kprintf.h"
 #include "timer.h"
 #include "kmalloc.h"
-#include "sys.h"
+
 
 struct task ktask;
 struct task *current_task;
-struct task *ready_queue;
 
 
-int sigpop(sigset_t *sigpend, sigset_t *sigmask)
+static int sigpop(sigset_t *sigpend, sigset_t *sigmask)
 {
     int sig;
     /* find first non blocked signal */
@@ -92,14 +92,14 @@ void scheduler(void)
 {
     struct task *curr;
     struct task *next;
-    
+
     curr = current_task;
-    next = list_container(current_task->tasks.next, 
+    next = list_container(current_task->tasks.next,
             struct task, tasks);
 
     while (next->state != TASK_RUNNING && next != current_task)
         next = list_container(next->tasks.next, struct task, tasks);
-    
+
     if (next == current_task && next->pid != 0)
     {
         /* Nothing to run... run the idle() task */
@@ -140,28 +140,28 @@ void scheduler_init(void)
     current_task = &ktask;
 }
 
-void task_dump(struct task *t)
+static void task_dump(struct task *t)
 {
     char state;
 
     switch (t->state)
     {
-        case TASK_RUNNING:
-            state = 'R';
-            break;
-        case TASK_SLEEPING:
-            state = 'S';
-            break;
-        default:
-            state = 'U';
-            break;
+    case TASK_RUNNING:
+        state = 'R';
+        break;
+    case TASK_SLEEPING:
+        state = 'S';
+        break;
+    default:
+        state = 'U';
+        break;
     }
     kprintf("<pid=%d, ppid=%d, pgid=%d, state=%c)>",
               t->pid, t->pptr->pid, t->pgid, state);
 }
 
 
-void proc_dump_p(struct task *t, int level,
+static void proc_dump_p(struct task *t, int level,
         struct task *fs, struct task *fp)
 {
     int i;
@@ -184,4 +184,3 @@ void proc_dump(void)
 {
     proc_dump_p(&ktask, 0, &ktask, &ktask);
 }
-

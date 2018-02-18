@@ -26,6 +26,10 @@
 #define SCHED_TIMESLICE     100
 
 extern struct task *current_task;
+extern struct task ktask;
+
+extern int need_resched;
+
 
 void scheduler(void);
 
@@ -50,6 +54,10 @@ void init_start(void);
  * init process (pid=1) has been started.
  */
 void idle(void);
+
+
+void proc_dump(void);
+
 
 #endif /* BEEOS_PROC_H_ */
 

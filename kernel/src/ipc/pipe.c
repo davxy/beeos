@@ -17,21 +17,21 @@
  * License along with BeeOS; if not, see <http://www.gnu/licenses/>.
  */
 
+#include "ipc/pipe.h"
 #include "sync/spinlock.h"
+#include "sync/cond.h"
 #include "fs/vfs.h"
 #include "proc.h"
-#include "sync/cond.h"
 #include "kmalloc.h"
 #include "sys.h"
-#include <sys/types.h>
 #include <limits.h>
 #include <fcntl.h>
 #include <errno.h>
 
+
 #define PIPE_SIZE   PIPE_BUF
 #define DATA_SIZE   (PIPE_SIZE+1)
 
-struct file *fs_file_alloc(void);
 
 /* Implemented as a ring-buffer */
 struct pipe_inode
@@ -45,8 +45,8 @@ struct pipe_inode
     char data[DATA_SIZE];   /**< Pipe data */
 };
 
-/* TODO: in VFS this is a 'file' operation. 
- * Thus the function should take a file and as a consequence 
+/* TODO: in VFS this is a 'file' operation.
+ * Thus the function should take a file and as a consequence
  * we can check if that is not blocking */
 
 /*
@@ -80,7 +80,7 @@ static int pipe_read(struct inode *inode, void *buf,
             if (left != count && pnode->queued_writers == 0)
                 goto done;
 
-            /* TODO: if BLOCKING allowed */ 
+            /* TODO: if BLOCKING allowed */
             pnode->queued_readers++;
             if (pnode->queued_writers > 0)      /* if there are pending writers */
                 cond_broadcast(&pnode->queue);  /* wakeup them before sleep */
@@ -183,7 +183,7 @@ static const struct inode_ops pipe_ops =
     .write = pipe_write
 };
 
-struct inode *pipe_inode_create(void)
+static struct inode *pipe_inode_create(void)
 {
     struct pipe_inode *pnode;
 

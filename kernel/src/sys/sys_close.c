@@ -17,13 +17,13 @@
  * License along with BeeOS; if not, see <http://www.gnu/licenses/>.
  */
 
+#include "sys.h"
 #include "fs/vfs.h"
 #include "proc.h"
 #include <unistd.h>
 #include <errno.h>
 #include <limits.h>
 
-void fs_file_free(struct file *file);
 
 int sys_close(int fd)
 {

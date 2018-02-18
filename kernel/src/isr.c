@@ -25,13 +25,12 @@
 
 #include "arch/x86/pic.h"
 
-#define HANDLERS_NUM    49  // TODO : not a generic number
 
 int need_resched;
 
-isr_handler_t isr_handlers[HANDLERS_NUM];
+#define HANDLERS_NUM    49
+static isr_handler_t isr_handlers[HANDLERS_NUM];
 
-void pic_eoi(int num);
 
 /* ISR arch independent dispatcher */
 void isr_handler(struct isr_frame *ifr)

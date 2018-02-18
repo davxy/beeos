@@ -67,5 +67,7 @@ struct msqid_ds
     struct htable_link hlink;
 };
 
+int msgget(key_t key, int flags);
+
 #endif /* BEEOS_IPC_MSG_H_ */
 

@@ -18,6 +18,8 @@
  */
 
 #include "fs/vfs.h"
+#include "fs/devfs.h"   /* devfs_super_create */
+#include "fs/ext2.h"    /* ext2_super_create */
 #include "mm/slab.h"
 #include "kmalloc.h"
 #include "proc.h"
@@ -25,15 +27,9 @@
 #include <limits.h>
 
 
-struct super_block *ext2_super_create(dev_t dev);
-struct super_block *devfs_super_create(dev_t dev);
-
-// http://www.tldp.org/LDP/lki/lki-3.html
-
-struct vfs_type fs_list[] =
-{
+static struct vfs_type fs_list[] = {
     { "ext2", ext2_super_create },
-	{ "dev",  devfs_super_create }
+    { "dev",  devfs_super_create }
 };
 
 #define FS_LIST_LEN (sizeof(fs_list)/sizeof(fs_list[0]))
@@ -77,20 +73,13 @@ static struct htable_link *inode_htable[1 << INODE_HTABLE_BITS];
 
 struct file *fs_file_alloc(void)
 {
-    struct file *file = slab_cache_alloc(&file_cache, 0);
-    return file;
+    return slab_cache_alloc(&file_cache, 0);
 }
 
 void fs_file_free(struct file *file)
 {
     slab_cache_free(&file_cache, file);
 }
-
-struct inode *fs_inode_alloc(void)
-{
-    return slab_cache_alloc(&inode_cache, 0);
-}
-
 
 struct inode *inode_lookup(dev_t dev, ino_t ino)
 {
@@ -138,7 +127,7 @@ void iput(struct inode *inod)
 {
     inod->ref--;
 #if 0
-	kprintf("iput: ino=%d, ref=%d\n", inod->ino, inod->ref);
+    kprintf("iput: ino=%d, ref=%d\n", inod->ino, inod->ref);
 #endif
     if (inod->ref != 0)
         return;
@@ -157,7 +146,7 @@ void iget(struct inode *inod)
 {
     inod->ref++;
 #if 0
-	kprintf("idup: ino=%d, ref=%d\n", inod->ino, inod->ref);
+    kprintf("idup: ino=%d, ref=%d\n", inod->ino, inod->ref);
 #endif
 }
 
@@ -232,8 +221,8 @@ void dget(struct dentry *de)
 {
     de->ref++;
 #if 0
-	kprintf("dget: (%s) ino=%d, iref=%d, dref=%d\n",
-			de->name, de->inode->ino, de->inode->ref, de->ref);
+    kprintf("dget: (%s) ino=%d, iref=%d, dref=%d\n",
+            de->name, de->inode->ino, de->inode->ref, de->ref);
 #endif
 }
 
@@ -241,8 +230,8 @@ void dput(struct dentry *de)
 {
     de->ref--;
 #if 0
-	kprintf("dput: (%s) ino=%d, iref=%d, dref=%d\n",
-			de->name, de->inode->ino, de->inode->ref, de->ref);
+    kprintf("dput: (%s) ino=%d, iref=%d, dref=%d\n",
+            de->name, de->inode->ino, de->inode->ref, de->ref);
 #endif
     if (de->ref != 0)
         return;
@@ -270,7 +259,7 @@ int do_mount(struct dentry *mntpt, struct dentry *root)
     return 0;
 }
 
-
+/* Used by sys_getcwd() */
 struct dentry *follow_up(struct dentry *root)
 {
     struct dentry *res = root;
@@ -293,7 +282,7 @@ struct dentry *follow_up(struct dentry *root)
     return res;
 }
 
-struct dentry *follow_down(struct dentry *mntpt)
+static struct dentry *follow_down(struct dentry *mntpt)
 {
     struct dentry *res = mntpt;
     struct vfsmount *mnt;
@@ -316,7 +305,7 @@ struct dentry *follow_down(struct dentry *mntpt)
 }
 
 
-struct dentry *dentry_lookup(struct dentry *dir, const char *name)
+static struct dentry *dentry_lookup(struct dentry *dir, const char *name)
 {
     struct list_link *curr;
     struct dentry *curr_de, *res = NULL;

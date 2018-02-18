@@ -17,6 +17,7 @@
  * License along with BeeOS; if not, see <http://www.gnu/licenses/>.
  */
 
+#include "sys.h"
 #include "proc.h"
 #include <sys/types.h>
 #include <errno.h>

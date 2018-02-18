@@ -247,6 +247,10 @@ void dget(struct dentry *de);
 void dput(struct dentry *de);
 
 
+struct file *fs_file_alloc(void);
+
+void fs_file_free(struct file *file);
+
 
 
 int do_mount(struct dentry *mntpt, struct dentry *root);

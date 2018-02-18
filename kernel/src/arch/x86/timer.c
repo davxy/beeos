@@ -30,7 +30,6 @@
 #define TIMER_OPMODE        0x04    /* Mode 2, rate generator */
 #define TIMER_ACCESS        0x30    /* 16bit, LSB first */
 
-extern unsigned long timer_ticks;
 
 static void timer_handler(void)
 {

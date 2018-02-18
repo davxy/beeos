@@ -56,5 +56,6 @@ int frame_zone_add(void *addr, size_t size, size_t frame_size, int flags);
  */
 void frame_dump(void);
 
+
 #endif /* BEEOS_MM_FRAME_H_ */
 

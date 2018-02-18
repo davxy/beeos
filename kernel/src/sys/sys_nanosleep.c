@@ -17,14 +17,12 @@
  * License along with BeeOS; if not, see <http://www.gnu/licenses/>.
  */
 
+#include "sys.h"
 #include "proc.h"
-#include "kmalloc.h"
 #include "timer.h"
 #include <unistd.h>
 #include <errno.h>
 
-
-extern unsigned long timer_ticks;
 
 static void sleep_timer_handler(void *data)
 {
@@ -38,19 +36,19 @@ int sys_nanosleep(const struct timespec *req, struct timespec *rem)
     unsigned long when;
     unsigned long now;
     struct timer_event tm;
-    
+
     if (req->tv_sec < 0 || req->tv_nsec < 0 || req->tv_nsec > 999999999)
         return -EINVAL;
 
     current_task->state = TASK_SLEEPING;
-    
+
     ms = req->tv_sec * 1000 + req->tv_nsec / 1000000;
     when = timer_ticks + msecs_to_ticks(ms);
     timer_event_init(&tm, sleep_timer_handler, current_task, when);
 
     /* Do this after the timer initialization but before queue insertion */
     list_insert_before(&current_task->timers, &tm.plink);
-    
+
     timer_event_add(&tm);
 
     scheduler();

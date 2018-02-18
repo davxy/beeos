@@ -17,11 +17,10 @@
  * License along with BeeOS; if not, see <http://www.gnu/licenses/>.
  */
 
-#include "sys/types.h"
-#include "kprintf.h"
+#include "sys.h"
+#include "proc.h"
+#include "mm/frame.h"
 
-void frame_dump(void);
-void proc_dump(void);
 
 int sys_info(int type)
 {

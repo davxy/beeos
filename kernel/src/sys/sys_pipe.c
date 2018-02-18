@@ -17,9 +17,10 @@
  * License along with BeeOS; if not, see <http://www.gnu/licenses/>.
  */
 
-#include "sys.h"
 
-int pipe_create(int pipefd[2]);
+#include "sys.h"
+#include "ipc/pipe.h"
+
 
 int sys_pipe(int pipefd[2])
 {

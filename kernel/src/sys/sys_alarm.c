@@ -22,7 +22,6 @@
 #include "kprintf.h"
 #include "proc.h"
 
-extern unsigned long timer_ticks;
 
 static void alarm_handler(void *data)
 {

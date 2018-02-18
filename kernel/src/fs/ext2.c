@@ -38,7 +38,7 @@ struct ext2_super_block
     uint32_t           block_size;
     uint32_t           inodes_per_group;
     uint32_t           log_block_size;
-    struct ext2_group_desc *gd_table; 
+    struct ext2_group_desc *gd_table;
 };
 
 struct ext2_inode
@@ -94,7 +94,8 @@ static int offset_to_block(off_t offset, struct ext2_inode *inode,
     return block;
 }
 
-ssize_t ext2_read(struct ext2_inode *inode, void *buf, size_t count, off_t off)
+static ssize_t ext2_read(struct ext2_inode *inode, void *buf,
+                         size_t count, off_t off)
 {
     struct ext2_super_block *sb = (struct ext2_super_block *)inode->base.sb;
     int left;
@@ -128,7 +129,7 @@ ssize_t ext2_read(struct ext2_inode *inode, void *buf, size_t count, off_t off)
     return count-left;
 }
 
-struct inode *ext2_lookup(struct inode *dir, const char *name)
+static struct inode *ext2_lookup(struct inode *dir, const char *name)
 {
     struct ext2_disk_dirent *dirent;
     struct ext2_disk_dirent *dirbuf;
@@ -171,7 +172,7 @@ end:
     return inode;
 }
 
-int ext2_mknod(struct inode *idir, mode_t mode, dev_t dev)
+static int ext2_mknod(struct inode *idir, mode_t mode, dev_t dev)
 {
     struct inode *inode;
     int res = -1;
@@ -249,24 +250,24 @@ static const struct dentry_ops ext2_dentry_ops = {
 
 /******************************************************************************
  *
- * 	Superblock operations
+ *  Superblock operations
  *
  */
 
 
 static struct inode *ext2_super_inode_alloc(struct super_block *sb)
 {
-	struct inode *inode = kmalloc(sizeof(struct ext2_inode), 0);
+    struct inode *inode = kmalloc(sizeof(struct ext2_inode), 0);
 #if 0
     kprintf("Alloc: %p\n", inode);
 #endif
     return inode;
 }
 
-void ext2_super_inode_free(struct inode *inode)
+static void ext2_super_inode_free(struct inode *inode)
 {
 #if 0
-	kprintf("Free : %p\n", inode);
+    kprintf("Free : %p\n", inode);
 #endif
     kfree(inode, sizeof(struct ext2_inode));
 }
@@ -274,13 +275,13 @@ void ext2_super_inode_free(struct inode *inode)
 /*
  * Fetch inode information from the device.
  */
-int ext2_super_inode_read(struct inode *inode)
+static int ext2_super_inode_read(struct inode *inode)
 {
     int n;
     struct ext2_disk_inode dnode;
     struct ext2_super_block *sb = (struct ext2_super_block *) inode->sb;
 
-    int group = ((inode->ino - 1) / sb->inodes_per_group); 
+    int group = ((inode->ino - 1) / sb->inodes_per_group);
     struct ext2_group_desc *gd = &sb->gd_table[group];
 
     int table_index = (inode->ino - 1 ) % sb->inodes_per_group;
@@ -310,7 +311,7 @@ int ext2_super_inode_read(struct inode *inode)
 
     memcpy(((struct ext2_inode *)inode)->blocks, dnode.block,
             sizeof(dnode.block));
-    
+
     return 0;
 }
 

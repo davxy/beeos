@@ -17,16 +17,15 @@
  * License along with BeeOS; if not, see <http://www.gnu/licenses/>.
  */
 
+
 #include "tty.h"
+#include "uart.h"  /* Temporary */
 #include "dev.h"
 #include "proc.h"
 #include "screen.h"
 #include "timer.h"
 #include <errno.h>
 
-
-void uart_putchar(int c);
-void uart_init(void);
 
 #define TTYS_CONSOLE    4
 #define TTYS_TOTAL      TTYS_CONSOLE
@@ -40,6 +39,7 @@ pid_t tty_getpgrp(void)
 {
     return tty_table[tty_curr].pgrp;
 }
+
 
 int tty_setpgrp(pid_t pgrp)
 {
@@ -55,6 +55,7 @@ void tty_change(int n)
         scr_table[n].dirty = 1;
     }
 }
+
 
 dev_t tty_get(void)
 {
@@ -73,6 +74,7 @@ dev_t tty_get(void)
     return dev;
 }
 
+
 void tty_put(dev_t dev)
 {
     int i = minor(dev) - 1;
@@ -87,7 +89,6 @@ void tty_put(dev_t dev)
             tty_table[i].pgrp = 0;
     }
 }
-
 
 
 static int tty_read_wait(dev_t dev, int couldblock)
@@ -147,7 +148,6 @@ ssize_t tty_read(dev_t dev, void *buf, size_t size)
 }
 
 
-
 static void tty_putchar(dev_t dev, int c)
 {
     int i;
@@ -163,6 +163,7 @@ static void tty_putchar(dev_t dev, int c)
     /* Useful for debug */
     uart_putchar(c);
 }
+
 
 ssize_t tty_write(dev_t dev, const void *buf, size_t n)
 {
@@ -240,6 +241,7 @@ static void tty_attr_init(struct termios *termptr)
     termptr->c_cc[VTIME] = 0x00;
 }
 
+
 static void tty_struct_init(struct tty_st *tty, dev_t dev)
 {
     tty->dev = dev;
@@ -251,8 +253,8 @@ static void tty_struct_init(struct tty_st *tty, dev_t dev)
     tty_attr_init(&tty->attr);
 }
 
-struct timer_event refresh_tm;
 
+static struct timer_event refresh_tm;
 
 static void refresh_func(void *_unused)
 {
@@ -277,9 +279,3 @@ void tty_init(void)
     timer_event_init(&refresh_tm, refresh_func, NULL, timer_ticks + msecs_to_ticks(100));
     timer_event_add(&refresh_tm);
 }
-
-
-
-
-
-

@@ -17,14 +17,14 @@
  * License along with BeeOS; if not, see <http://www.gnu/licenses/>.
  */
 
-#include <unistd.h>
-#include <sys/wait.h>
+#include "sys.h"
 #include "proc.h"
 #include "util.h"
 #include "kprintf.h"    // TODO : remove
 #include "kmalloc.h"
+#include <sys/wait.h>
 
-/* 
+/*
  * Wait for a child process to exit and return its pid.
  * Return -1 if this process has no children.
  */
@@ -42,7 +42,7 @@ pid_t sys_waitpid(pid_t pid, int *wstatus, int options)
         t = struct_ptr(current_task->tasks.next, struct task, tasks);
         while (t != current_task)
         {
-            if (t->pptr == current_task 
+            if (t->pptr == current_task
                 && (pid == t->pid || pid == -1))
             {
                 havekids = 1;
@@ -86,7 +86,7 @@ pid_t sys_waitpid(pid_t pid, int *wstatus, int options)
         else
             break;
     }
-    
+
     spinlock_unlock(&current_task->chld_exit.lock);
 
     return pid;

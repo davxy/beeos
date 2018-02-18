@@ -42,5 +42,8 @@ void pic_unmask(int n);
  */
 void pic_init(void);
 
-#endif /* BEEOS_ARCH_X86_PIC_H_ */
 
+void pic_eoi(int n);
+
+
+#endif /* BEEOS_ARCH_X86_PIC_H_ */

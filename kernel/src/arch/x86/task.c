@@ -24,9 +24,6 @@
 #include <stddef.h>
 
 
-extern struct task ktask;
-extern struct task *current_task;
-
 /*
  * TODO : implement as clone syscall
  */

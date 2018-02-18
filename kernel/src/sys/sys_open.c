@@ -17,20 +17,15 @@
  * License along with BeeOS; if not, see <http://www.gnu/licenses/>.
  */
 
+#include "sys.h"
 #include "fs/vfs.h"
 #include "proc.h"
-#include "dev.h"
-#include "kmalloc.h"
 #include "driver/tty.h"
-#include <unistd.h>
 #include <errno.h>
-#include <limits.h>
 #include <string.h>
 #include <stdio.h>
 #include <fcntl.h>
 
-
-void *fs_file_alloc(void);
 
 int sys_open(const char *pathname, int flags, mode_t mode)
 {

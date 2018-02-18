@@ -40,7 +40,7 @@
 #define ROOT_DEV        DEV_INITRD
 
 
-void mount_root(void)
+static void mount_root(void)
 {
     struct super_block *sb;
     struct dentry *de;

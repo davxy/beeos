@@ -26,7 +26,7 @@
 #define BLOCK_SIZE  512
 
 
-struct
+static struct
 {
     void  *addr;
     size_t size;

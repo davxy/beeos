@@ -27,7 +27,6 @@
 static struct task *find_init(void)
 {
     struct task *t;
-    extern struct task ktask;
 
     t = list_container(ktask.tasks.next, struct task, tasks);
     while (t != &ktask) {

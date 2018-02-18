@@ -17,8 +17,9 @@
  * License along with BeeOS; if not, see <http://www.gnu/licenses/>.
  */
 
-#include <sys/types.h>
+#include "sys.h"
 #include "proc.h"
+#include <sys/types.h>
 
 pid_t sys_getpid(void)
 {
