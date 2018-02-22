@@ -17,11 +17,11 @@
  * License along with BeeOS; if not, see <http://www.gnu/licenses/>.
  */
 
+#include "sys.h"
 #include "fs/vfs.h"
 #include "elf.h"
 #include "kmalloc.h"
 #include "proc.h"
-#include "sys.h"
 #include "arch/x86/paging.h"
 #include <sys/types.h>
 #include <stddef.h>
@@ -81,7 +81,7 @@ static void stack_init(uintptr_t *base, const char *argv[], const char *envp[])
 {
     char *sp = (char *)base + ARG_MAX;
     ptrdiff_t delta = (char *)KVBASE - sp;
-    
+
     sp = push_all(&base[3], sp, argv, delta, &base[0]);
     base[1] = (uintptr_t)&base[3] + delta;
 
@@ -134,7 +134,7 @@ int sys_execve(const char *path, const char *argv[], const char *envp[])
         goto bad;
     }
     memcpy((char *)KVBASE-ARG_MAX, ustack, ARG_MAX);
-    
+
     /* Release user stack copy */
     kfree(ustack, ARG_MAX);
 
@@ -142,15 +142,15 @@ int sys_execve(const char *path, const char *argv[], const char *envp[])
     current_task->brk = 0;
 
     for (i = 0, off = eh.phoff; i < eh.phnum; i++, off += sizeof(ph)) {
-        
+
         if (vfs_read(inode, &ph, sizeof(ph), off) != sizeof(ph)) {
             ret = -ENOEXEC;
             goto bad;
         }
-        
+
         if (ph.type != ELF_PROG_TYPE_LOAD)
             continue;
-        
+
         if (ph.memsz < ph.filesz ||
             KVBASE <= ph.vaddr + ph.memsz) {
             ret = -ENOEXEC;
