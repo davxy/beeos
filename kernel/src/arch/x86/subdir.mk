@@ -11,7 +11,6 @@ local_sources := init.S \
 				 kbd.c \
 				 arch_init.c \
 				 paging.c \
-				 stack_trace.c \
 				 task.c \
 				 timer.c \
 				 uart.c

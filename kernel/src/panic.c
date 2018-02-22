@@ -30,9 +30,6 @@ void panic(const char *fmt, ...)
     va_start(va, fmt);
     kprintf("*** kernel panic: ");
     kvprintf(fmt, va);
-#if 0
-    print_stack_trace();
-#endif
     kprintf("\n***\n");
     freeze();
 }
