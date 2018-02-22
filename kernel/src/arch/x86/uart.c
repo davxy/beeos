@@ -17,9 +17,11 @@
  * License along with BeeOS; if not, see <http://www.gnu/licenses/>.
  */
 
+#include "driver/uart.h"
+#include "driver/tty.h"
 #include "io.h"
 #include "isr.h"
-#include "driver/tty.h"
+
 
 #define PORT 0x3f8
 
@@ -48,7 +50,9 @@ void uart_putchar(int c)
 
 static void uart_handler(void)
 {
-    char c = uart_getchar();
+    char c;
+
+    c = uart_getchar();
     tty_update(c);
 }
 

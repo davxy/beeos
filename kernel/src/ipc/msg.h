@@ -24,8 +24,8 @@
  * identified by a message queue identifier.
  */
 
-#ifndef _BEEOS_IPC_MSG_H_
-#define _BEEOS_IPC_MSG_H_
+#ifndef BEEOS_IPC_MSG_H_
+#define BEEOS_IPC_MSG_H_
 
 #include "sync/cond.h"
 #include <sys/types.h>
@@ -67,4 +67,7 @@ struct msqid_ds
     struct htable_link hlink;
 };
 
-#endif /* _BEEOS_IPC_MSG_H_ */
+int msgget(key_t key, int flags);
+
+#endif /* BEEOS_IPC_MSG_H_ */
+

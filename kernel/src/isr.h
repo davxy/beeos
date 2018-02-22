@@ -18,10 +18,13 @@
  */
 
 
-#ifndef _BEEOS_ISR_H_
-#define _BEEOS_ISR_H_
+#ifndef BEEOS_ISR_H_
+#define BEEOS_ISR_H_
 
 #include "arch/x86/isr_arch.h"
+
+
+void isr_handler(struct isr_frame *ifr);
 
 typedef void (*isr_handler_t)(void);
 
@@ -29,4 +32,4 @@ void isr_register_handler(unsigned int num, isr_handler_t func);
 
 void isr_init(void);
 
-#endif /* _BEEOS_ISR_H_ */
+#endif /* BEEOS_ISR_H_ */

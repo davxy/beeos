@@ -17,8 +17,8 @@
  * License along with BeeOS; if not, see <http://www.gnu/licenses/>.
  */
 
-#ifndef _BEEOS_FS_EXT2_H_
-#define _BEEOS_FS_EXT2_H_
+#ifndef BEEOS_FS_EXT2_H_
+#define BEEOS_FS_EXT2_H_
 
 #include "fs/vfs.h"
 #include <stdint.h>
@@ -130,4 +130,5 @@ struct ext2_fs
 
 struct super_block *ext2_super_create(dev_t dev);
 
-#endif /* _BEEOS_FS_EXT2_H_ */
+#endif /* BEEOS_FS_EXT2_H_ */
+

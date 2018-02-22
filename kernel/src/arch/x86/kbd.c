@@ -17,6 +17,7 @@
  * License along with BeeOS; if not, see <http://www.gnu/licenses/>.
  */
 
+#include "kbd.h"
 #include "isr.h"
 #include "io.h"
 #include "kprintf.h"

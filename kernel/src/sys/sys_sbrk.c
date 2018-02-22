@@ -17,11 +17,11 @@
  * License along with BeeOS; if not, see <http://www.gnu/licenses/>.
  */
 
+#include "sys.h"
 #include "proc.h"
 #include <unistd.h>
 #include <errno.h>
 #include "arch/x86/paging.h"
-
 
 void *sys_sbrk(intptr_t incr)
 {

@@ -31,7 +31,7 @@ int sys_chdir(const char *path)
     dentry = named(path);
     if (dentry == NULL)
         return -ENOENT;
-    inode = dentry->inode;
+    inode = dentry->inod;
 
     if (!S_ISDIR(inode->mode))
         return -ENOTDIR;

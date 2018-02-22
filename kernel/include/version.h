@@ -17,8 +17,8 @@
  * License along with BeeOS; if not, see <http://www.gnu/licenses/>.
  */
 
-#ifndef _BEEOS_VERSION_H_
-#define _BEEOS_VERSION_H_
+#ifndef BEEOS_VERSION_H_
+#define BEEOS_VERSION_H_
 
 #define BEEOS_MAJOR       0
 #define BEEOS_MINOR       1
@@ -28,5 +28,5 @@
 
 #define BEEOS_CODENAME    "StoneAge"
 
-#endif /* _BEEOS_VERSION_H_ */
+#endif /* BEEOS_VERSION_H_ */
 

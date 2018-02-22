@@ -22,13 +22,10 @@
  * https://www.kernel.org/doc/Documentation/devices.txt
  */
 
-#ifndef _BEEOS_DEV_H_
-#define _BEEOS_DEV_H_
+#ifndef BEEOS_DEV_H_
+#define BEEOS_DEV_H_
 
 #include <sys/types.h>
-
-#define DEV_READ    0
-#define DEV_WRITE   1
 
 /** Character devices @{ */
 /** Physical memory */
@@ -60,7 +57,5 @@
 #define DEV_INITRD              0x01FA
 /** @} */
 
+#endif /* BEEOS_DEV_H_ */
 
-ssize_t dev_io(dev_t dev, int rw, off_t off, void *buf, size_t size);
-
-#endif /* _BEEOS_DEV_H_ */

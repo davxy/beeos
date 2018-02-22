@@ -26,13 +26,11 @@
 #define BLOCK_SIZE  512
 
 
-struct ramdisk
+static struct
 {
     void  *addr;
     size_t size;
-};
-
-struct ramdisk ramdisk;
+} ramdisk;
 
 
 static ssize_t ramdisk_rw_block(void *buf, size_t blocknum, int doread)

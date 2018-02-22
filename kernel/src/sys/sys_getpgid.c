@@ -17,9 +17,10 @@
  * License along with BeeOS; if not, see <http://www.gnu/licenses/>.
  */
 
+#include "sys.h"
+#include "proc.h"
 #include <sys/types.h>
 #include <errno.h>
-#include "proc.h"
 
 /*
  * Returns the PGID of the process specified by pid. If pid is zero, the
@@ -27,7 +28,6 @@
  * process other than the caller is rarely necessary, and the POSIX.1
  * getpgrp() is preferred for that task.)
  */
-
 pid_t sys_getpgid(pid_t pid)
 {
     struct task *t = NULL;

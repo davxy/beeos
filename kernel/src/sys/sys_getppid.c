@@ -17,10 +17,10 @@
  * License along with BeeOS; if not, see <http://www.gnu/licenses/>.
  */
 
-#include <sys/types.h>
+#include "sys.h"
 #include "proc.h"
 
-pid_t sys_getppid()
+pid_t sys_getppid(void)
 {
     return current_task->pptr->pid;
 }

@@ -17,36 +17,36 @@
  * License along with BeeOS; if not, see <http://www.gnu/licenses/>.
  */
 
+#include "sys.h"
 #include "fs/vfs.h"
 #include "proc.h"
 #include <unistd.h>
 #include <errno.h>
 #include <limits.h>
 
-void fs_file_free(struct file *file);
 
-int sys_close(int fdn)
+int sys_close(int fd)
 {
     struct file *file;
 
     /* Validate file descriptor */
-    if (fdn < 0 || OPEN_MAX <= fdn || !current_task->fd[fdn].file)
+    if (fd < 0 || OPEN_MAX <= fd || !current_task->fds[fd].fil)
         return -EBADF;
 
-    file = current_task->fd[fdn].file;
-    current_task->fd[fdn].file = NULL;
-    current_task->fd[fdn].flags = 0;
+    file = current_task->fds[fd].fil;
+    current_task->fds[fd].fil = NULL;
+    current_task->fds[fd].flags = 0;
 
     file->ref--;
     if (file->ref == 0)
     {
         /* Wake up the other end, to allow EOF recv in user space */
-        if (S_ISFIFO(file->dentry->inode->mode))
-            vfs_write(file->dentry->inode, NULL, 0, 0);
-        dput(file->dentry);
+        if (S_ISFIFO(file->dent->inod->mode))
+            vfs_write(file->dent->inod, NULL, 0, 0);
+        dput(file->dent);
 
         fs_file_free(file);
     }
 
-    return fdn;
+    return fd;
 }

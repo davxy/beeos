@@ -67,7 +67,7 @@ startup:
     or      eax, CR4_PSE
     mov     cr4, eax
     /* Initialize the page directory relevant entries */
-    mov     eax, offset virt_to_phys(kpage_dir)
+    mov     eax, offset (kpage_dir - KVBASE)
     mov     dword ptr [eax], (PTE_P|PTE_W|PTE_PS)
     mov     dword ptr [eax+4*768], (PTE_P|PTE_W|PTE_PS)
     mov     cr3, eax

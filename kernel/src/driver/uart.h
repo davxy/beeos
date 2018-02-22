@@ -17,21 +17,13 @@
  * License along with BeeOS; if not, see <http://www.gnu/licenses/>.
  */
 
-#include "kprintf.h"
-#include "elf.h"
-#include <stdint.h>
+#ifndef BEEOS_DRIVER_UART_H_
+#define BEEOS_DRIVER_UART_H_
 
-extern struct elf_file kernel_elf;
+int uart_getchar(void);
 
-void print_stack_trace()
-{
-    uint32_t *ebp, *eip;
-    /* Get the current EBP value */
-    asm volatile ("mov %%ebp, %0" : "=r"(ebp));
-    while (ebp)
-    {
-        eip = ebp+1; 
-        kprintf("    [0x%x] %s\n", *eip, "");//elf_lookup_symbol(&kernel_elf, *eip));
-        ebp = (uint32_t *) *ebp;
-    }
-}
+void uart_putchar(int c);
+
+void uart_init(void);
+
+#endif /* BEEOS_DRIVER_UART_H_ */

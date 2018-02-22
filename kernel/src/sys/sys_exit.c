@@ -27,7 +27,6 @@
 static struct task *find_init(void)
 {
     struct task *t;
-    extern struct task ktask;
 
     t = list_container(ktask.tasks.next, struct task, tasks);
     while (t != &ktask) {
@@ -121,7 +120,7 @@ void sys_exit(int status)
     /* close all open files */
     for (i = 0; i < OPEN_MAX; i++)
     {
-        if (current_task->fd[i].file)
+        if (current_task->fds[i].fil)
             sys_close(i);
     }
 

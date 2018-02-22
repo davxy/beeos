@@ -24,6 +24,7 @@
 #include "timer.h"
 #include "sys.h"
 #include "proc.h"
+#include "mm/slab.h"
 #include "driver/tty.h"
 #include "fs/vfs.h"
 #include "fs/devfs.h"
@@ -40,7 +41,7 @@
 #define ROOT_DEV        DEV_INITRD
 
 
-void mount_root(void)
+static void mount_root(void)
 {
     struct super_block *sb;
     struct dentry *de;
@@ -83,6 +84,7 @@ void kmain(void)
      * Core
      */
 
+    slab_init();
     kmalloc_init();
     isr_init();
 
@@ -90,7 +92,7 @@ void kmain(void)
      * Primary
      */
 
-    timer_init(100);
+    timer_init();
     vfs_init();
     scheduler_init();
     tty_init();

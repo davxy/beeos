@@ -21,8 +21,8 @@
  * http://www.tldp.org/LDP/tlk/ds/ds.html
  */
 
-#ifndef BEEOS_VFS_H_
-#define BEEOS_VFS_H_
+#ifndef BEEOS_FS_VFS_H_
+#define BEEOS_FS_VFS_H_
 
 #include "htable.h"
 #include "list.h"
@@ -36,7 +36,13 @@
  */
 
 
-struct super_block;
+/** File system super block */
+struct super_block
+{
+    dev_t                   dev;  /** Device */
+    struct dentry          *root; /** Root dentry */
+    const struct super_ops *ops;  /** Superblock vfs operations */
+};
 
 typedef struct inode * (* super_inode_alloc_t)(struct super_block *sb);
 typedef void (* super_inode_free_t)(struct inode *inode);
@@ -50,13 +56,7 @@ struct super_ops {
     super_inode_write_t   inode_write;
 };
 
-/** File system super block */
-struct super_block
-{
-    dev_t                   dev;  /** Device */
-    struct dentry          *root; /** Root dentry */
-    const struct super_ops *ops;  /** Superblock vfs operations */
-};
+
 
 void super_init(struct super_block *sb, dev_t dev, struct dentry *root,
                 const struct super_ops *ops);
@@ -79,26 +79,6 @@ struct vfs_type
  * Inode declarations.
  */
 
-struct inode;
-
-typedef int (* inode_read_t)(struct inode *inode, void *buf,
-            size_t count, off_t offset);
-
-typedef int (* inode_write_t)(struct inode *inode, const void *buf,
-            size_t count, off_t offset);
-
-typedef int (* inode_mknod_t)(struct inode *idir, mode_t mode,
-            dev_t dev);
-
-typedef struct inode *(* inode_lookup_t)(struct inode *udir, const char *name);
-
-struct inode_ops {
-    inode_read_t    read;
-    inode_write_t   write;
-    inode_mknod_t   mknod;
-    inode_lookup_t  lookup;
-};
-
 /** In-memory inode. */
 struct inode {
     dev_t       rdev;   /**< Real device */
@@ -116,11 +96,39 @@ struct inode {
     const struct inode_ops  *ops;  /**< Inode vfs Operations */
 };
 
+typedef int (* inode_read_t)(struct inode *inode, void *buf,
+            size_t count, off_t off);
+
+typedef int (* inode_write_t)(struct inode *inode, const void *buf,
+            size_t count, off_t off);
+
+typedef int (* inode_mknod_t)(struct inode *idir, mode_t mode,
+            dev_t dev);
+
+typedef struct inode *(* inode_lookup_t)(struct inode *udir, const char *name);
+
+struct inode_ops {
+    inode_read_t    read;
+    inode_write_t   write;
+    inode_mknod_t   mknod;
+    inode_lookup_t  lookup;
+};
 
 
 /*
  * Dentry declarations.
  */
+
+struct dentry {
+    char              name[NAME_MAX];  /**< Name */
+    int               ref;             /**< Reference counter */
+    struct inode     *inod;          /**< Inode */
+    struct dentry    *parent;          /**< Parent directory */
+    struct list_link  child;           /**< Children list (if is a dir) */
+    struct list_link  link;            /**< Siblings link */
+    int               mounted;         /**< Set to 1 if is a mount point */
+    const struct dentry_ops *ops;      /**< Dentry vfs operations */
+};
 
 typedef int (* dentry_readdir_t)(struct dentry *dir, unsigned int i,
             struct dirent *dent);
@@ -129,48 +137,36 @@ struct dentry_ops {
     dentry_readdir_t readdir; /**< Read directory */
 };
 
-struct dentry {
-    char              name[NAME_MAX];  /**< Name */
-    int               ref;             /**< Reference counter */
-    struct inode     *inode;           /**< Inode */
-    struct dentry    *parent;          /**< Parent directory */
-    struct list_link  child;           /**< Children list (if is a dir) */
-    struct list_link  link;            /**< Siblings link */
-    int               mounted;         /**< Set to 1 if is a mount point */
-    const struct dentry_ops *ops;      /**< Dentry vfs operations */
-};
-
 
 
 struct file {
     int            flags;   /**< File status flags and access modes. */
     int            ref;     /**< Reference counter. */
     mode_t         mode;    /**< File mode when a new file is created */
-    off_t          offset;  /**< File position. */
-    struct dentry *dentry;  /**< Dentry reference. */
+    off_t          off;     /**< File position. */
+    struct dentry *dent;    /**< Dentry reference. */
 };
 
-struct fd {
-    int         flags;  /**< File descriptor flags, currently FD_CLOEXEC. */
-    struct file *file;  /**< Pointer to the file table. */
+struct filedesc {
+    int          flags;  /**< File descriptor flags, currently FD_CLOEXEC. */
+    struct file *fil;    /**< Pointer to the file table. */
 };
 
 struct vfsmount {
     struct dentry    *mntpt; /**< mount point */
     struct dentry    *root;  /**< mount root */
-    struct list_link link;   /**< link in the mounts list */
+    struct list_link  link;  /**< link in the mounts list */
 };
-
 
 
 
 static inline struct inode *vfs_inode_alloc(struct super_block *sb)
 {
-    struct inode *inode = NULL;
+    struct inode *inod = NULL;
 
     if (sb->ops->inode_alloc != NULL)
-        inode = sb->ops->inode_alloc(sb);
-    return inode;
+        inod = sb->ops->inode_alloc(sb);
+    return inod;
 }
 
 
@@ -219,7 +215,7 @@ static inline int vfs_readdir(struct dentry *dir, int i, struct dirent *dent)
 {
     int ret = -1;
 
-    if (S_ISDIR(dir->inode->mode) && dir->ops->readdir)
+    if (S_ISDIR(dir->inod->mode) && dir->ops->readdir)
         ret = dir->ops->readdir(dir, i, dent);
     return ret;
 }
@@ -231,11 +227,11 @@ struct inode *inode_lookup(dev_t dev, ino_t ino);
 void inode_init(struct inode *inode, struct super_block *sb, ino_t ino,
                 mode_t mode, dev_t dev, const struct inode_ops *ops);
 
-struct inode *namei(const char *pathname);
+struct inode *namei(const char *path);
 
-void iget(struct inode *inode);
+void iget(struct inode *inod);
 
-void iput(struct inode *inode);
+void iput(struct inode *inod);
 
 
 
@@ -244,12 +240,16 @@ struct dentry *dentry_create(const char *name, struct dentry *parent,
 
 void dentry_delete(struct dentry *de);
 
-struct dentry *named(const char *pathname);
+struct dentry *named(const char *path);
 
 void dget(struct dentry *de);
 
 void dput(struct dentry *de);
 
+
+struct file *fs_file_alloc(void);
+
+void fs_file_free(struct file *file);
 
 
 
@@ -258,5 +258,5 @@ int do_mount(struct dentry *mntpt, struct dentry *root);
 
 int vfs_init(void);
 
+#endif /* BEEOS_FS_VFS_H_ */
 
-#endif /* BEEOS_VFS_H_ */

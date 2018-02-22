@@ -17,12 +17,11 @@
  * License along with BeeOS; if not, see <http://www.gnu/licenses/>.
  */
 
-#include "sys.h"
-#include "driver/tty.h"
-#include <sys/types.h>
+#ifndef BEEOS_IPC_PIPE_H_
+#define BEEOS_IPC_PIPE_H_
 
-int sys_tcsetpgrp(int fd, pid_t pgrp)
-{
-    return tty_setpgrp(pgrp);
-}
 
+int pipe_create(int pipefd[2]);
+
+
+#endif /* BEEOS_IPC_PIPE_H_ */

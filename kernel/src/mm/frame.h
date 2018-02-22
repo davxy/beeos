@@ -17,8 +17,8 @@
  * License along with BeeOS; if not, see <http://www.gnu/licenses/>.
  */
 
-#ifndef _BEEOS_MM_FRAME_H_
-#define _BEEOS_MM_FRAME_H_
+#ifndef BEEOS_MM_FRAME_H_
+#define BEEOS_MM_FRAME_H_
 
 #include "mm/zone.h"
 #include <sys/types.h>
@@ -56,4 +56,6 @@ int frame_zone_add(void *addr, size_t size, size_t frame_size, int flags);
  */
 void frame_dump(void);
 
-#endif /* _BEEOS_MM_FRAME_H_ */
+
+#endif /* BEEOS_MM_FRAME_H_ */
+

@@ -17,19 +17,15 @@
  * License along with BeeOS; if not, see <http://www.gnu/licenses/>.
  */
 
+#include "sys.h"
 #include "fs/vfs.h"
 #include "proc.h"
-#include "dev.h"
-#include "kmalloc.h"
 #include "driver/tty.h"
-#include <unistd.h>
 #include <errno.h>
-#include <limits.h>
 #include <string.h>
 #include <stdio.h>
+#include <fcntl.h>
 
-
-void *fs_file_alloc(void);
 
 int sys_open(const char *pathname, int flags, mode_t mode)
 {
@@ -53,7 +49,7 @@ int sys_open(const char *pathname, int flags, mode_t mode)
         return -ENOENT;
 
     for (fdn = 0; fdn < OPEN_MAX; fdn++)
-        if (current_task->fd[fdn].file == NULL)
+        if (current_task->fds[fdn].fil == NULL)
             break;
     if (fdn == OPEN_MAX)
         return -EMFILE; /* Too many open files. */
@@ -63,13 +59,14 @@ int sys_open(const char *pathname, int flags, mode_t mode)
         return -ENOMEM;
 
     file->ref = 1;
-    file->offset = 0;
+    file->off = 0;
     file->mode = mode;
-    file->flags = flags;
-    file->dentry = dentry;
+    file->flags = flags & ~O_CLOEXEC;
+    file->dent = dentry;
     dget(dentry);
 
-    current_task->fd[fdn].file = file;
+    current_task->fds[fdn].fil = file;
+    current_task->fds[fdn].flags = flags & O_CLOEXEC;
 
     return fdn;
 }

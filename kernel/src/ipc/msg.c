@@ -21,8 +21,8 @@
 #include "htable.h"
 
 #define HTABLE_BITS 3
-struct htable_link *ipc_hmap[1<<HTABLE_BITS];
-int ipc_hmap_initialized;
+static struct htable_link *ipc_hmap[1<<HTABLE_BITS];
+static int ipc_hmap_initialized;
 
 int msgget(key_t key, int flags)
 {

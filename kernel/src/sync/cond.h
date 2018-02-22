@@ -17,8 +17,8 @@
  * License along with BeeOS; if not, see <http://www.gnu/licenses/>.
  */
 
-#ifndef _COND_H_
-#define _COND_H_
+#ifndef BEEOS_SYNC_COND_H_
+#define BEEOS_SYNC_COND_H_
 
 #include "spinlock.h"
 #include "list.h"
@@ -38,4 +38,5 @@ void cond_signal(struct cond *cond);
 void cond_broadcast(struct cond *cond);
 
 
-#endif /* _COND_H_ */
+#endif /* BEEOS_SYNC_COND_H_ */
+

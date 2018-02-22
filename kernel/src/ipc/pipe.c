@@ -17,21 +17,21 @@
  * License along with BeeOS; if not, see <http://www.gnu/licenses/>.
  */
 
+#include "ipc/pipe.h"
 #include "sync/spinlock.h"
+#include "sync/cond.h"
 #include "fs/vfs.h"
 #include "proc.h"
-#include "sync/cond.h"
 #include "kmalloc.h"
 #include "sys.h"
-#include <sys/types.h>
 #include <limits.h>
 #include <fcntl.h>
 #include <errno.h>
 
+
 #define PIPE_SIZE   PIPE_BUF
 #define DATA_SIZE   (PIPE_SIZE+1)
 
-struct file *fs_file_alloc(void);
 
 /* Implemented as a ring-buffer */
 struct pipe_inode
@@ -45,8 +45,8 @@ struct pipe_inode
     char data[DATA_SIZE];   /**< Pipe data */
 };
 
-/* TODO: in VFS this is a 'file' operation. 
- * Thus the function should take a file and as a consequence 
+/* TODO: in VFS this is a 'file' operation.
+ * Thus the function should take a file and as a consequence
  * we can check if that is not blocking */
 
 /*
@@ -80,7 +80,7 @@ static int pipe_read(struct inode *inode, void *buf,
             if (left != count && pnode->queued_writers == 0)
                 goto done;
 
-            /* TODO: if BLOCKING allowed */ 
+            /* TODO: if BLOCKING allowed */
             pnode->queued_readers++;
             if (pnode->queued_writers > 0)      /* if there are pending writers */
                 cond_broadcast(&pnode->queue);  /* wakeup them before sleep */
@@ -183,7 +183,7 @@ static const struct inode_ops pipe_ops =
     .write = pipe_write
 };
 
-struct inode *pipe_inode_create(void)
+static struct inode *pipe_inode_create(void)
 {
     struct pipe_inode *pnode;
 
@@ -209,10 +209,10 @@ int pipe_create(int pipefd[2])
     struct file *file0, *file1;
 
     for (fd0 = 0; fd0 < OPEN_MAX; fd0++)
-        if (current_task->fd[fd0].file == NULL)
+        if (current_task->fds[fd0].fil == NULL)
             break;
     for (fd1 = fd0+1; fd1 < OPEN_MAX; fd1++)
-        if (current_task->fd[fd1].file == NULL)
+        if (current_task->fds[fd1].fil == NULL)
             break;
     if (fd1 == OPEN_MAX)
         return -EMFILE; /* Too many open files */
@@ -230,20 +230,20 @@ int pipe_create(int pipefd[2])
     dentry = dentry_create("", NULL, NULL);
     if (dentry == NULL)
         return -1;
-    dentry->inode = inode;
+    dentry->inod = inode;
     iget(inode);
 
     file0->flags = O_RDONLY;
     file0->ref = 1;
-    file0->offset = 0;
-    file0->dentry = dentry;
+    file0->off = 0;
+    file0->dent = dentry;
     dget(dentry);
     dget(dentry); /* Held by two files */
     *file1 = *file0;
     file1->flags = O_WRONLY;
 
-    current_task->fd[fd0].file = file0;
-    current_task->fd[fd1].file = file1;
+    current_task->fds[fd0].fil = file0;
+    current_task->fds[fd1].fil = file1;
 
     pipefd[0] = fd0;
     pipefd[1] = fd1;

@@ -17,8 +17,8 @@
  * License along with BeeOS; if not, see <http://www.gnu/licenses/>.
  */
 
-#ifndef _BEEOS_ARCH_X86_PIC_H_
-#define _BEEOS_ARCH_X86_PIC_H_
+#ifndef BEEOS_ARCH_X86_PIC_H_
+#define BEEOS_ARCH_X86_PIC_H_
 
 /*
  * Mask an IRQ.
@@ -42,4 +42,8 @@ void pic_unmask(int n);
  */
 void pic_init(void);
 
-#endif /* _BEEOS_ARCH_X86_PIC_H_ */
+
+void pic_eoi(int n);
+
+
+#endif /* BEEOS_ARCH_X86_PIC_H_ */

@@ -19,11 +19,11 @@
 
 #include "sys.h"
 #include "fs/vfs.h"
+#include "fs/devfs.h"
 #include "proc.h"
 #include <errno.h>
 #include <sys/stat.h>
 
-struct super_block *devfs_sb_get(void);
 
 int sys_mount(const char *source, const char *target,
               const char *fs_type, unsigned long flags,

@@ -44,9 +44,6 @@
 #define MAKE_COLOR(bg, fg) 		((bg << 4) | fg)
 #define MAKE_ENTRY(bg, fg, c)	((MAKE_COLOR(bg, fg) << 8) | c)
 
-#define VGA_WIDTH		80
-#define VGA_HEIGHT		25
-
 /*
  * Copy the backbuffer and update the hardware cursor. 
  *

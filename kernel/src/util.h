@@ -17,8 +17,8 @@
  * License along with BeeOS; if not, see <http://www.gnu/licenses/>.
  */
 
-#ifndef _BEEOS_UTIL_H_
-#define _BEEOS_UTIL_H_
+#ifndef BEEOS_UTIL_H_
+#define BEEOS_UTIL_H_
 
 #include <stdint.h>
 #include <sys/types.h>
@@ -82,15 +82,7 @@ static inline int iswithin(uintptr_t b1, size_t sz1, uintptr_t b2, size_t sz2)
     return ((b1 <= b2) && (e1 >= e2));
 }
 
-#define SWAP(a, b) \
-do { \
-    (a) ^= (b); \
-    (b) ^= (a); \
-    (a) ^= (b); \
-} while(0)
-
 #define MIN(a, b) (((a) < (b)) ? (a) : (b))
-#define MAX(a, b) (((a) < (b)) ? (b) : (a))
 
 /**
  * Get a pointer to the struct start given a pointer to a member.
@@ -101,4 +93,5 @@ do { \
 #define struct_ptr(member_ptr, struct_type, member_name) \
     ((struct_type *)((char *)(member_ptr)-offsetof(struct_type,member_name)))
 
-#endif /* _BEEOS_UTIL_H_ */
+#endif /* BEEOS_UTIL_H_ */
+

@@ -24,10 +24,33 @@
  * word-width, the l-suffix functions are long-width.
  */
 
-#ifndef _BEEOS_ARCH_X86_IO_H_
-#define _BEEOS_ARCH_X86_IO_H_
+#ifndef BEEOS_ARCH_X86_IO_H_
+#define BEEOS_ARCH_X86_IO_H_
 
-#include <stdint.h> 
+#include <stdint.h>
+
+
+#define outb_asm(port, val) \
+    asm volatile("out %w1, %b0" : : "a"(val), "Nd"(port))
+
+#define inb_asm(port, val) \
+    asm volatile("in %b0, %w1" : "=a"(val) : "Nd"(port))
+
+
+#define outw_asm(port, val) \
+    asm volatile("out %w1, %w0" : : "a"(val), "Nd"(port))
+
+#define inw_asm(port, val) \
+    asm volatile("in %w0, %w1" : "=a"(val) : "Nd"(port))
+
+
+#define outl_asm(port, val) \
+    asm volatile("out %w1, %d0" : : "a"(val), "Nd"(port))
+
+#define inl_asm(port,val) \
+    asm volatile("in %d0, %w1" : "=a"(val) : "Nd"(port))
+
+
 
 /*
  * Write one byte to an output port
@@ -37,7 +60,7 @@
  */
 static inline void outb(uint16_t port, uint8_t val)
 {
-    asm volatile("out %w1, %b0" : : "a"(val), "Nd"(port));
+    outb_asm(port, val);
 }
 
 /*
@@ -49,7 +72,7 @@ static inline void outb(uint16_t port, uint8_t val)
 static inline uint8_t inb(uint16_t port)
 {
     uint8_t val;
-    asm volatile("in %b0, %w1" : "=a"(val) : "Nd"(port));
+    inb_asm(port, val);
     return val;
 }
 
@@ -61,7 +84,7 @@ static inline uint8_t inb(uint16_t port)
  */
 static inline void outw(uint16_t port, uint16_t val)
 {
-    asm volatile("out %w1, %w0" : : "a"(val), "Nd"(port));
+    outw_asm(port, val);
 }
 
 /*
@@ -73,7 +96,7 @@ static inline void outw(uint16_t port, uint16_t val)
 static inline uint16_t inw(uint16_t port)
 {
     uint16_t val;
-    asm volatile("in %w0, %w1" : "=a"(val) : "Nd"(port));
+    inw_asm(port, val);
     return val;
 }
 
@@ -85,7 +108,7 @@ static inline uint16_t inw(uint16_t port)
  */
 static inline void outl(uint16_t port, uint32_t val)
 {
-    asm volatile("out %w1, %d0" : : "a"(val), "Nd"(port));
+    outl_asm(port, val);
 }
 
 /*
@@ -97,8 +120,9 @@ static inline void outl(uint16_t port, uint32_t val)
 static inline uint32_t inl(uint16_t port)
 {
     uint32_t val;
-    asm volatile("in %d0, %w1" : "=a"(val) : "Nd"(port));
+    inl_asm(port, val);
     return val;
 }
 
-#endif /* _BEEOS_ARCH_X86_IO_H_ */
+#endif /* BEEOS_ARCH_X86_IO_H_ */
+

@@ -17,8 +17,8 @@
  * License along with BeeOS; if not, see <http://www.gnu/licenses/>.
  */
 
-#ifndef _BEEOS_TASK_H_
-#define _BEEOS_TASK_H_
+#ifndef BEEOS_PROC_TASK_H_
+#define BEEOS_PROC_TASK_H_
 
 #include "list.h"
 #include "fs/vfs.h"
@@ -33,7 +33,6 @@
 #define TASK_RUNNING    1
 #define TASK_SLEEPING   2
 #define TASK_ZOMBIE     3
-#define TASK_READY      4
 
 #define SIGNALS_NUM     (SIGUNUSED+1)
 
@@ -52,7 +51,7 @@ struct task
     int                 state;          /**< Process state. */
     struct dentry       *cwd;           /**< Current working directory. */
     struct dentry       *root;
-    struct fd           fd[OPEN_MAX];   /**< Open files. */  
+    struct filedesc     fds[OPEN_MAX];  /**< Open files. */
     struct list_link    tasks;          /**< Tasks list link. */
     struct cond         chld_exit;      /**< Child exit condition */
     int                 counter;        /**< Remaining time slice for sched */
@@ -82,4 +81,5 @@ void task_arch_deinit(struct task_arch *task);
 void task_arch_switch(struct task_arch *curr, struct task_arch *next);
 
 
-#endif /* _BEEOS_TASK_H_ */
+#endif /* BEEOS_PROC_TASK_H_ */
+

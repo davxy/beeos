@@ -17,8 +17,8 @@
  * License along with BeeOS; if not, see <http://www.gnu/licenses/>.
  */
 
-#ifndef _BEEOS_MM_BUDDY_H_
-#define _BEEOS_MM_BUDDY_H_
+#ifndef BEEOS_MM_BUDDY_H_
+#define BEEOS_MM_BUDDY_H_
 
 #include "list.h"
 
@@ -99,4 +99,5 @@ void buddy_free(struct buddy_sys *ctx, struct frame *frame, unsigned int order);
  */
 void buddy_dump(struct buddy_sys *ctx, char *base);
 
-#endif /* _BEEOS_MM_BUDDY_H_ */ 
+#endif /* BEEOS_MM_BUDDY_H_ */ 
+

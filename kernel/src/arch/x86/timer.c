@@ -26,11 +26,17 @@
 #define TIMER_IO_DAT        0x40    /* Data port */
 #define TIMER_IO_CMD        0x43    /* Command port */
 
-#define TIMER_FREQ          1193180 /* Timer built-in frequency */
+#define TIMER_ARCH_HZ       1193180 /* Built-in timer max frequency */
 #define TIMER_OPMODE        0x04    /* Mode 2, rate generator */
 #define TIMER_ACCESS        0x30    /* 16bit, LSB first */
 
-extern unsigned long timer_ticks;
+/* The value we send to the PIT is the value to divide it's input
+ * clock (1193180 Hz) to get the required frequency.
+ * The divisor must be small enough to fit into 16-bits.
+ *
+ * TIMER_ARCH_FREQ / freq < 65536 => frequency > 18,20
+ */
+#define TIMER_DIVISOR       (TIMER_ARCH_HZ / TIMER_HZ)
 
 static void timer_handler(void)
 {
@@ -38,21 +44,15 @@ static void timer_handler(void)
     timer_update();
 }
 
-void timer_arch_init(unsigned int frequency)
+void timer_arch_init(void)
 {
-	/* The value we send to the PIT is the value to divide it's input
-	 * clock (1193180 Hz) to get the required frequency. 
-     * The divisor must be small enough to fit into 16-bits.
-	 *
-	 * TIMER_FREQ/freq < 65536 => frequency > 18,20
-	 */
-	uint32_t divisor =  TIMER_FREQ/frequency;
+    uint8_t lo, hi;
 
 	outb(TIMER_IO_CMD, TIMER_OPMODE | TIMER_ACCESS);
 
 	/* Divisor has to be sent byte-wise, so split here into upper/lower bytes.*/
-	uint8_t lo = (uint8_t) divisor;
-	uint8_t hi = (uint8_t) (divisor >> 8 );
+	lo = (uint8_t) TIMER_DIVISOR;
+	hi = (uint8_t) (TIMER_DIVISOR >> 8 );
 
 	/* Send the frequency divisor. */
 	outb(TIMER_IO_DAT, lo);

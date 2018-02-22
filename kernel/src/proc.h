@@ -17,8 +17,8 @@
  * License along with BeeOS; if not, see <http://www.gnu/licenses/>.
  */
 
-#ifndef _BEEOS_PROC_H_
-#define _BEEOS_PROC_H_
+#ifndef BEEOS_PROC_H_
+#define BEEOS_PROC_H_
 
 #include "proc/task.h"
 
@@ -26,12 +26,14 @@
 #define SCHED_TIMESLICE     100
 
 extern struct task *current_task;
+extern struct task ktask;
+
+extern int need_resched;
+
 
 void scheduler(void);
 
 void scheduler_init(void);
-
-void wakeup(void *ctx);
 
 /**
  * Process pending (non masked) signals.
@@ -51,5 +53,10 @@ void init_start(void);
  */
 void idle(void);
 
-#endif /* _BEEOS_PROC_H_ */
+
+void proc_dump(void);
+
+
+#endif /* BEEOS_PROC_H_ */
+
 

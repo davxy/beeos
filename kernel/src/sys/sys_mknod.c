@@ -73,7 +73,7 @@ int sys_mknod(const char *pathname, mode_t mode, dev_t dev)
     dentry = named(parent);
     if (dentry == NULL)
         return -1;
-    idir = dentry->inode;
+    idir = dentry->inod;
 
     return vfs_mknod(idir, mode, dev);
 }

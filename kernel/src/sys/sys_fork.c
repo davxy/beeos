@@ -17,13 +17,14 @@
  * License along with BeeOS; if not, see <http://www.gnu/licenses/>.
  */
 
+#include "sys.h"
 #include "proc.h"
 #include "proc/task.h"
 
 pid_t sys_fork(void)
 {
     struct task *child;
-    
+
     child = task_create();
     if (child == NULL)
         return -1;

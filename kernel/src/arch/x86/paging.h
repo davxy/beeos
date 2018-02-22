@@ -17,8 +17,8 @@
  * License along with BeeOS; if not, see <http://www.gnu/licenses/>.
  */
 
-#ifndef _BEEOS_ARCH_X86_PAGING_H_
-#define _BEEOS_ARCH_X86_PAGING_H_
+#ifndef BEEOS_ARCH_X86_PAGING_H_
+#define BEEOS_ARCH_X86_PAGING_H_
 
 #include "paging_bits.h"
 #include "vmem.h"
@@ -42,9 +42,9 @@ uint32_t page_dir_dup(int dup_user);
 /**
  * Deletes a page directory.
  *
- * @param pgdir Physical address of the dir to delete.
+ * @param phys  Physical address of the page directory.
  */
-void page_dir_del(uint32_t pgdir);
+void page_dir_del(uint32_t phys);
 
 /**
  * Maps a page virtual memory address to a physical memory address.
@@ -81,4 +81,5 @@ uint32_t page_unmap(void *virt, int retain);
  */
 void paging_init(void);
 
-#endif /* _BEEOS_ARCH_X86_PAGING_H_ */
+#endif /* BEEOS_ARCH_X86_PAGING_H_ */
+

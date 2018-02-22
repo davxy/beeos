@@ -23,7 +23,7 @@
 #include <string.h>
 
 
-/* 
+/*
  * We just need two entries that defines the stack pointer and the stack
  * segment when we switch to kernel mode. All the other entries are unused
  */
@@ -47,41 +47,46 @@ struct tss_struct
     uint32_t ebp;
     uint32_t esi;
     uint32_t edi;
-    uint32_t es;         
-    uint32_t cs;        
-    uint32_t ss;        
-    uint32_t ds;        
-    uint32_t fs;       
-    uint32_t gs;         
-    uint32_t ldt;      
+    uint32_t es;
+    uint32_t cs;
+    uint32_t ss;
+    uint32_t ds;
+    uint32_t fs;
+    uint32_t gs;
+    uint32_t ldt;
     uint16_t trap;
     uint16_t iomap_base;
 };
 
 static struct gdt_entry     gdt_entries[6];
-static struct gdt_reg       gdt_reg;
-struct tss_struct    tss;
+static struct gdt_register  gdt_reg;
+struct tss_struct           tss;
 
 /*
  * Load the new GDT register and flush the old one
  */
-#define	gdt_flush(gdt_reg) \
-    asm volatile ( \
+#define gdt_flush() asm volatile ( \
         "lgdt   [eax]\n\t" \
         "mov    eax, 0x10\n\t" \
         "mov    ds, ax\n\t" \
-		"mov    es, ax\n\t" \
-		"mov    fs, ax\n\t" \
-		"mov    gs, ax\n\t" \
-		"mov    ss, ax\n\t" \
+        "mov    es, ax\n\t" \
+        "mov    fs, ax\n\t" \
+        "mov    gs, ax\n\t" \
+        "mov    ss, ax\n\t" \
         "jmp    0x08:1f\n\t" \
         "1:\n\t" \
-	:: "a"(gdt_reg))
+    :: "a"(&gdt_reg))
+
+/* Load task register */
+#define load_task_reg() asm volatile( \
+        "mov   ax, 0x2B \n\t" \
+        "ltr   ax       \n\t")
+
 
 /*
  * Initialize a single GDT entry
  */
-static void gdt_entry_init(int i, uint32_t base, uint32_t limit, 
+static void gdt_entry_init(int i, uint32_t base, uint32_t limit,
         uint8_t flags, uint8_t access)
 {
    gdt_entries[i].base_lo = (base & 0xFFFF);
@@ -100,7 +105,7 @@ void gdt_init(void)
     uint32_t gdt_addr = (uint32_t)&gdt_entries;
 
     /* Init the GDT register */
-	gdt_reg.limit = sizeof(struct gdt_entry) * 6 - 1;   /* Six entries */
+    gdt_reg.limit = sizeof(struct gdt_entry) * 6 - 1;   /* Six entries */
     gdt_reg.base_lo = gdt_addr & 0xFFFF;
     gdt_reg.base_hi = (gdt_addr >> 16) & 0xFFFF;
 
@@ -112,12 +117,12 @@ void gdt_init(void)
      * ucode.access  = (Pres | Dpl = 3 | Ex | Rd) = 0xFA
      * udata.access  = (Pres | Dpl = 3 | Wr) = 0xF2
      */
-	memset(gdt_entries, 0, sizeof(struct gdt_entry));   /* NULL segment */
-	gdt_entry_init(1, 0, 0xFFFFFFFF, 0xC0, 0x9A); 	    /* Kern code seg */
-	gdt_entry_init(2, 0, 0xFFFFFFFF, 0xC0, 0x92); 		/* Kern data seg */
-	gdt_entry_init(3, 0, 0xFFFFFFFF, 0xC0, 0xFA); 		/* User code seg */
-	gdt_entry_init(4, 0, 0xFFFFFFFF, 0xC0, 0xF2); 		/* User data seg */
-    /* 
+    memset(gdt_entries, 0, sizeof(struct gdt_entry));   /* NULL segment */
+    gdt_entry_init(1, 0, 0xFFFFFFFF, 0xC0, 0x9A);       /* Kern code seg */
+    gdt_entry_init(2, 0, 0xFFFFFFFF, 0xC0, 0x92);       /* Kern data seg */
+    gdt_entry_init(3, 0, 0xFFFFFFFF, 0xC0, 0xFA);       /* User code seg */
+    gdt_entry_init(4, 0, 0xFFFFFFFF, 0xC0, 0xF2);       /* User data seg */
+    /*
      * TSS descriptor.
      * Requires the TSS address as 'base' and TSS size as 'limit'.
      * flags = SZ = 0x40
@@ -126,9 +131,9 @@ void gdt_init(void)
     gdt_entry_init(5, (uint32_t)&tss, sizeof(tss), 0x40, 0xE9);
 
     /* Make effective by loading the new GDT register */
-	gdt_flush(&gdt_reg);
+    gdt_flush();
 
-    /* 
+    /*
      * Initialize the Task State Segment descriptor.
      * Even though this structure is obsolete, some entries need to be
      * correctly initialized to control the values assumed by some
@@ -140,6 +145,5 @@ void gdt_init(void)
     tss.esp0 = (uint32_t)&kstack + PAGE_SIZE;   /* Kernel stack pointer */
 
     /* Load task register */
-    asm volatile("mov   ax, 0x2B \n\t"
-                 "ltr   ax       \n\t");
+    load_task_reg();
 }

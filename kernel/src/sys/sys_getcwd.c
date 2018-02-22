@@ -23,7 +23,7 @@
 #include <string.h>
 
 
-struct dentry *follow_up(struct dentry *root);
+extern struct dentry *follow_up(struct dentry *root);
 
 
 char *sys_getcwd(char *buf, size_t size)

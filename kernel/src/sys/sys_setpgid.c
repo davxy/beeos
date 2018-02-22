@@ -17,9 +17,10 @@
  * License along with BeeOS; if not, see <http://www.gnu/licenses/>.
  */
 
+#include "sys.h"
+#include "proc.h"
 #include <sys/types.h>
 #include <errno.h>
-#include "proc.h"
 
 /*
  * Sets the process group ID to pgid in the process whose process ID equals
@@ -34,7 +35,6 @@
  * children after that child has called one of the exec functions.
  * NOTE: for simplicity, we don't respect this last requirement here!!!
  */
-
 int sys_setpgid(pid_t pid, pid_t pgid)
 {
     struct task *task = NULL;

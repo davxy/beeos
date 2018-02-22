@@ -23,10 +23,6 @@
 #include "kmalloc.h"
 #include <stddef.h>
 
-extern uint32_t get_eip();
-
-extern struct task ktask;
-extern struct task *current_task;
 
 /*
  * TODO : implement as clone syscall

@@ -17,8 +17,8 @@
  * License along with BeeOS; if not, see <http://www.gnu/licenses/>.
  */
 
-#ifndef _BEEOS_MM_ZONE_H_
-#define _BEEOS_MM_ZONE_H_
+#ifndef BEEOS_MM_ZONE_H_
+#define BEEOS_MM_ZONE_H_
 
 #include "buddy.h"
 #include "list.h"
@@ -56,7 +56,7 @@ struct zone_st
  * @param flags         Zone flags (e.g. ZONE_HIGH).
  * @return              On error -1 is returned.
  */
-int zone_init(struct zone_st *ctx, void *base, size_t size,
+int zone_init(struct zone_st *ctx, void *addr, size_t size,
         size_t frame_size, int flags);
 
 /**
@@ -87,4 +87,5 @@ void zone_free(struct zone_st *ctx, void *ptr, int order);
  */
 void zone_dump(struct zone_st *ctx);
 
-#endif /* _BEEOS_MM_ZONE_H_ */
+#endif /* BEEOS_MM_ZONE_H_ */
+

@@ -17,8 +17,8 @@
  * License along with BeeOS; if not, see <http://www.gnu/licenses/>.
  */
 
-#ifndef _BEEOS_SYS_H_
-#define _BEEOS_SYS_H_
+#ifndef BEEOS_SYS_H_
+#define BEEOS_SYS_H_
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -27,35 +27,47 @@
 
 
 void sys_exit(int status);
+
 pid_t sys_fork(void);
 
 ssize_t sys_read(int fd, void *buf, size_t count);
+
 ssize_t sys_write(int fd, const void *buf, size_t count);
 
 int sys_mknod(const char *pathname, mode_t mode, dev_t dev);
+
 int sys_open(const char *pathname, int flags, mode_t mode);
+
 int sys_close(int fd);
+
 off_t sys_lseek(int fd, off_t offset, int whence);
+
 int sys_dup(int oldfd);
+
 int sys_dup2(int oldfd, int newfd);
 
 pid_t sys_waitpid(pid_t pid, int *wstatus, int options);
 
 pid_t sys_getpid(void);
+
 pid_t sys_getppid(void);
 
 char *sys_getcwd(char *buf, size_t size);
 
 uid_t sys_getuid(void);
+
 gid_t sys_getgid(void);
 
 int sys_setuid(uid_t uid);
+
 int sys_setgid(gid_t gid);
 
 pid_t sys_getpgid(pid_t pid);
+
 int sys_setpgid(pid_t pid, pid_t pgid);
 
 pid_t sys_tcgetpgrp(int fd);
+
 int sys_tcsetpgrp(int fd, pid_t pgrp);
 
 int sys_execve(const char *path, const char *argv[], const char *envp[]);
@@ -68,8 +80,7 @@ int sys_fstat(int fd, struct stat *buf);
 
 int sys_info(int type);
 
-int sys_sigaction(int sig, const struct sigaction *act,
-        struct sigaction *oact);
+int sys_sigaction(int sig, const struct sigaction *act, struct sigaction *oact);
 
 int sys_sigreturn(void);
 
@@ -77,7 +88,7 @@ int sys_sigsuspend(const sigset_t *mask);
 
 int sys_kill(pid_t pid, int sig);
 
-int sys_sigprocmask(int how, const sigset_t *set, sigset_t *oldset);
+int sys_sigprocmask(int how, const sigset_t *set, sigset_t *oset);
 
 int sys_pipe(int pipefd[2]);
 
@@ -89,7 +100,9 @@ int sys_mount(const char *source, const char *target,
               const char *fs_type, unsigned long flags,
               const void *data);
 
+
 void syscall_init(void);
 
 
-#endif /* _BEEOS_SYS_H_ */
+#endif /* BEEOS_SYS_H_ */
+

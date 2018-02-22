@@ -17,8 +17,8 @@
  * License along with BeeOS; if not, see <http://www.gnu/licenses/>.
  */
 
-#ifndef _BEEOS_HTABLE_H_
-#define _BEEOS_HTABLE_H_
+#ifndef BEEOS_HTABLE_H_
+#define BEEOS_HTABLE_H_
 
 #include <stdint.h>
 #include <string.h>
@@ -88,4 +88,5 @@ static inline struct htable_link *htable_lookup(struct htable_link **htable,
     return htable[hash(key, bits)];
 }
 
-#endif /* _BEEOS_HTABLE_H_ */
+#endif /* BEEOS_HTABLE_H_ */
+
