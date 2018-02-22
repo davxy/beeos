@@ -24,23 +24,19 @@
 #include <stdint.h>
 
 
-/* Clock timer frequency. */
-extern unsigned long timer_freq;
-
 /* Clock ticks since system startup. */
 extern unsigned long timer_ticks;
 
-/** Converts milliseconds to clock ticks. */
-static inline unsigned long msecs_to_ticks(unsigned long msecs)
-{
-    //return (freq / 1000L) * msecs;
-    return (msecs + (1000L / timer_freq) - 1) / (1000L / timer_freq);
-}
+/* Timer frequency */
+#define TIMER_HZ    100
 
-static inline unsigned long ticks_to_msecs(unsigned long ticks)
-{
-    return (1000L / timer_freq) * ticks;
-}
+/** Converts milliseconds to clock ticks. */
+#define msecs_to_ticks(msecs) \
+        (((unsigned long)(msecs) + (1000L / TIMER_HZ) - 1) / (1000L / TIMER_HZ))
+
+#define ticks_to_msecs(ticks) \
+        ((1000L / TIMER_HZ) * (unsigned long)(ticks))
+
 
 /** Timer event callback signature. */
 typedef void (timer_event_t)(void *data);
@@ -52,7 +48,7 @@ struct timer_event
     struct list_link plink;     /**< Link for timers within the same process */
     timer_event_t    *func;     /**< Timer event function callback. */
     void             *data;     /**< User context data. */
-    unsigned long    expires;   /**< Expiration time, in system ticks. */ 
+    unsigned long    expires;   /**< Expiration time, in system ticks. */
 };
 
 /**
@@ -63,7 +59,7 @@ struct timer_event
  * @param data      Data pointer to be passed to the callback.
  * @param expires   Expiration time, in system ticks.
  */
-void timer_event_init(struct timer_event *tm, timer_event_t *fn, 
+void timer_event_init(struct timer_event *tm, timer_event_t *fn,
                       void *data, unsigned long expires);
 
 /**
@@ -85,7 +81,7 @@ void timer_event_del(struct timer_event *tm);
 /**
  * Adds a timer queue to the timers queue.
  * This function also specifies the expration time in ticks.
- * If the expration time is less than or equal the current 'timer_ticks' 
+ * If the expration time is less than or equal the current 'timer_ticks'
  * value the event is immediatelly executed.
  *
  * @param tm        Timer event structure.
@@ -95,20 +91,11 @@ void timer_event_mod(struct timer_event *tm, unsigned long expires);
 
 /**
  * Initialize the timer event queue.
- *
- * @param freq      Required timer frequency in Hz (greather than 18).
  */
-void timer_init(unsigned int freq);
+void timer_init(void);
 
 /**
- * Architecture dependent timer initialization.
- *
- * @param freq  Required timer frequency in Hz.
- */
-void timer_arch_init(unsigned int freq);
-
-/**
- * Timer wheel update. 
+ * Timer wheel update.
  *
  * Eventually fires some asynchronous events.
  */

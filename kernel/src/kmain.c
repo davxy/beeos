@@ -92,7 +92,7 @@ void kmain(void)
      * Primary
      */
 
-    timer_init(100);
+    timer_init();
     vfs_init();
     scheduler_init();
     tty_init();

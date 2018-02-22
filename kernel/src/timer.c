@@ -22,10 +22,14 @@
 
 unsigned long timer_ticks = 0;
 
-unsigned long timer_freq;
-
 /* Timer events queue. */
 static struct list_link timer_events;
+
+/**
+ * Architecture dependent timer initialization.
+ */
+void timer_arch_init(void);
+
 
 void timer_event_add(struct timer_event *tm)
 {
@@ -82,9 +86,8 @@ void timer_update(void)
         need_resched = 1;
 }
 
-void timer_init(unsigned int freq)
+void timer_init(void)
 {
-    timer_freq = freq;
     list_init(&timer_events);
-    timer_arch_init(freq);
+    timer_arch_init();
 }
