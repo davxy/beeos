@@ -38,7 +38,7 @@
  * via the following special virtual addresses thus there is no need to
  * temporary map dirs and tables to a reserved virtual address.
  *
- * The last 4 MB of the current process virtual memory space 
+ * The last 4 MB of the current process virtual memory space
  * [0xFFC00000:0xFFFFFFFF] are reserved to access to the current process page
  * directory and page tables.
  * The second-to-last 4 MB of the current process virtual memory space
@@ -46,7 +46,7 @@
  * directory and page tables.
  * Loosing 8 MB of memory space in 4 GB is not such a big deal.
  *
- * We also reserve a "wild" page starting below the second-to-last 4MB to 
+ * We also reserve a "wild" page starting below the second-to-last 4MB to
  * temporary map arbitrary physical addresses to a well known virtual address.
  * This wild page is used to copy pages between two different processes.
  */
@@ -72,6 +72,11 @@
  */
 #define page_invalidate(phys) flush_tlb()
 
+/* Get page fault address */
+#define fault_addr_get(virt) \
+    asm volatile("mov %0, cr2" : "=r"(virt))
+
+
 /*
  * Maps a page virtual memory address to a physical memory address.
  */
@@ -88,7 +93,7 @@ uint32_t page_map(void *virt, uint32_t phys)
     if ((uint32_t)virt < KVBASE)
         flags |= PTE_U;
 
-    /* 
+    /*
      * Check if the page table is present.
      * Note that is not required to be identity mappable.
      * TODO: Add ZONE_ANY flag?
@@ -170,8 +175,8 @@ void page_dir_del(uint32_t phys)
     int di, ti;
     uint32_t *tab;
     uint32_t *dir_curr, *dir;
-    
-    dir_curr = (uint32_t *)PAGE_DIR_MAP; 
+
+    dir_curr = (uint32_t *)PAGE_DIR_MAP;
     /* Temporary map the dir in under the current dir */
     dir_curr[1022] = phys | PTE_W | PTE_P;
     dir = (uint32_t *)(PAGE_TAB_MAP + (1022 * 4096));
@@ -202,7 +207,7 @@ void page_dir_del(uint32_t phys)
 uint32_t page_dir_dup(int dup_user)
 {
     int i, j;
-    uint32_t *dir_src; 
+    uint32_t *dir_src;
     uint32_t *dir_dst;
     uint32_t *tab_src;
     uint32_t *tab_dst;
@@ -210,7 +215,7 @@ uint32_t page_dir_dup(int dup_user)
     uint32_t phys;
     int flags = PTE_W | PTE_P;
 
-    dir_src = (uint32_t *)PAGE_DIR_MAP; 
+    dir_src = (uint32_t *)PAGE_DIR_MAP;
     dir_dst = (uint32_t *)(PAGE_TAB_MAP + (1022 * 4096));
     phys = (uint32_t) frame_alloc(0, 0);
     dir_src[1022] = phys | flags; /* Temporary map the dst page table */
@@ -277,13 +282,13 @@ static void map_propagate(int idx)
     uint32_t *dir_src, *dir_dst;
     struct task *other;
 
-    other = list_container(current_task->tasks.next, 
+    other = list_container(current_task->tasks.next,
             struct task, tasks);
     /*
      * The non-current process page dir is mapped just below the
      * current process page directory.
      */
-    dir_src = (uint32_t *)PAGE_DIR_MAP; 
+    dir_src = (uint32_t *)PAGE_DIR_MAP;
     dir_dst = (uint32_t *)(PAGE_TAB_MAP + (1022 * 4096));
     while (other != current_task)
     {
@@ -316,7 +321,7 @@ static void page_fault_handler(void)
     uint32_t virt, phys;
     int flags = ZONE_LOW;
 
-    asm volatile ("mov %0, cr2" : "=r"(virt));
+    fault_addr_get(virt);
 
 #if DEBUG
     kprintf("pid: %d\n", current_task->pid);
@@ -339,9 +344,9 @@ static void page_fault_handler(void)
         panic("Out of mem in page fault handler");
     if ((int)page_map((char *)virt, (uint32_t)-1) < 0)
         panic("Map page error");
-    
+
     if (virt >= KVBASE) {
-        map_propagate(DIR_INDEX(virt)); 
+        map_propagate(DIR_INDEX(virt));
         kprintf("Propagate\n");
     }
 }
@@ -354,7 +359,7 @@ void paging_init(void)
     int i;
     uint32_t *tab, phys;
 
-    /* 
+    /*
      * New page table physical address.
      * For the first process we preserve the page dir already in use.
      */
@@ -366,12 +371,12 @@ void paging_init(void)
     /* Temporary mapping to construct the page table */
     kpage_dir[0] = phys | PTE_W | PTE_P;
     flush_tlb();
-   
+
     tab = (uint32_t *)PAGE_TAB_MAP; /* Page table for virtual address 0x0 */
     for (i = 0; i < 1024; i++)      /* Identity map the first 4 MB */
         tab[i] = (i * PAGE_SIZE) | PTE_W | PTE_P;
 
-    /* 
+    /*
      * Now the new kernel page table is ready to be used in place of the
      * current page dir entry. Note that this operation MUST be done after
      * the table construction (is flush strictly needed???)
