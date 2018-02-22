@@ -24,6 +24,7 @@
 #include "timer.h"
 #include "sys.h"
 #include "proc.h"
+#include "mm/slab.h"
 #include "driver/tty.h"
 #include "fs/vfs.h"
 #include "fs/devfs.h"
@@ -83,6 +84,7 @@ void kmain(void)
      * Core
      */
 
+    slab_init();
     kmalloc_init();
     isr_init();
 
