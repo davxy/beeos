@@ -26,7 +26,7 @@
 #include <string.h>
 
 
-int task_init(struct task *task, const task_entry_t entry)
+int task_init(struct task *task, task_entry_t entry)
 {
     static pid_t next_pid = 1;
     int i;
@@ -44,7 +44,7 @@ int task_init(struct task *task, const task_entry_t entry)
     task->gid = current_task->gid;
     task->egid = current_task->egid;
     task->sgid = current_task->sgid;
- 
+
     /* file system */
     task->cwd = current_task->cwd;
     task->root = current_task->root;
@@ -75,7 +75,7 @@ int task_init(struct task *task, const task_entry_t entry)
 
     /* Add to the global tasks list */
     list_insert_before(&current_task->tasks, &task->tasks);
-    
+
     sib = list_container(current_task->children.next, struct task, children);
     if (list_empty(&current_task->children) || sib->pptr != current_task)
         list_insert_after(&current_task->children, &task->children);
@@ -83,7 +83,7 @@ int task_init(struct task *task, const task_entry_t entry)
         list_insert_before(&sib->sibling, &task->sibling);
 
     cond_init(&task->chld_exit);
-    
+
     /* signals */
     (void)sigemptyset(&task->sigpend);
     (void)sigemptyset(&task->sigmask);

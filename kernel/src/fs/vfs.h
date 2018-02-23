@@ -253,5 +253,8 @@ int do_mount(struct dentry *mntpt, struct dentry *root);
 
 int vfs_init(void);
 
+/* TODO... find a better way */
+struct dentry *follow_up(struct dentry *root);
+
 #endif /* BEEOS_FS_VFS_H_ */
 

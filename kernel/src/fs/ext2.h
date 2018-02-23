@@ -98,10 +98,8 @@ struct ext2_disk_dirent
 };
 
 
-#if 0
-
 /*
- * Reserved for future extensions
+ * Unused macros are reserved for future extensions or completeness.
  */
 
 #define EXT2_BAD_INO            1
@@ -110,6 +108,8 @@ struct ext2_disk_dirent
 #define EXT2_ACL_DATA_INO       4
 #define EXT2_BOOT_LOADER_INO    5
 #define EXT2_UNDEL_DIR_INO      6
+
+#if 0
 
 struct ext2_aux
 {

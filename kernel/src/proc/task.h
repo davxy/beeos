@@ -71,17 +71,17 @@ struct task
 
 typedef void (* task_entry_t)(void);
 
-int task_init(struct task *task, const task_entry_t entry);
+int task_init(struct task *task, task_entry_t entry);
 
 void task_deinit(struct task *task);
 
-struct task *task_create(const task_entry_t entry);
+struct task *task_create(task_entry_t entry);
 
 void task_delete(struct task *task);
 
 
 
-int task_arch_init(struct task_arch *task, const task_entry_t entry);
+int task_arch_init(struct task_arch *task, task_entry_t entry);
 
 void task_arch_deinit(struct task_arch *task);
 
