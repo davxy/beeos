@@ -17,30 +17,14 @@
  * License along with BeeOS; if not, see <http://www.gnu/licenses/>.
  */
 
-.intel_syntax noprefix
+#ifndef BEEOS_DRIVER_RANDOM_H_
+#define BEEOS_DRIVER_RANDOM_H_
 
-.section .text
+#include <sys/types.h>
 
-/*
- * void swtch(struct context **old, struct context *new);
- */
-.globl swtch
-swtch:
-    mov     eax, [esp + 4]
-    mov     edx, [esp + 8]
-    /* Save old callee-save registers */
-    /* Instruction pointer saved implicitly by function "call" */
-    push    ebp
-    push    ebx
-    push    esi
-    push    edi
-    /* Switch stacks */
-    mov     [eax], esp
-    mov     esp, edx
-    /* Restore new context */
-    pop     edi
-    pop     esi
-    pop     ebx
-    pop     ebp
-    ret
+int random_init(const unsigned char *seed, size_t seed_siz);
+
+int random_read(unsigned char *buf, size_t siz);
+
+#endif /* BEEOS_DRIVER_RANDOM_H_ */
 

@@ -83,6 +83,8 @@ static inline int iswithin(uintptr_t b1, size_t sz1, uintptr_t b2, size_t sz2)
 }
 
 #define MIN(a, b) (((a) < (b)) ? (a) : (b))
+#define MAX(a, b) (((a) > (b)) ? (a) : (b))
+
 
 /**
  * Get a pointer to the struct start given a pointer to a member.

@@ -26,6 +26,8 @@
 
 struct tss_struct tss;
 
+void swtch(struct context **old, struct context *new);
+
 
 /*
  * TODO : implement as clone syscall

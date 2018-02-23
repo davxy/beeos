@@ -362,7 +362,6 @@ struct dentry *named(const char *path)
                 iget(inode);
             } else
                 return NULL;
-
         }
     }
     if (S_ISDIR(de->inod->mode) && de->mounted)

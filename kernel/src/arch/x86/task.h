@@ -99,12 +99,5 @@ struct task_arch
     struct isr_frame    *sfr;   /**< Interrupt saved frame (used by signals) */
 };
 
-
-/**
- * The old context data is stored within the old context kernel stack.
- */
-void swtch(struct context **old, struct context *new);
-
-
 #endif /* BEEOS_ARCH_X86_TASK_H_ */
 
