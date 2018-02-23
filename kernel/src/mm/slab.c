@@ -89,8 +89,7 @@ static struct slab_cache *slab_slabctl_cache;
 static struct slab_cache *slab_bufctl_cache;
 
 
-static void *bufctl_hash_put(struct slab_cache *cache, struct bufctl *bctl,
-        int loadcheck)
+static void *bufctl_hash_put(struct slab_cache *cache, struct bufctl *bctl)
 {
     if (cache->hload == 0)
     {
@@ -285,7 +284,7 @@ void *slab_cache_alloc(struct slab_cache *cache, int flags)
     }
     else
     {
-        obj = bufctl_hash_put(cache, bctl, 1);
+        obj = bufctl_hash_put(cache, bctl);
         if (!obj)
         {
             bufctl_list_put(slab, bctl);

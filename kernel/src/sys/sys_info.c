@@ -22,7 +22,7 @@
 #include "mm/frame.h"
 
 
-int sys_info(int type)
+int sys_info(void)
 {
     frame_dump();
     proc_dump();

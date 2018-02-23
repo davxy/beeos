@@ -78,8 +78,6 @@ int sys_nanosleep(const struct timespec *req, struct timespec *rem);
 
 int sys_fstat(int fd, struct stat *buf);
 
-int sys_info(int type);
-
 int sys_sigaction(int sig, const struct sigaction *act, struct sigaction *oact);
 
 int sys_sigreturn(void);
@@ -99,6 +97,8 @@ unsigned int sys_alarm(unsigned int seconds);
 int sys_mount(const char *source, const char *target,
               const char *fs_type, unsigned long flags,
               const void *data);
+
+int sys_info(void);
 
 
 void syscall_init(void);

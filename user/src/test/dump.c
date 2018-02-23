@@ -21,6 +21,6 @@
 
 int main(int argc, char *argv[])
 {
-    syscall(__NR_info, 0);
+    syscall(__NR_info);
     return 0;
 }
