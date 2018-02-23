@@ -21,11 +21,15 @@
 #include "proc.h"
 #include "proc/task.h"
 
+
+void fork_ret(void);
+
+
 pid_t sys_fork(void)
 {
     struct task *child;
 
-    child = task_create();
+    child = task_create(fork_ret);
     if (child == NULL)
         return -1;
     return child->pid;

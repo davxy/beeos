@@ -40,6 +40,9 @@
 #define ROOT_FS_TYPE    "ext2"
 #define ROOT_DEV        DEV_INITRD
 
+/* Init process entry point (arch defined) */
+void init(void);
+
 
 static void mount_root(void)
 {
@@ -101,17 +104,17 @@ void kmain(void)
     kprintf("BeeOS v%d.%d.%d - %s\n\n",
             BEEOS_MAJOR, BEEOS_MINOR, BEEOS_PATCH, BEEOS_CODENAME);
 
+    /* Mount root filesystem */
     mount_root();
 
     /*
-     * Fork and start the init process
+     * Start the init process
      */
-
-    init_start();
+    if (task_create(init) == NULL)
+        panic("init_start");
 
     /*
-     * Idle procedure
+     * Process 0 continues with the idle procedure
      */
-
     idle();
 }

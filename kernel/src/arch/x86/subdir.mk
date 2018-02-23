@@ -1,6 +1,7 @@
 LDFLAGS += -Tsrc/arch/x86/linker.ld
 
 local_sources := init.S \
+				 swtch.S \
 				 startup.S \
 				 pic.c \
 				 isr_stub.S \

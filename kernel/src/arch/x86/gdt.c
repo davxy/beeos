@@ -20,47 +20,13 @@
 #include "gdt.h"
 #include "misc.h"
 #include "paging.h"
+#include "task.h"
 #include <string.h>
 
 
-/*
- * We just need two entries that defines the stack pointer and the stack
- * segment when we switch to kernel mode. All the other entries are unused
- */
-struct tss_struct
-{
-    uint32_t prev;
-    uint32_t esp0;  /* Stack pointer when we change to kernel mode */
-    uint32_t ss0;   /* Stack segment when we change to kernel mode */
-    uint32_t esp1;
-    uint32_t ss1;
-    uint32_t esp2;
-    uint32_t ss2;
-    uint32_t cr3;
-    uint32_t eip;
-    uint32_t eflags;
-    uint32_t eax;
-    uint32_t ecx;
-    uint32_t edx;
-    uint32_t ebx;
-    uint32_t esp;
-    uint32_t ebp;
-    uint32_t esi;
-    uint32_t edi;
-    uint32_t es;
-    uint32_t cs;
-    uint32_t ss;
-    uint32_t ds;
-    uint32_t fs;
-    uint32_t gs;
-    uint32_t ldt;
-    uint16_t trap;
-    uint16_t iomap_base;
-};
-
 static struct gdt_entry     gdt_entries[6];
 static struct gdt_register  gdt_reg;
-struct tss_struct           tss;
+
 
 /*
  * Load the new GDT register and flush the old one
@@ -141,8 +107,8 @@ void gdt_init(void)
      * 'int' instruction or after an irq.
      */
     memset(&tss, 0, sizeof(tss));
-    tss.ss0 = 0x10;                             /* Kernel stack seg selector */
-    tss.esp0 = (uint32_t)&kstack + PAGE_SIZE;   /* Kernel stack pointer */
+    tss.ss0 = 0x10;                            /* Kernel stack seg selector */
+    tss.esp0 = (uint32_t)&kstack[PAGE_SIZE];   /* Kernel stack pointer */
 
     /* Load task register */
     load_task_reg();
