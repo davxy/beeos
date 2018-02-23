@@ -47,7 +47,7 @@ struct ext2_disk_super_block
     uint16_t pad;//padding
     uint32_t lastcheck;//time the fs was last checked
     uint32_t checkinterval;//maximum time between checks
-    uint32_t creator_os;//indicator of which OS created 
+    uint32_t creator_os;//indicator of which OS created
     uint32_t rev_level;//EXT2 revision level
     uint32_t reserved[236];//padding to 1024 bytesOS
 };
@@ -97,6 +97,13 @@ struct ext2_disk_dirent
     char     name[255];
 };
 
+
+#if 0
+
+/*
+ * Reserved for future extensions
+ */
+
 #define EXT2_BAD_INO            1
 #define EXT2_ROOT_INO           2
 #define EXT2_ACL_IDX_INO        3
@@ -104,19 +111,17 @@ struct ext2_disk_dirent
 #define EXT2_BOOT_LOADER_INO    5
 #define EXT2_UNDEL_DIR_INO      6
 
-
-#if 0
 struct ext2_aux
 {
     uint32_t size;
     uint32_t gd_block;
     uint32_t block_size;
-    ext2_group_descriptor_t *gd_table; 
+    ext2_group_descriptor_t *gd_table;
     uint32_t *block_bitmap;
     uint32_t *inode_bitmap;
 };
 
-struct ext2_fs 
+struct ext2_fs
 {
     vfs_sb_t *superblock;
     char name[10];

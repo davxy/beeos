@@ -17,10 +17,6 @@
  * License along with BeeOS; if not, see <http://www.gnu/licenses/>.
  */
 
-/**
- * http://www.tldp.org/LDP/tlk/ds/ds.html
- */
-
 #ifndef BEEOS_FS_VFS_H_
 #define BEEOS_FS_VFS_H_
 
@@ -29,7 +25,6 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <dirent.h>
-
 
 /*
  * Superblock declarations
