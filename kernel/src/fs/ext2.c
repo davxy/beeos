@@ -257,18 +257,16 @@ static const struct dentry_ops ext2_dentry_ops = {
 
 static struct inode *ext2_super_inode_alloc(struct super_block *sb)
 {
-    struct inode *inode = kmalloc(sizeof(struct ext2_inode), 0);
-#if 0
-    kprintf("Alloc: %p\n", inode);
-#endif
+    struct inode *inode;
+
+    inode = kmalloc(sizeof(struct ext2_inode), 0);
+    if (inode != NULL)
+        memset(inode, 0, sizeof(*inode));
     return inode;
 }
 
 static void ext2_super_inode_free(struct inode *inode)
 {
-#if 0
-    kprintf("Free : %p\n", inode);
-#endif
     kfree(inode, sizeof(struct ext2_inode));
 }
 
