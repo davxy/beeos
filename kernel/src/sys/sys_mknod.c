@@ -54,9 +54,11 @@ static void split_path(const char *filepath, char *parent, char *name)
 }
 
 
+#include <fcntl.h>
 
 int sys_mknod(const char *pathname, mode_t mode, dev_t dev)
 {
+    int res;
     struct dentry *dentry;
     struct inode  *idir;
     char parent[PATH_MAX];
@@ -75,6 +77,14 @@ int sys_mknod(const char *pathname, mode_t mode, dev_t dev)
         return -1;
     idir = dentry->inod;
 
-    return vfs_mknod(idir, mode, dev);
+    res = vfs_mknod(idir, mode, dev);
+    if (res == 0)
+    {
+        struct dentry *dchild = named(pathname);
+        if (dchild == NULL)
+            res = -1;
+        dget(dchild);   /* Keep one reference */
+    }
+    return res;
 }
 
