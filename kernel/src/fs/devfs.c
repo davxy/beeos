@@ -59,7 +59,8 @@ static ssize_t devfs_inode_read(struct inode *inode, void *buf,
             break;
         case DEV_ZERO:
             memset(buf, 0, count);
-            /* no break */
+            n = count;
+            break;
         case DEV_NULL:
             n = count;
             break;
@@ -77,7 +78,8 @@ static ssize_t devfs_inode_read(struct inode *inode, void *buf,
             n = random_read(buf, count);
             break;
         default:
-            return -ENODEV;
+            n = -ENODEV;
+            break;
     }
     return n;
 }
@@ -117,7 +119,8 @@ static ssize_t devfs_inode_write(struct inode *inode, const void *buf,
             n = -1;
             break;
         default:
-            return -ENODEV;
+            n = -ENODEV;
+            break;
     }
     return n;
 }
