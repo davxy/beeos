@@ -34,8 +34,6 @@
 #define DEV_KMEM                0x0102
 /** Null device */
 #define DEV_NULL                0x0103
-/** IO port access */
-#define DEV_PORT                0x0104
 /** Null byte source */
 #define DEV_ZERO                0x0105
 /** Non deterministic random number generator */

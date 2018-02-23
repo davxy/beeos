@@ -21,6 +21,7 @@
 #include "dev.h"
 #include "driver/tty.h"
 #include "driver/ramdisk.h"
+#include "driver/random.h"
 #include "kmalloc.h"
 #include "kprintf.h"
 #include "list.h"
@@ -56,14 +57,24 @@ static ssize_t devfs_inode_read(struct inode *inode, void *buf,
         case DEV_CONSOLE4 :
             n = tty_read(rdev, buf, count);
             break;
-        case DEV_INITRD:
-            n = ramdisk_read(buf, count, offset);
-            break;
         case DEV_ZERO:
             memset(buf, 0, count);
             /* no break */
         case DEV_NULL:
             n = count;
+            break;
+        case DEV_INITRD:
+            n = ramdisk_read(buf, count, offset);
+            break;
+        case DEV_MEM:
+            n = -1;
+            break;
+        case DEV_KMEM:
+            n = -1;
+            break;
+        case DEV_RANDOM:
+        case DEV_URANDOM:
+            n = random_read(buf, count);
             break;
         default:
             return -ENODEV;
@@ -88,12 +99,22 @@ static ssize_t devfs_inode_write(struct inode *inode, const void *buf,
         case DEV_CONSOLE4 :
             n = tty_write(rdev, buf, count);
             break;
-        case DEV_INITRD:
-            n = ramdisk_write(buf, count, offset);
-            break;
         case DEV_ZERO:
         case DEV_NULL:
             n = count;
+            break;
+        case DEV_INITRD:
+            n = ramdisk_write(buf, count, offset);
+            break;
+        case DEV_MEM:
+            n = -1;
+            break;
+        case DEV_KMEM:
+            n = -1;
+            break;
+        case DEV_RANDOM:
+        case DEV_URANDOM:
+            n = -1;
             break;
         default:
             return -ENODEV;
@@ -112,6 +133,10 @@ static struct {
     { "tty3", DEV_CONSOLE3 },
     { "tty4", DEV_CONSOLE4 },
     { "initrd", DEV_INITRD },
+    { "mem", DEV_MEM },
+    { "kmem", DEV_KMEM },
+    { "random", DEV_RANDOM },
+    { "urandom", DEV_URANDOM },
 };
 
 #define NDEVS (sizeof(dev_name_map)/sizeof(dev_name_map[0]))
@@ -141,6 +166,7 @@ static int devfs_mknod(struct inode *idir, mode_t mode, dev_t dev)
         inode_init(inode, idir->sb, ++devfs_ino, mode, dev, idir->ops);
         res = 0;
     }
+
     return res;
 }
 
