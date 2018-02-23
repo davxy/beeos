@@ -24,12 +24,6 @@
 #include "vmem.h"
 #include <stdint.h>
 
-/** Kernel first process page directory */
-extern uint32_t kpage_dir[1024];
-
-/** Kernel stack. The virtual address is shared between processes */
-extern uint8_t kstack[PAGE_SIZE];
-
 /**
  * Duplicates the current process page directory.
  *

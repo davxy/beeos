@@ -17,21 +17,29 @@
  * License along with BeeOS; if not, see <http://www.gnu/licenses/>.
  */
 
-#include "sys.h"
-#include "proc.h"
-#include "proc/task.h"
+.intel_syntax noprefix
 
+.section .text
 
-void fork_ret(void);
-
-
-pid_t sys_fork(void)
-{
-    struct task *child;
-
-    child = task_create(fork_ret);
-    if (child == NULL)
-        return -1;
-    return child->pid;
-}
-
+/*
+ * void swtch(struct context **old, struct context *new);
+ */
+.globl swtch
+swtch:
+    mov     eax, [esp + 4]
+    mov     edx, [esp + 8]
+    /* Save old callee-save registers */
+    /* Instruction pointer saved implicitly by function "call" */
+    push    ebp
+    push    ebx
+    push    esi
+    push    edi
+    /* Switch stacks */
+    mov     [eax], esp
+    mov     esp, edx
+    /* Restore new context */
+    pop     edi
+    pop     esi
+    pop     ebx
+    pop     ebp
+    ret

@@ -108,14 +108,20 @@ void scheduler(void)
     }
 
     current_task = next;
-    task_arch_switch(&curr->arch, &next->arch);
-
     current_task->counter = msecs_to_ticks(SCHED_TIMESLICE);
+
+    /*
+     * Should be the last call... the following can return in another place.
+     * E.g. init start or fork_ret
+     */
+    task_arch_switch(&curr->arch, &next->arch);
 }
 
 void scheduler_init(void)
 {
     int i;
+
+    current_task = &ktask;
 
     /* Set to zero: uids, gids, pids... */
     memset(&ktask, 0, sizeof(ktask));
@@ -127,7 +133,7 @@ void scheduler_init(void)
     list_init(&ktask.children);
     list_init(&ktask.condw);
     list_init(&ktask.timers);
-    task_arch_init(&ktask.arch);
+    task_arch_init(&ktask.arch, NULL);
 
     (void)sigemptyset(&ktask.sigmask);
     (void)sigemptyset(&ktask.sigpend);
@@ -136,8 +142,6 @@ void scheduler_init(void)
         memset(&ktask.signals[i], 0, sizeof(struct sigaction));
         ktask.signals[i].sa_handler = SIG_DFL;
     }
-
-    current_task = &ktask;
 }
 
 static void task_dump(struct task *t)
