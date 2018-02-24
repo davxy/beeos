@@ -22,7 +22,7 @@
 #include "isr.h"
 #include "kprintf.h"
 #include <unistd.h>
-#include <stdarg.h>
+
 
 static void *syscalls[] =
 {
@@ -76,7 +76,7 @@ static void syscall_handler(void)
     if (ifr->eax < SYSCALLS_NUM && syscalls[ifr->eax])
     {
         ifr->eax = ((syscall_f)syscalls[ifr->eax])(
-                ifr->ebx, ifr->ecx, ifr->edx, 
+                ifr->ebx, ifr->ecx, ifr->edx,
                 ifr->esi, ifr->edi, ifr->ebp);
     }
     else
