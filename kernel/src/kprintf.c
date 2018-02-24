@@ -45,4 +45,5 @@ int kprintf(const char *fmt, ...)
     va_start(ap, fmt);
     n = kvprintf(fmt, ap);
     va_end(ap);
+    return n;
 }
