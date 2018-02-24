@@ -37,7 +37,7 @@ static void split_path(const char *filepath, char *parent, char *name)
             break;
     }
     if (i > 0) {
-    	int k = (*filepath == '/') ? 1 : 0;
+        int k = (*filepath == '/') ? 1 : 0;
         strncpy(parent, filepath, i);
         strcpy(name, filepath + i + k);
     } else {
@@ -53,8 +53,6 @@ static void split_path(const char *filepath, char *parent, char *name)
     parent[i] = '\0';
 }
 
-
-#include <fcntl.h>
 
 int sys_mknod(const char *pathname, mode_t mode, dev_t dev)
 {
