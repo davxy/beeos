@@ -181,7 +181,7 @@ ssize_t tty_write(dev_t dev, const void *buf, size_t n)
  */
 void tty_update(char c)
 {
-    char *echo_buf = &c;
+    const char *echo_buf = &c;
     size_t echo_siz = 1;
     struct tty_st *tty = &tty_table[tty_curr];
 
