@@ -17,14 +17,14 @@
  * License along with BeeOS; if not, see <http://www.gnu/licenses/>.
  */
 
-#include "sys.h"
-#include "proc.h"
-#include "mm/frame.h"
+#ifndef BEEOS_DRIVER_RANDOM_H_
+#define BEEOS_DRIVER_RANDOM_H_
 
+#include <sys/types.h>
 
-int sys_info(void)
-{
-    frame_dump();
-    proc_dump();
-    return 0;
-}
+int random_init(const unsigned char *seed, size_t seed_siz);
+
+int random_read(unsigned char *buf, size_t siz);
+
+#endif /* BEEOS_DRIVER_RANDOM_H_ */
+

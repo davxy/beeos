@@ -17,10 +17,6 @@
  * License along with BeeOS; if not, see <http://www.gnu/licenses/>.
  */
 
-/**
- * http://www.tldp.org/LDP/tlk/ds/ds.html
- */
-
 #ifndef BEEOS_FS_VFS_H_
 #define BEEOS_FS_VFS_H_
 
@@ -29,7 +25,6 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <dirent.h>
-
 
 /*
  * Superblock declarations
@@ -257,6 +252,9 @@ int do_mount(struct dentry *mntpt, struct dentry *root);
 
 
 int vfs_init(void);
+
+/* TODO... find a better way */
+struct dentry *follow_up(struct dentry *root);
 
 #endif /* BEEOS_FS_VFS_H_ */
 

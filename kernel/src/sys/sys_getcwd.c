@@ -19,11 +19,9 @@
 
 #include "sys.h"
 #include "proc.h"
+#include "fs/vfs.h" /* follow_up() */
 #include <errno.h>
 #include <string.h>
-
-
-extern struct dentry *follow_up(struct dentry *root);
 
 
 char *sys_getcwd(char *buf, size_t size)

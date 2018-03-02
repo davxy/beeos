@@ -68,14 +68,21 @@ struct task
     struct list_link    condw;          /**< Conditional wait */
 };
 
-struct task *task_create(void);
-void task_delete(struct task *task);
 
-int task_init(struct task *task);
+typedef void (* task_entry_t)(void);
+
+int task_init(struct task *task, task_entry_t entry);
+
 void task_deinit(struct task *task);
 
+struct task *task_create(task_entry_t entry);
 
-int task_arch_init(struct task_arch *task);
+void task_delete(struct task *task);
+
+
+
+int task_arch_init(struct task_arch *task, task_entry_t entry);
+
 void task_arch_deinit(struct task_arch *task);
 
 void task_arch_switch(struct task_arch *curr, struct task_arch *next);

@@ -26,7 +26,7 @@
 #include <string.h>
 
 
-int task_init(struct task *task)
+int task_init(struct task *task, task_entry_t entry)
 {
     static pid_t next_pid = 1;
     int i;
@@ -44,7 +44,7 @@ int task_init(struct task *task)
     task->gid = current_task->gid;
     task->egid = current_task->egid;
     task->sgid = current_task->sgid;
- 
+
     /* file system */
     task->cwd = current_task->cwd;
     task->root = current_task->root;
@@ -75,7 +75,7 @@ int task_init(struct task *task)
 
     /* Add to the global tasks list */
     list_insert_before(&current_task->tasks, &task->tasks);
-    
+
     sib = list_container(current_task->children.next, struct task, children);
     if (list_empty(&current_task->children) || sib->pptr != current_task)
         list_insert_after(&current_task->children, &task->children);
@@ -83,7 +83,7 @@ int task_init(struct task *task)
         list_insert_before(&sib->sibling, &task->sibling);
 
     cond_init(&task->chld_exit);
-    
+
     /* signals */
     (void)sigemptyset(&task->sigpend);
     (void)sigemptyset(&task->sigmask);
@@ -95,10 +95,11 @@ int task_init(struct task *task)
     /* Conditional wait link */
     list_init(&task->condw);
 
-    task_arch_init(&task->arch);
+    task_arch_init(&task->arch, entry);
 
     return 0;
 }
+
 
 void task_deinit(struct task *task)
 {
@@ -107,16 +108,18 @@ void task_deinit(struct task *task)
     task_arch_deinit(&task->arch);
 }
 
-struct task *task_create(void)
+
+struct task *task_create(task_entry_t entry)
 {
     struct task *task = kmalloc(sizeof(struct task), 0);
     if (task)
     {
         memset(task, 0, sizeof(*task));
-        task_init(task);
+        task_init(task, entry);
     }
     return task;
 }
+
 
 void task_delete(struct task *task)
 {
@@ -124,15 +127,3 @@ void task_delete(struct task *task)
     kfree(task, sizeof(struct task));
 }
 
-void init_start(void)
-{
-    struct task *task;
-    void init(void);
-
-    task = task_create();
-    if (task == NULL)
-        panic("init_start");
-
-    task->arch.eip = (uint32_t)init;
-    task->arch.esp = task->arch.ebp;
-}

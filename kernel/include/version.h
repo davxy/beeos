@@ -23,8 +23,6 @@
 #define BEEOS_MAJOR       0
 #define BEEOS_MINOR       1
 #define BEEOS_PATCH       1
-#define BEEOS_VERSION \
-    (((BEEOS_MAJOR) << 16) + ((BEEOS_MINOR) << 8) + (BEEOS_PATCH))
 
 #define BEEOS_CODENAME    "StoneAge"
 

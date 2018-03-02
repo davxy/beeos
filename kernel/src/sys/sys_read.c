@@ -52,6 +52,7 @@ ssize_t sys_read(int fd, void *buf, size_t count)
             break;
         default:
             n = -1;
+            break;
     }
 
     if (n > 0)

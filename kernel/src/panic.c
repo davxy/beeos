@@ -27,9 +27,10 @@ void panic(const char *fmt, ...)
     va_list va;
     extern void freeze(void);
 
-    va_start(va, fmt);
     kprintf("*** kernel panic: ");
+    va_start(va, fmt);
     kvprintf(fmt, va);
+    va_end(va);
     kprintf("\n***\n");
     freeze();
 }

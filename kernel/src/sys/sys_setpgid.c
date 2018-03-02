@@ -31,7 +31,7 @@
  * A process can set the process group ID of only itself or any of its
  * children.
  *
- * Furthermore, it can’t change the process group ID of one of its
+ * Furthermore, it can't change the process group ID of one of its
  * children after that child has called one of the exec functions.
  * NOTE: for simplicity, we don't respect this last requirement here!!!
  */

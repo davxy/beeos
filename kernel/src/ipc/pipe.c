@@ -30,7 +30,7 @@
 
 
 #define PIPE_SIZE   PIPE_BUF
-#define DATA_SIZE   (PIPE_SIZE+1)
+#define DATA_SIZE   (PIPE_SIZE + 1)
 
 
 /* Implemented as a ring-buffer */
@@ -45,16 +45,20 @@ struct pipe_inode
     char data[DATA_SIZE];   /**< Pipe data */
 };
 
-/* TODO: in VFS this is a 'file' operation.
+/*
+ * TODO: in VFS this is a 'file' operation.
  * Thus the function should take a file and as a consequence
- * we can check if that is not blocking */
+ * we can check if that is not blocking
+ */
 
 /*
  * From APUE
- * If we read from a pipe whose write end has been closed, read returns 0 to indicate an end of file after
- * all the data has been read. (Technically, we should say that this end of file is not generated until there are
- * no more writers for the pipe. It's possible to duplicate a pipe descriptor so that multiple processes have
- * the pipe open for writing. Normally, however, there is a single reader and a single writer for a pipe.
+ * If we read from a pipe whose write end has been closed, read returns 0
+ * to indicate an end of file after all the data has been read.
+ * Technically, we should say that this end of file is not generated until
+ * there are no more writers for the pipe. It's possible to duplicate a pipe
+ * descriptor so that multiple processes have the pipe open for writing.
+ * Normally, however, there is a single reader and a single writer for a pipe.
  */
 static int pipe_read(struct inode *inode, void *buf,
         size_t count, off_t offset)
@@ -111,8 +115,9 @@ done:
 
 /*
  * From APUE.
- * If we write to a pipe whose read end has been closed, the signal SIGPIPE is generated. If we either
- * ignore the signal or catch it and return from the signal handler, write returns –1 with errno set to EPIPE .
+ * If we write to a pipe whose read end has been closed, the signal SIGPIPE
+ * is generated. If we either ignore the signal or catch it and return from
+ * the signal handler, write returns -1 with errno set to EPIPE.
  */
 static int pipe_write(struct inode *inode, const void *buf,
         size_t count, off_t offset)
@@ -142,14 +147,14 @@ static int pipe_write(struct inode *inode, const void *buf,
                 return -EPIPE;
             }
 
-            //if (BLOKING)
+            //if (BLOCKING)
             pnode->queued_writers++;
-            if (pnode->queued_readers > 0) /* there are pending writers */
+            if (pnode->queued_readers > 0)     /* there are pending writers */
                 cond_broadcast(&pnode->queue); /* wakeup all before (eventually) sleep */
             cond_wait(&pnode->queue);
             pnode->queued_writers--;
 
-            //else // unlock first!!!
+            // else unlock first!!!
             //    return goto spinlock unlock;
         }
 
@@ -249,3 +254,4 @@ int pipe_create(int pipefd[2])
     pipefd[1] = fd1;
     return 0;
 }
+

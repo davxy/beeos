@@ -39,8 +39,11 @@ int kvprintf(const char *fmt, va_list arg)
 
 int kprintf(const char *fmt, ...)
 {
+    int n;
     va_list ap;
 
     va_start(ap, fmt);
-    return kvprintf(fmt, ap);
+    n = kvprintf(fmt, ap);
+    va_end(ap);
+    return n;
 }
