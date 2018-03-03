@@ -21,6 +21,7 @@
 #include "fs/vfs.h"
 #include "elf.h"
 #include "kmalloc.h"
+#include "kprintf.h"
 #include "proc.h"
 #include "arch/x86/paging.h"
 #include <sys/types.h>
@@ -198,7 +199,8 @@ int sys_execve(const char *path, const char *argv[], const char *envp[])
         if (current_task->fds[i].fil == NULL ||
            (current_task->fds[i].flags & O_CLOEXEC) == 0)
             continue;
-        sys_close(i);
+        if (sys_close(i) < 0)
+            kprintf("[warn] error closing an open file\n");
     }
 
 

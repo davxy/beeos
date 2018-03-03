@@ -23,6 +23,7 @@
 #include "fs/vfs.h"
 #include "proc.h"
 #include "kmalloc.h"
+#include "kprintf.h"
 #include "sys.h"
 #include <limits.h>
 #include <fcntl.h>
@@ -142,7 +143,8 @@ static int pipe_write(struct inode *inode, const void *buf,
             if (pnode->base.ref == 1)
             {
                 spinlock_unlock(&pnode->queue.lock);
-                sys_kill(sys_getpid(), SIGPIPE);
+                if (sys_kill(sys_getpid(), SIGPIPE) < 0)
+                    kprintf("[warn] unable to send SIGPIPE to curr process\n");
                 /* in case the signal has been catched, return an error */
                 return -EPIPE;
             }

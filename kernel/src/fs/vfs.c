@@ -382,7 +382,7 @@ struct inode *namei(const char *path)
 
 
 
-int vfs_init(void)
+void vfs_init(void)
 {
     slab_cache_init(&inode_cache, "inode-cache", sizeof(struct inode),
             0, 0, NULL, NULL);
@@ -393,6 +393,5 @@ int vfs_init(void)
     htable_init(inode_htable, INODE_HTABLE_BITS);
 
     list_init(&mounts);
-
-    return 0;
 }
+

@@ -254,13 +254,16 @@ uint32_t page_dir_dup(int dup_user)
                     continue;
 
                 /* TODO: copy on write (in the page fault handler) */
-                //tab_src[j] &= ~PTE_W; // NON SEMBRA FUNZIONARE...
-                //tab_dst[j] = tab_src[j];
+                /* 
+                 * tab_src[j] &= ~PTE_W; // NON SEMBRA FUNZIONARE...
+                 * tab_dst[j] = tab_src[j];
+                 */
                 mem_src = (void *)((i * 0x400000) + (j * 0x1000));
                 mem_dst = (void *)PAGE_WILD;
                 phys = page_map(mem_dst, -1);
                 memcpy(mem_dst, mem_src, PAGE_SIZE);
-                page_unmap(mem_dst, 1);
+                if ((int)page_unmap(mem_dst, 1) < 0)
+                    panic("Unmapping a mapped page");
                 tab_dst[j] = phys | flags;
             }
         }

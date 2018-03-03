@@ -118,10 +118,13 @@ void sys_exit(int status)
     }
 
     /* close all open files */
-    for (i = 0; i < OPEN_MAX; i++)
-    {
-        if (current_task->fds[i].fil)
-            sys_close(i);
+    for (i = 0; i < OPEN_MAX; i++) {
+        if (current_task->fds[i].fil) {
+            if (sys_close(i) < 0) {
+                /* Should never happen... */
+                kprintf("[warn] sys_close error on opened file\n");
+            }
+        }
     }
 
     /* Give children to init */
@@ -131,7 +134,8 @@ void sys_exit(int status)
         children_give(child); /* Wrap around, current is not a leaf */
 
     /* Send SIGCHLD to the parent */
-    sys_kill(current_task->pptr->pid, SIGCHLD);
+    if (sys_kill(current_task->pptr->pid, SIGCHLD) < 0)
+        kprintf("[warn] Unable to send SIGCHLD to parent\n");
 
     /* Acquire the father conditional variable to prevent lost signals */
     spinlock_lock(&current_task->pptr->chld_exit.lock);
