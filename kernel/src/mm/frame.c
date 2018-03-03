@@ -22,6 +22,7 @@
 #include "kmalloc.h"
 #include "kprintf.h"
 
+
 /* List of all the registered zones */
 static struct zone_st *zone_list;
 
@@ -57,16 +58,24 @@ void frame_free(void *ptr, unsigned int order)
 
 int frame_zone_add(void *addr, size_t size, size_t frame_size, int flags)
 {
+    int res;
     struct zone_st *zone;
     
     zone = kmalloc(sizeof(struct zone_st), 0);
-    if (!zone)
-        return -1;
-    zone_init(zone, addr, size, frame_size, flags);
-    zone->next = zone_list;
-    zone_list = zone;
-    return 0; 
+    if (zone != NULL) {
+        res = zone_init(zone, addr, size, frame_size, flags);
+        if (res == 0) {
+            zone->next = zone_list;
+            zone_list = zone;
+        } else {
+            kfree(zone, sizeof(struct zone_st));
+        }
+    } else {
+        res = -1;
+    }
+    return res; 
 }
+
 
 void frame_dump(void)
 {
@@ -75,3 +84,4 @@ void frame_dump(void)
     for (zone = zone_list; zone != NULL; zone = zone->next)
         zone_dump(zone);
 }
+

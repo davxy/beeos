@@ -125,14 +125,27 @@ int buddy_init(struct buddy_sys *ctx, unsigned int frames_num,
     unsigned int count;
 
     /*
+     * Create the frames list
+     */
+
+    ctx->frames = kmalloc(frames_num * sizeof(struct frame), 0);
+    if (ctx->frames == NULL)
+        goto e0;
+    for (i = 0; i < frames_num; i++)
+    {
+        list_init(&ctx->frames[i].link);
+        ctx->frames[i].refs = 1;
+    }
+
+    /*
      * Initialize the free frames table
      */
 
     ctx->order_bit = fnzb(frame_size);
     ctx->order_max = fnzb(frames_num);
     ctx->free_area = kmalloc(sizeof(struct free_list) * (ctx->order_max+1), 0);
-    if (!ctx->free_area)
-        panic("Buddy init");
+    if (ctx->free_area == NULL)
+        goto e1;
 
     /*
      * Initialize free frames table row for each order.
@@ -145,29 +158,30 @@ int buddy_init(struct buddy_sys *ctx, unsigned int frames_num,
         /* Compute the required number of unsigned longs to hold the bitmap */
         count = (count - 1) / (8 * sizeof(unsigned long)) + 1;
         ctx->free_area[i].map = kmalloc(sizeof(unsigned long) * count, 0);
-        if (!ctx->free_area[i].map)
-            panic("Buddy init");
+        if (ctx->free_area[i].map == NULL) {
+            /* Rollback */
+            while (i > 0) {
+                kfree(ctx->free_area[i].map, sizeof(unsigned long) * count);
+                count = (count + 1) / (8 * sizeof(unsigned long)) + 1;
+            }
+            goto e2;
+        }
         memset(ctx->free_area[i].map, 0, sizeof(unsigned long) * count);
         list_init(&ctx->free_area[i].list);
     }
+
     /* Initialize the last (order_max) entry with a null buddy */
     list_init(&ctx->free_area[i].list);
     ctx->free_area[i].map = NULL;
 
-    /*
-     * Create the frames list
-     */
-
-    ctx->frames = kmalloc(frames_num * sizeof(struct frame), 0);
-    if (!ctx->frames)
-        panic("Buddy init");
-    for (i = 0; i < frames_num; i++)
-    {
-        list_init(&ctx->frames[i].link);
-        ctx->frames[i].refs = 1;
-    }
     return 0;
+
+    /* Rollback */
+e2: kfree(ctx->free_area, sizeof(struct free_list) * (ctx->order_max+1));
+e1: kfree(ctx->frames, frames_num * sizeof(struct frame));
+e0: return -1;
 }
+
 
 /*
  * Dump buddy status
@@ -204,3 +218,4 @@ void buddy_dump(struct buddy_sys *ctx, char *base)
     }
     kprintf("free: %u\n", freemem);
 }
+
