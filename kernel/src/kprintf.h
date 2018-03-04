@@ -22,9 +22,9 @@
 
 #include <stdarg.h>
 
-int kprintf(const char *fmt, ...);
+void kprintf(const char *fmt, ...);
 
-int kvprintf(const char *fmt, va_list arg);
+void kvprintf(const char *fmt, va_list arg);
 
 #endif /* BEEOS_KPRINTF_H_ */
 
