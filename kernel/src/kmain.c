@@ -62,10 +62,12 @@ static void mount_root(void)
     dget(sb->root);
 
     /* Initrd node created to read data from ramdisk */
-    sys_mknod("/initrd", S_IFBLK, DEV_INITRD);
+    if (sys_mknod("/initrd", S_IFBLK, DEV_INITRD) < 0)
+        panic("Creating initrd temporary root");
     de = named("/initrd");
+    if (de == NULL)
+        panic("Cannot find initrd device");
     dget(de);
-    //sys_open("/initrd", O_RDONLY | O_CLOEXEC, 0);
 
     /*
      * Initialization finished
