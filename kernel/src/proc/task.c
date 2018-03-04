@@ -26,6 +26,21 @@
 #include <string.h>
 
 
+void task_signal(struct task *task, int sig)
+{
+    sigaddset(&task->sigpend, sig);
+
+    /* check if signal is not masked */
+    if (sigismember(&task->sigmask, sig) <= 0) {
+        /* check if the process must be awake */
+        if (task->state == TASK_SLEEPING) {
+            if (!list_empty(&task->condw))
+                list_delete(&task->condw);
+            task->state = TASK_RUNNING;
+        }
+    }
+}
+
 int task_init(struct task *task, task_entry_t entry)
 {
     static pid_t next_pid = 1;

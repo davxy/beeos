@@ -262,10 +262,8 @@ static void kill_tty_group(void)
 
     pgid = sys_tcgetpgrp(0);
     do {
-        if (t->pgid == pgid) {
-            if (sys_kill(t->pid, SIGINT) < 0)
-                kprintf("[warn] error sending SIGINT to process\n");
-        }
+        if (t->pgid == pgid)
+            task_signal(t, SIGINT);
         t = list_container(t->tasks.next, struct task, tasks);
     } while (t != current_task);
 }

@@ -134,8 +134,7 @@ void sys_exit(int status)
         children_give(child); /* Wrap around, current is not a leaf */
 
     /* Send SIGCHLD to the parent */
-    if (sys_kill(current_task->pptr->pid, SIGCHLD) < 0)
-        kprintf("[warn] Unable to send SIGCHLD to parent\n");
+    task_signal(current_task->pptr, SIGCHLD);
 
     /* Acquire the father conditional variable to prevent lost signals */
     spinlock_lock(&current_task->pptr->chld_exit.lock);

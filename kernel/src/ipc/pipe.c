@@ -143,8 +143,8 @@ static int pipe_write(struct inode *inode, const void *buf,
             if (pnode->base.ref == 1)
             {
                 spinlock_unlock(&pnode->queue.lock);
-                if (sys_kill(sys_getpid(), SIGPIPE) < 0)
-                    kprintf("[warn] unable to send SIGPIPE to curr process\n");
+                task_signal(current_task, SIGPIPE);
+                scheduler();
                 /* in case the signal has been catched, return an error */
                 return -EPIPE;
             }

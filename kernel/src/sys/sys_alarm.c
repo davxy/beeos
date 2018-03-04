@@ -26,8 +26,9 @@
 static void alarm_handler(void *data)
 {
     struct task *task = (struct task *)data;
+
     list_delete(&task->alarm.plink);
-    sys_kill(task->pid, SIGALRM);
+    task_signal(task, SIGALRM);
 }
 
 unsigned int sys_alarm(unsigned int seconds)
@@ -45,16 +46,13 @@ unsigned int sys_alarm(unsigned int seconds)
     if (when > now)
         left = ticks_to_msecs(when-now)/1000;
 
-    if (seconds != 0)
-    {
+    if (seconds != 0) {
         when = now + msecs_to_ticks(seconds*1000);
         timer_event_mod(tm, when);
         /* Also add to the process timers */
         if (list_empty(&tm->plink))
             list_insert_before(&current_task->timers, &tm->plink);
-    }
-    else
-    {
+    } else {
         if (!list_empty(&tm->link))
             timer_event_del(tm);
         if (!list_empty(&tm->plink))

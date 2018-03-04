@@ -100,12 +100,12 @@ void isr_register_handler(unsigned int num, isr_handler_t func)
 
 static void divide_error(void)
 {
-    sys_kill(current_task->pid, SIGFPE);
+    task_signal(current_task, SIGFPE);
 }
 
 static void invalid_opcode(void)
 {
-    sys_kill(current_task->pid, SIGILL);
+    task_signal(current_task, SIGILL);
 }
 
 void isr_init(void)
