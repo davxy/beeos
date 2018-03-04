@@ -110,9 +110,7 @@ int task_init(struct task *task, task_entry_t entry)
     /* Conditional wait link */
     list_init(&task->condw);
 
-    task_arch_init(&task->arch, entry);
-
-    return 0;
+    return task_arch_init(&task->arch, entry);
 }
 
 
@@ -126,11 +124,15 @@ void task_deinit(struct task *task)
 
 struct task *task_create(task_entry_t entry)
 {
-    struct task *task = kmalloc(sizeof(struct task), 0);
-    if (task)
-    {
+    struct task *task;
+    
+    task = kmalloc(sizeof(struct task), 0);
+    if (task) {
         memset(task, 0, sizeof(*task));
-        task_init(task, entry);
+        if (task_init(task, entry) < 0) {
+            kfree(task, sizeof(struct task));
+            task = NULL;
+        }
     }
     return task;
 }

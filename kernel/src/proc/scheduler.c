@@ -22,6 +22,7 @@
 #include "kprintf.h"
 #include "timer.h"
 #include "kmalloc.h"
+#include "panic.h"
 
 
 struct task ktask;
@@ -133,7 +134,8 @@ void scheduler_init(void)
     list_init(&ktask.children);
     list_init(&ktask.condw);
     list_init(&ktask.timers);
-    task_arch_init(&ktask.arch, NULL);
+    if (task_arch_init(&ktask.arch, NULL) < 0)
+        panic("Task 0 init failure");
 
     (void)sigemptyset(&ktask.sigmask);
     (void)sigemptyset(&ktask.sigpend);

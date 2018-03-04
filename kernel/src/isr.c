@@ -73,7 +73,7 @@ void isr_handler(struct isr_frame *ifr)
      */
     if (!sigisemptyset(&current_task->sigpend) &&
             current_task->arch.sfr == NULL && (ifr->cs & 0x3) == 0x3)
-        do_signal();
+        (void)do_signal();
 
     /* Eventually restore the previous ifr */
     current_task->arch.ifr = previfr;

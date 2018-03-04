@@ -102,15 +102,16 @@ struct frame *buddy_alloc(struct buddy_sys *ctx, unsigned int order)
         return NULL;
 
     if (i != ctx->order_max) /* Order max does't have any buddy */
-        toggle_bit(ctx, left_idx, i);
+        (void)toggle_bit(ctx, left_idx, i);
 
     /* Eventually split */
     while (i > order)
     {
         i--;
         right_idx = left_idx + (1 << i);
-        list_insert_before(&ctx->free_area[i].list, &ctx->frames[right_idx].link);
-        toggle_bit(ctx, right_idx, i);
+        list_insert_before(&ctx->free_area[i].list,
+                &ctx->frames[right_idx].link);
+        (void)toggle_bit(ctx, right_idx, i);
     }
     return frame;
 }

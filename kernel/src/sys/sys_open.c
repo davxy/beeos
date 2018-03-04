@@ -40,7 +40,8 @@ int sys_open(const char *pathname, int flags, mode_t mode)
     if (strcmp(pathname, "/dev/tty") == 0)
     {
         dev_t dev = tty_get();
-        snprintf(buf, sizeof(buf), "/dev/tty%d", minor(dev));
+        if (snprintf(buf, sizeof(buf), "/dev/tty%d", minor(dev)) < 0)
+            return -EINVAL;
         pathname = buf;
     }
 

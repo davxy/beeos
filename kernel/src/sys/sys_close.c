@@ -42,11 +42,10 @@ int sys_close(int fd)
     {
         /* Wake up the other end, to allow EOF recv in user space */
         if (S_ISFIFO(file->dent->inod->mode))
-            vfs_write(file->dent->inod, NULL, 0, 0);
+            (void)vfs_write(file->dent->inod, NULL, 0, 0);
         dput(file->dent);
 
         fs_file_free(file);
     }
-
-    return fd;
+    return 0;
 }

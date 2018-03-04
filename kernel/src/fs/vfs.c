@@ -101,7 +101,8 @@ struct inode *inode_lookup(dev_t dev, ino_t ino)
 }
 
 
-void inode_init(struct inode *inode, struct super_block *sb, ino_t ino, mode_t mode,
+void inode_init(struct inode *inode, struct super_block *sb,
+                ino_t ino, mode_t mode,
                 dev_t dev, const struct inode_ops *ops)
 {
     memset(inode, 0, sizeof(*inode));
@@ -114,8 +115,12 @@ void inode_init(struct inode *inode, struct super_block *sb, ino_t ino, mode_t m
     if (S_ISBLK(mode) || S_ISCHR(mode))
         inode->rdev = dev;
 
+    /*
+     * TODO: consider the inode read return value.
+     * This is just a quick and dirty solution for MISRA compliance
+     */
     if (sb->ops->inode_read != NULL)
-        sb->ops->inode_read(inode);
+        (void)sb->ops->inode_read(inode);
 
     htable_insert(inode_htable, &inode->hlink,
                   KEY(inode->sb->dev, inode->ino), INODE_HTABLE_BITS);

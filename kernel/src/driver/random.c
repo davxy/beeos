@@ -72,8 +72,12 @@ int random_read(unsigned char *buf, size_t siz)
     uint32_t *buf32 = (uint32_t *) buf;
     uint32_t r;
 
-    if (!init)
-        random_init((const unsigned char *)&timer_ticks, sizeof(timer_ticks));
+    if (!init) {
+        if (random_init((const unsigned char *)&timer_ticks,
+                         sizeof(timer_ticks) < 0)) {
+            return -1;
+        }
+    }
 
     for (i = 0; i < iter; i++, buf32++)
         RAND_GET(*buf32);
@@ -87,3 +91,4 @@ int random_read(unsigned char *buf, size_t siz)
     }
     return siz;
 }
+

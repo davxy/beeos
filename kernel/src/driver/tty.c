@@ -219,7 +219,7 @@ void tty_update(char c)
     spinlock_unlock(&tty->rcond.lock);
 
     if ((tty->attr.c_lflag & ECHO) != 0 && echo_siz != 0)
-        tty_write(tty->dev, echo_buf, echo_siz);
+        (void)tty_write(tty->dev, echo_buf, echo_siz);
 }
 
 
@@ -276,6 +276,8 @@ void tty_init(void)
 
     uart_init();
 
-    timer_event_init(&refresh_tm, refresh_func, NULL, timer_ticks + msecs_to_ticks(100));
+    timer_event_init(&refresh_tm, refresh_func, NULL,
+                     timer_ticks + msecs_to_ticks(100));
     timer_event_add(&refresh_tm);
 }
+
