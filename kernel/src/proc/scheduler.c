@@ -32,6 +32,7 @@ struct task *current_task;
 static int sigpop(sigset_t *sigpend, sigset_t *sigmask)
 {
     int sig;
+
     /* find first non blocked signal */
     for (sig = 0; sig < SIGNALS_NUM; sig++)
         if (sigismember(sigpend, sig) == 1 && sigismember(sigmask, sig) <= 0)
@@ -50,22 +51,23 @@ int do_signal(void)
     uint32_t *esp;
 
     sig = sigpop(&current_task->sigpend, &current_task->sigmask);
-    if (sig < 0)
+    if (sig <= 0)
         return -1; /* no unmasked signals available */
     ifr = current_task->arch.ifr;
-    act = &current_task->signals[sig-1];
+    act = &current_task->signals[sig - 1];
 
     if (act->sa_handler == SIG_DFL)
     {
         if (sig == SIGCHLD || sig == SIGURG)
             return 0; /* Ignore */
-        else if (sig == SIGSTOP || sig == SIGTSTP || sig == SIGTTIN || sig == SIGTTOU)
+        else if (sig == SIGSTOP || sig == SIGTSTP ||
+                 sig == SIGTTIN || sig == SIGTTOU)
             return 0; /* TODO: Stop the process */
         else
             sys_exit(1); /* Terminate the process */
     }
 
-    if (!act->sa_restorer || act->sa_handler == SIG_IGN)
+    if (act->sa_restorer == NULL || act->sa_handler == SIG_IGN)
         return 0; /* No way to return from signal handlers or ignore */
 
     if (!current_task->arch.sfr)
