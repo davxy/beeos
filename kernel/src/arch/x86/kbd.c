@@ -318,8 +318,8 @@ static void kbd_handler(void)
                 tty_change(c - 0x3B);
                 return;
             }
-            else if (((kbd_status & KBD_STATUS_SHIFT) != 0)
-                    ^ ((kbd_status & KBD_STATUS_CAPS_LCK) != 0))
+            else if ((((kbd_status & KBD_STATUS_SHIFT) != 0)
+                    ^ ((kbd_status & KBD_STATUS_CAPS_LCK) != 0)) != 0)
                 c = kbd_map2[c];
             else
                 c = kbd_map1[c];

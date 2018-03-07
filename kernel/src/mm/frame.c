@@ -35,7 +35,7 @@ void *frame_alloc(unsigned int order, int flags)
         if ((zone->flags & flags) != flags)
             continue;
         ptr = zone_alloc(zone, order);
-        if (ptr)
+        if (ptr != NULL)
             break;
     }
     return ptr;
@@ -49,7 +49,7 @@ void frame_free(void *ptr, unsigned int order)
         return;
     for (zone = zone_list; zone != NULL; zone = zone->next) {
         if (iswithin((uintptr_t)zone->addr, zone->size,
-                     (uintptr_t)ptr, 4096<<order)) {
+                     (uintptr_t)ptr, 4096<<order) != 0) {
             zone_free(zone, ptr, order);
             break;
         }

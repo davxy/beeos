@@ -96,7 +96,7 @@ static void *bufctl_hash_put(struct slab_cache *cache, struct bufctl *bctl)
         cache->hsize = 32;  // FIXME TODO
         cache->htable = kmalloc(cache->hsize *
                                 sizeof(struct htable_link *), 0);
-        if (!cache->htable)
+        if (cache->htable == NULL)
             return NULL;
         htable_init(cache->htable, fnzb(cache->hsize));
     }
@@ -113,7 +113,7 @@ static struct bufctl *bufctl_hash_get(struct slab_cache *cache, void *obj)
     struct htable_link *link;
     struct bufctl *bctl;
 
-    if (!cache->htable)
+    if (cache->htable == NULL)
         return NULL;
 
     link = htable_lookup(cache->htable, (uintptr_t)obj,
@@ -127,7 +127,7 @@ static struct bufctl *bufctl_hash_get(struct slab_cache *cache, void *obj)
             break;
         link = link->next;
     }
-    if (!link)
+    if (link == NULL)
         return NULL;
 
     htable_delete(link);
@@ -149,7 +149,8 @@ static struct bufctl *bufctl_hash_get(struct slab_cache *cache, void *obj)
 static struct bufctl *bufctl_list_get(struct slabctl *slab)
 {
     struct htable_link *lnk;
-    if (!slab->bctls)
+
+    if (slab->bctls == NULL)
         return NULL;
     lnk = slab->bctls;
     slab->bctls = lnk->next;
@@ -175,17 +176,17 @@ static void slab_space_free(struct slabctl* slab, size_t size)
     for (i = 0, obj = data; i < cache->slab_objs;
          i++, obj = (char *)obj+cache->objsize)
     {
-        if (cache->dtor)
+        if (cache->dtor != NULL)
             cache->dtor(obj);
 
-        if (!(cache->flags & SLAB_EMBED_BUFCTL))
+        if ((cache->flags & SLAB_EMBED_BUFCTL) == 0)
         {
             struct bufctl *bctl = bufctl_list_get(slab);
             slab_cache_free(slab_bufctl_cache, bctl);
         }
     }
 
-    if (!(cache->flags & SLAB_EMBED_SLABCTL))
+    if ((cache->flags & SLAB_EMBED_SLABCTL) == 0)
         slab_cache_free(slab_slabctl_cache, slab);
 
     order = size >> (1+SLAB_UNIT_BITS);
@@ -205,18 +206,18 @@ static struct slabctl *slab_space_alloc(struct slab_cache *cache, int flags)
     size = ALIGN_UP(cache->slab_objs*cache->objsize, SLAB_UNIT_SIZE);
     order = size >> (1+SLAB_UNIT_BITS);
     data = frame_alloc(order, ZONE_LOW);
-    if (!data)
+    if (data == NULL)
         return NULL;
     data = phys_to_virt(data);
 
-    if (cache->flags & SLAB_EMBED_SLABCTL)
+    if ((cache->flags & SLAB_EMBED_SLABCTL) != 0)
     {
         slab = BUF_TO_SLABCTL(data);
     }
     else
     {
         slab = slab_cache_alloc(slab_slabctl_cache, flags);
-        if (!slab)
+        if (slab == NULL)
         {
             frame_free(virt_to_phys(data), order);
             return NULL;
@@ -232,14 +233,14 @@ static struct slabctl *slab_space_alloc(struct slab_cache *cache, int flags)
     for (i = 0, obj = data; i < cache->slab_objs;
          i++, obj = (char *)obj+cache->objsize)
     {
-        if (cache->flags & SLAB_EMBED_BUFCTL)
+        if ((cache->flags & SLAB_EMBED_BUFCTL) != 0)
         {
             bctl = BUF_TO_BUFCTL(obj, cache->objsize);
         }
         else
         {
             bctl = slab_cache_alloc(slab_bufctl_cache, flags);
-            if (!bctl)
+            if (bctl == NULL)
             {
                 /* temporary set to the allocated objects and undo */
                 unsigned int objs = slab->cache->slab_objs;
@@ -252,7 +253,7 @@ static struct slabctl *slab_space_alloc(struct slab_cache *cache, int flags)
             bctl->slab = slab;
         }
         bufctl_list_put(slab, bctl);
-        if (cache->ctor)
+        if (cache->ctor != NULL)
             cache->ctor(obj);
     }
     return slab;
@@ -265,7 +266,7 @@ void *slab_cache_alloc(struct slab_cache *cache, int flags)
     struct slabctl *slab;
     struct bufctl *bctl;
 
-    if (!list_empty(&cache->slabs_part))
+    if (list_empty(&cache->slabs_part) == 0)
     {
         slab = list_container(cache->slabs_part.next, struct slabctl, link);
         list_delete(&slab->link);
@@ -273,26 +274,26 @@ void *slab_cache_alloc(struct slab_cache *cache, int flags)
     else
     {
         slab = slab_space_alloc(cache, flags);
-        if (!slab)
+        if (slab == NULL)
             return NULL;
     }
 
     bctl = bufctl_list_get(slab);
-    if (cache->flags & SLAB_EMBED_BUFCTL)
+    if ((cache->flags & SLAB_EMBED_BUFCTL) != 0)
     {
         obj = BUFCTL_TO_BUF(bctl, cache->objsize);
     }
     else
     {
         obj = bufctl_hash_put(cache, bctl);
-        if (!obj)
+        if (obj == NULL)
         {
             bufctl_list_put(slab, bctl);
             return NULL;
         }
     }
 
-    if (cache->slab_objs - slab->inuse)
+    if ((cache->slab_objs - slab->inuse) > 0)
         list_insert_after(&cache->slabs_part, &slab->link);
     else
         list_insert_after(&cache->slabs_full, &slab->link);
@@ -306,7 +307,7 @@ void slab_cache_free(struct slab_cache *cache, void *obj)
     struct bufctl *bctl;
     size_t size = ALIGN_UP(cache->slab_objs*cache->objsize, SLAB_UNIT_SIZE);
 
-    if (cache->flags & SLAB_EMBED_BUFCTL)
+    if ((cache->flags & SLAB_EMBED_BUFCTL) != 0)
     {
         bctl = BUF_TO_BUFCTL(obj, cache->objsize);
         slab = BUF_TO_SLABCTL(obj);
@@ -314,7 +315,7 @@ void slab_cache_free(struct slab_cache *cache, void *obj)
     else
     {
         bctl = bufctl_hash_get(cache, obj);
-        if (!bctl)
+        if (bctl == NULL)
             return;
         slab = bctl->slab;
     }
@@ -338,12 +339,12 @@ void slab_cache_init(struct slab_cache *cache, const char *name,
         size_t objsize, unsigned int align, unsigned int flags,
         void (*ctor)(void *), void (*dtor)(void *))
 {
-    size_t slabsize, wasted;
+    size_t slabsize, wasted, orgsiz;
 
     align = (align < ALIGN_VALUE) ?
         ALIGN_VALUE : ALIGN_UP(align, ALIGN_VALUE);
 
-    memset(cache, 0, sizeof(*cache));
+    memset(cache, 0, sizeof(struct slab_cache));
     cache->name = name;
     cache->objsize = ALIGN_UP(objsize, align);
     cache->ctor = ctor;
@@ -359,8 +360,10 @@ void slab_cache_init(struct slab_cache *cache, const char *name,
 
     if (cache->objsize <= SLAB_SMALL_MAX)
     {
-        if (!ctor)
+        if (ctor == NULL)
+        {
             cache->flags |= (SLAB_EMBED_BUFCTL | SLAB_EMBED_SLABCTL);
+        }
         else
         {
             cache->objsize += sizeof(struct bufctl *);  // Add the space for bufctl link
@@ -372,7 +375,7 @@ void slab_cache_init(struct slab_cache *cache, const char *name,
     }
 
     slabsize = ALIGN_UP(cache->objsize, SLAB_UNIT_SIZE);
-    if (cache->flags & SLAB_EMBED_SLABCTL)
+    if ((cache->flags & SLAB_EMBED_SLABCTL) != 0)
         slabsize -= sizeof(struct slabctl);
 
     /*
@@ -381,10 +384,10 @@ void slab_cache_init(struct slab_cache *cache, const char *name,
      * then the wasted space is always less than slabsize/4.
      * slabsize % SMALL_MAX < SMALL_MAX = PAGESIZE/8 < slabsize/4
      */
-    if (flags & SLAB_OPTIMIZE)
+    if ((flags & SLAB_OPTIMIZE) != 0)
     {
-        while (1)
-        {
+        orgsiz = slabsize;
+        do {
             cache->slab_objs = slabsize / cache->objsize;
             wasted = slabsize % cache->objsize;
             /* wasted space should be less than slabsize/4 */
@@ -395,10 +398,16 @@ void slab_cache_init(struct slab_cache *cache, const char *name,
                 break;
             }
             slabsize <<= 1;
+        } while(slabsize > orgsiz);
+        if (slabsize <= orgsiz) {
+            /* Should never happen, but be defensive... */
+            cache->slab_objs = slabsize / cache->objsize;
         }
     }
     else
+    {
         cache->slab_objs = slabsize / cache->objsize;
+    }
 }
 
 void slab_cache_deinit(struct slab_cache *cache)
@@ -407,13 +416,13 @@ void slab_cache_deinit(struct slab_cache *cache)
     size_t size;
 
     size = ALIGN_UP(cache->slab_objs*cache->objsize, SLAB_UNIT_SIZE);
-    while (!list_empty(&cache->slabs_part))
+    while (list_empty(&cache->slabs_part) == 0)
     {
         slab = list_container(cache->slabs_part.next, struct slabctl, link);
         list_delete(&slab->link);
         slab_space_free(slab, size);
     }
-    while (!list_empty(&cache->slabs_full))
+    while (list_empty(&cache->slabs_full) == 0)
     {
         slab = list_container(cache->slabs_part.next, struct slabctl, link);
         list_delete(&slab->link);
@@ -429,7 +438,7 @@ struct slab_cache *slab_cache_create(const char *name,
     struct slab_cache *cache;
 
     cache = slab_cache_alloc(&slab_cache_cache, 0);
-    if (cache)
+    if (cache != NULL)
         slab_cache_init(cache, name, size, align, flags, ctor, dtor);
     return cache;
 }
@@ -450,12 +459,13 @@ void slab_init(void)
     /* Create a cache for slabs */
     slab_slabctl_cache = slab_cache_create("slab_slabctl_cache",
             sizeof(struct slabctl), 0, 0, NULL, NULL);
-    if (!slab_slabctl_cache)
+    if (slab_slabctl_cache == NULL)
         panic("slab_slabctl_cache creation error");
 
     /* Create a cache for bufctl */
     slab_bufctl_cache = slab_cache_create("slab_bufctl_cache",
             sizeof(struct bufctl), 0, 0, NULL, NULL);
-    if (!slab_bufctl_cache)
+    if (slab_bufctl_cache == NULL)
         panic("slab_bufctl_cache creation error");
 }
+

@@ -60,7 +60,7 @@ void isr_handler(struct isr_frame *ifr)
     if (32 <= num && num <= 47)
         pic_eoi(num);
 
-    if (need_resched)
+    if (need_resched != 0)
     {
         need_resched = 0;
         scheduler();

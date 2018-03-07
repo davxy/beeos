@@ -60,7 +60,7 @@ void buddy_free(struct buddy_sys *ctx, struct frame *frame, unsigned int order)
          * Here we could have passed block_idx. Same bit would be toggled.
          * Non zero value is returned if the buddy is still allocated.
          */
-        if (toggle_bit(ctx, buddy_idx, order))
+        if (toggle_bit(ctx, buddy_idx, order) != 0)
             break;
 
         /* Remove the buddy from its free list */
