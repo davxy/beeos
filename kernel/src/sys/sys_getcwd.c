@@ -26,7 +26,7 @@
 
 char *sys_getcwd(char *buf, size_t size)
 {
-    int j;
+    size_t j;
     size_t slen;
     struct dentry *curr;
 
@@ -43,11 +43,11 @@ char *sys_getcwd(char *buf, size_t size)
             break;
 
         slen = strlen(curr->name);
-        if (j - slen < 0)
+        if (slen > j)
             return (char *)-ENAMETOOLONG;
         j -= slen;
         memcpy(&buf[j], curr->name, slen);
-        if (j - 1 < 0)
+        if (j == 0)
             return (char *)-ENAMETOOLONG;
         buf[--j] = '/';
 
