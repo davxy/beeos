@@ -61,10 +61,8 @@ int task_init(struct task *task, task_entry_t entry)
     task->sgid = current_task->sgid;
 
     /* file system */
-    task->cwd = current_task->cwd;
-    task->root = current_task->root;
-    dget(task->cwd);
-    dget(task->root);
+    task->cwd = ddup(current_task->cwd);
+    task->root = ddup(current_task->root);
 
     /* duplicate valid file descriptors */
     memset(task->fds, 0, sizeof(task->fds));

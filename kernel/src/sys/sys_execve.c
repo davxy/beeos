@@ -116,14 +116,18 @@ int sys_execve(const char *path, const char *const argv[],
         return -ENOENT;
 
     if (vfs_read(inode, &eh, sizeof(eh), 0) != sizeof(eh)
-        || eh.magic != ELF_MAGIC)
+        || eh.magic != ELF_MAGIC) {
+        iput(inode);
         return -ENOEXEC;
+    }
 
     /* Immediatelly copy argv and envp arrays in a temporary user stack
      * allocated via kmalloc (shared betweek virtual spaces). */
     ustack = kmalloc(ARG_MAX, 0);
-    if (!ustack)
+    if (!ustack) {
+        iput(inode);
         return -ENOMEM;
+    }
     stack_init(ustack, argv, envp);
 
     pgdir = page_dir_dup(0);
@@ -134,7 +138,6 @@ int sys_execve(const char *path, const char *const argv[],
      * Otherwise esp is not in the frame */
     /* Minimal user stack */
     if ((ret = (int)page_map((char *)KVBASE-PAGE_SIZE, -1)) < 0) {
-        kfree(ustack, ARG_MAX);
         goto bad;
     }
     memcpy((char *)KVBASE-ARG_MAX, ustack, ARG_MAX);
@@ -220,9 +223,12 @@ int sys_execve(const char *path, const char *const argv[],
         }
     }
 
+    iput(inode);
     return ret;
 
 bad:
+    iput(inode);
+    kfree(ustack, ARG_MAX);
     /* Switch back to the old dir */
     page_dir_switch(current_task->arch.pgdir);
     /* Release the new dir, this also release all the mapped pages. */

@@ -64,7 +64,7 @@ int sys_open(const char *pathname, int flags, mode_t mode)
     file->mode = mode;
     file->flags = flags & ~O_CLOEXEC;
     file->dent = dentry;
-    dget(dentry);
+    //dget(dentry);
 
     current_task->fds[fdn].fil = file;
     current_task->fds[fdn].flags = flags & O_CLOEXEC;

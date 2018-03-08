@@ -228,6 +228,13 @@ void iget(struct inode *inod);
 
 void iput(struct inode *inod);
 
+//#define idup(inod) ((inod)->ref++)
+
+static inline struct inode *idup(struct inode *inod)
+{
+    inod->ref++;
+    return inod;
+}
 
 
 struct dentry *dentry_create(const char *name, struct dentry *parent,
@@ -237,9 +244,15 @@ void dentry_delete(struct dentry *de);
 
 struct dentry *named(const char *path);
 
-void dget(struct dentry *de);
+struct dentry *dget(struct dentry *dir, const char *name);
 
 void dput(struct dentry *de);
+
+static inline struct dentry *ddup(struct dentry *de)
+{
+    de->ref++;
+    return de;
+}
 
 
 struct file *fs_file_alloc(void);

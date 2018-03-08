@@ -75,13 +75,14 @@ int sys_mknod(const char *pathname, mode_t mode, dev_t dev)
     idir = dentry->inod;
 
     res = vfs_mknod(idir, mode, dev);
+//#if 0
     if (res == 0)
     {
         struct dentry *dchild = named(pathname);
         if (dchild == NULL)
             res = -1;
-        dget(dchild);   /* Keep one reference */
     }
+//#endif
     return res;
 }
 

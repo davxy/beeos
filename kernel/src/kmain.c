@@ -56,10 +56,8 @@ static void mount_root(void)
     sb = vfs_super_create(0, "dev");
     if (sb == NULL)
         panic("Unable to create dev fs");
-    current_task->cwd = sb->root;
-    current_task->root = sb->root;
-    dget(sb->root);
-    dget(sb->root);
+    current_task->cwd = ddup(sb->root);
+    current_task->root = ddup(sb->root);
 
     /* Initrd node created to read data from ramdisk */
     if (sys_mknod("/initrd", S_IFBLK, DEV_INITRD) < 0)
@@ -67,7 +65,6 @@ static void mount_root(void)
     de = named("/initrd");
     if (de == NULL)
         panic("Cannot find initrd device");
-    dget(de);
 
     /*
      * Initialization finished
@@ -76,10 +73,10 @@ static void mount_root(void)
     sb = vfs_super_create(ROOT_DEV, ROOT_FS_TYPE);
     if (sb == NULL)
         panic("Unable to create root file system");
-    current_task->cwd = sb->root;
-    current_task->root = sb->root;
-    dget(sb->root);
-    dget(sb->root);
+    //dput(current_task->cwd);
+    //dput(current_task->root);
+    current_task->cwd = ddup(sb->root);
+    current_task->root = ddup(sb->root);
 }
 
 

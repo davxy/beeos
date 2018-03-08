@@ -153,7 +153,6 @@ static struct inode *ext2_lookup(struct inode *dir, const char *name)
         if(dirent->name_len == strlen(name)
             && strncmp(dirent->name, name, dirent->name_len) == 0)
         {
-            /* TODO: iget first...?!?! (old comment... cannot remember :D) */
             inode = inode_lookup(dir->sb->dev, dirent->inode);
             if (inode == NULL)
             {
@@ -357,6 +356,7 @@ struct super_block *ext2_super_create(dev_t dev)
         return NULL;
 
     droot = dentry_create("/", NULL, &ext2_dentry_ops);
+    droot->ref++;
 
     super_init(&sb->base, dev, droot, &ext2_sb_ops);
 

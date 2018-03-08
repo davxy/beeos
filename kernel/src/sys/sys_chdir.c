@@ -36,7 +36,7 @@ int sys_chdir(const char *path)
     if (!S_ISDIR(inode->mode))
         return -ENOTDIR;
 
-    dget(dentry);
+   // dget(dentry);
     dput(current_task->cwd);
     current_task->cwd = dentry;
     return 0;

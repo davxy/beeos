@@ -244,8 +244,9 @@ int pipe_create(int pipefd[2])
     file0->ref = 1;
     file0->off = 0;
     file0->dent = dentry;
-    dget(dentry);
-    dget(dentry); /* Held by two files */
+    //dget(dentry);
+    //dget(dentry); /* Held by two files */
+    dentry->ref = 2;  /* Held by two files */
     *file1 = *file0;
     file1->flags = O_WRONLY;
 

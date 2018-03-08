@@ -25,6 +25,7 @@
 #include "proc.h"
 #include "panic.h"
 #include <limits.h>
+#include "kprintf.h"
 
 
 static struct vfs_type fs_list[] = {
@@ -222,29 +223,6 @@ void dentry_delete(struct dentry *de)
     kfree(de, sizeof(*de));
 }
 
-void dget(struct dentry *de)
-{
-    de->ref++;
-#if 0
-    kprintf("dget: (%s) ino=%d, iref=%d, dref=%d\n",
-            de->name, de->inode->ino, de->inode->ref, de->ref);
-#endif
-}
-
-void dput(struct dentry *de)
-{
-    de->ref--;
-#if 0
-    kprintf("dput: (%s) ino=%d, iref=%d, dref=%d\n",
-            de->name, de->inode->ino, de->inode->ref, de->ref);
-#endif
-    if (de->ref != 0)
-        return;
-
-    if (de->inod != NULL)
-        iput(de->inod);
-    dentry_delete(de);
-}
 
 
 
@@ -328,16 +306,61 @@ static struct dentry *dentry_lookup(const struct dentry *dir, const char *name)
 }
 
 
+struct dentry *dget(struct dentry *dir, const char *name)
+{
+    struct dentry *de;
+    struct inode  *inode;
+
+    de = dentry_lookup(dir, name);
+    if (de == NULL) {
+        inode = vfs_lookup(dir->inod, name);
+        if (inode == NULL)
+            return NULL;
+        de = dentry_create(name, dir, dir->ops);
+        if (de == NULL)
+            return NULL;
+        de->inod = inode;
+        iget(inode);
+    }
+
+    de->ref++;
+#if 1
+    kprintf("dget: (%s) ino=%d, iref=%d, dref=%d\n",
+            de->name, de->inod->ino, de->inod->ref, de->ref);
+#endif
+    return de;
+}
+
+void dput(struct dentry *de)
+{
+    de->ref--;
+#if 1
+    kprintf("dput: (%s) ino=%d, iref=%d, dref=%d\n",
+            de->name, de->inod->ino, de->inod->ref, de->ref);
+#endif
+
+    if (de->ref == 0) {
+        if (de->inod != NULL)
+            iput(de->inod);
+        if (de != current_task->cwd) {
+            dentry_delete(de);
+        } else {
+            kprintf("no release\n");
+        }
+    }
+}
+
 struct dentry *named(const char *path)
 {
     char name[NAME_MAX];
-    struct dentry *de, *tmp;
-    struct inode *inode;
+    struct dentry *de;
+    struct dentry *tmp;
 
     if (path == NULL || *path == '\0')
         return NULL;
 
     de = (*path == '/') ? current_task->root : current_task->cwd;
+    ddup(de);
 
     while ((path = skipelem(path, name)) != NULL)
     {
@@ -349,24 +372,20 @@ struct dentry *named(const char *path)
         } else if (strcmp(name, "..") == 0) {
             if (strcmp(de->name, "/") == 0)
                 de = follow_up(de);
+            tmp = de;
             de = de->parent;
+            ddup(de);
+            dput(tmp);
         } else {
             if (de->mounted != 0)
                 de = follow_down(de);
-            tmp = dentry_lookup(de, name);
-            if (tmp != NULL) {
-                de = tmp;
-            } else if (de->inod != NULL) {
-                inode = vfs_lookup(de->inod, name);
-                if (inode == NULL)
-                    return NULL;
-                de = dentry_create(name, de, de->ops);
-                if (de == NULL)
-                    return NULL;
-                de->inod = inode;
-                iget(inode);
-            } else
+            tmp = dget(de, name);
+            if (tmp == NULL) {
+                dput(de);
                 return NULL;
+            }
+            dput(de);
+            de = tmp;
         }
     }
     if (S_ISDIR(de->inod->mode) && de->mounted)
@@ -376,12 +395,14 @@ struct dentry *named(const char *path)
 
 struct inode *namei(const char *path)
 {
-    const struct dentry *de;
+    struct dentry *de;
     struct inode  *inode = NULL;
 
     de = named(path);
-    if (de != NULL)
+    if (de != NULL) {
         inode = de->inod;
+        de->ref--;
+    }
     return inode;
 }
 

@@ -317,6 +317,7 @@ struct super_block *devfs_super_create(dev_t dev)
     list_init(&devfs_nodes);
 
     droot = dentry_create("/", NULL, &devfs_dentry_ops);
+    droot->ref++;
 
     super_init(&devfs_sb, dev, droot, &devfs_sb_ops);
 
