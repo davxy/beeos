@@ -120,7 +120,7 @@ void sys_exit(int status)
 
     /* close all open files */
     for (i = 0; i < OPEN_MAX; i++) {
-        if (current_task->fds[i].fil) {
+        if (current_task->fds[i].fil != NULL) {
             if (sys_close(i) < 0) {
                 /* Should never happen... */
                 kprintf("[warn] sys_close error on opened file\n");

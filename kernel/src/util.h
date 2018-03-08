@@ -23,8 +23,8 @@
 #include <stdint.h>
 #include <sys/types.h>
 
-#define ALIGN_UP(val, a) (((val) + ((a) - 1)) & ~((a) - 1))
 
+#define ALIGN_UP(val, a) (((val) + ((a) - 1)) & ~((a) - 1))
 #define ALIGN_DOWN(val, a) ((val) & ~((a) - 1))
 
 /**

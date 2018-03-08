@@ -76,11 +76,11 @@ static int offset_to_block(off_t offset, const struct ext2_inode *inode,
     dbl = offset >> 8;
     tpl = offset >> 16;
 
-    if (tpl) {
+    if (tpl != 0) {
         panic("ext2: required triple block %d", triple_block);
     }
 
-    if (dbl) {
+    if (dbl != 0) {
         panic("ext2: required double block %d", double_block);
     }
 

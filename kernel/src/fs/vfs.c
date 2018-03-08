@@ -351,7 +351,7 @@ struct dentry *named(const char *path)
                 de = follow_up(de);
             de = de->parent;
         } else {
-            if (de->mounted)
+            if (de->mounted != 0)
                 de = follow_down(de);
             tmp = dentry_lookup(de, name);
             if (tmp != NULL) {

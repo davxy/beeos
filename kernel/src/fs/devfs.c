@@ -291,7 +291,7 @@ static int devfs_dentry_readdir(struct dentry *dir, unsigned int i,
             dent->d_ino = curr->inod->ino;
         }
     }
-    if (name) {
+    if (name != NULL) {
         strncpy(dent->d_name, name, sizeof(dent->d_name));
         res = 0;
     }
@@ -301,7 +301,6 @@ static int devfs_dentry_readdir(struct dentry *dir, unsigned int i,
 static const struct dentry_ops devfs_dentry_ops = {
     .readdir = devfs_dentry_readdir,
 };
-
 
 
 struct super_block *devfs_sb_get(void)

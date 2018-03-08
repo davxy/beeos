@@ -44,8 +44,8 @@ static char *push_all(uintptr_t *base, char *sp, const char * const str[],
 {
     int n;
 
-    for (n = 0; str[n]; n++);
-    if (nout)
+    for (n = 0; str[n] != NULL; n++);
+    if (nout != NULL)
         *nout = n;
     base[n] = 0;
     while (n-- > 0)

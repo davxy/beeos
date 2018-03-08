@@ -127,7 +127,7 @@ struct task *task_create(task_entry_t entry)
     struct task *task;
     
     task = kmalloc(sizeof(struct task), 0);
-    if (task) {
+    if (task != NULL) {
         memset(task, 0, sizeof(*task));
         if (task_init(task, entry) < 0) {
             kfree(task, sizeof(struct task));
