@@ -101,7 +101,8 @@ struct inode *inode_lookup(dev_t dev, ino_t ino)
 }
 
 
-void inode_init(struct inode *inode, struct super_block *sb, ino_t ino, mode_t mode,
+void inode_init(struct inode *inode, struct super_block *sb,
+                ino_t ino, mode_t mode,
                 dev_t dev, const struct inode_ops *ops)
 {
     memset(inode, 0, sizeof(*inode));
@@ -114,8 +115,12 @@ void inode_init(struct inode *inode, struct super_block *sb, ino_t ino, mode_t m
     if (S_ISBLK(mode) || S_ISCHR(mode))
         inode->rdev = dev;
 
+    /*
+     * TODO: consider the inode read return value.
+     * This is just a quick and dirty solution for MISRA compliance
+     */
     if (sb->ops->inode_read != NULL)
-        sb->ops->inode_read(inode);
+        (void)sb->ops->inode_read(inode);
 
     htable_insert(inode_htable, &inode->hlink,
                   KEY(inode->sb->dev, inode->ino), INODE_HTABLE_BITS);
@@ -263,8 +268,8 @@ int do_mount(struct dentry *mntpt, struct dentry *root)
 struct dentry *follow_up(struct dentry *root)
 {
     struct dentry *res = root;
-    struct vfsmount *mnt;
-    struct list_link *curr;
+    const struct list_link *curr;
+    const struct vfsmount *mnt;
 
     /* TODO: this is not efficient... use a hash map here */
     curr = mounts.next;
@@ -285,8 +290,8 @@ struct dentry *follow_up(struct dentry *root)
 static struct dentry *follow_down(struct dentry *mntpt)
 {
     struct dentry *res = mntpt;
-    struct vfsmount *mnt;
-    struct list_link *curr;
+    const struct list_link *curr;
+    const struct vfsmount *mnt;
 
     /* TODO: this is not efficient... use a hash map here */
     curr = mounts.next;
@@ -305,7 +310,7 @@ static struct dentry *follow_down(struct dentry *mntpt)
 }
 
 
-static struct dentry *dentry_lookup(struct dentry *dir, const char *name)
+static struct dentry *dentry_lookup(const struct dentry *dir, const char *name)
 {
     struct list_link *curr;
     struct dentry *curr_de, *res = NULL;
@@ -346,7 +351,7 @@ struct dentry *named(const char *path)
                 de = follow_up(de);
             de = de->parent;
         } else {
-            if (de->mounted)
+            if (de->mounted != 0)
                 de = follow_down(de);
             tmp = dentry_lookup(de, name);
             if (tmp != NULL) {
@@ -371,7 +376,7 @@ struct dentry *named(const char *path)
 
 struct inode *namei(const char *path)
 {
-    struct dentry *de;
+    const struct dentry *de;
     struct inode  *inode = NULL;
 
     de = named(path);
@@ -382,7 +387,7 @@ struct inode *namei(const char *path)
 
 
 
-int vfs_init(void)
+void vfs_init(void)
 {
     slab_cache_init(&inode_cache, "inode-cache", sizeof(struct inode),
             0, 0, NULL, NULL);
@@ -393,6 +398,5 @@ int vfs_init(void)
     htable_init(inode_htable, INODE_HTABLE_BITS);
 
     list_init(&mounts);
-
-    return 0;
 }
+

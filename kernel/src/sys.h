@@ -70,7 +70,8 @@ pid_t sys_tcgetpgrp(int fd);
 
 int sys_tcsetpgrp(int fd, pid_t pgrp);
 
-int sys_execve(const char *path, const char *argv[], const char *envp[]);
+int sys_execve(const char *path, const char *const argv[],
+               const char *const envp[]);
 
 void *sys_sbrk(intptr_t incr);
 

@@ -21,6 +21,7 @@
 #include "fs/vfs.h"
 #include "elf.h"
 #include "kmalloc.h"
+#include "kprintf.h"
 #include "proc.h"
 #include "arch/x86/paging.h"
 #include <sys/types.h>
@@ -38,12 +39,13 @@ static char *push(char *sp, const char *str)
     return sp;
 }
 
-static char *push_all(uintptr_t *base, char *sp, const char *str[],
-        ptrdiff_t delta, uintptr_t *nout)
+static char *push_all(uintptr_t *base, char *sp, const char * const str[],
+                      ptrdiff_t delta, uintptr_t *nout)
 {
     int n;
-    for (n = 0; str[n]; n++);
-    if (nout)
+
+    for (n = 0; str[n] != NULL; n++);
+    if (nout != NULL)
         *nout = n;
     base[n] = 0;
     while (n-- > 0)
@@ -77,7 +79,8 @@ static char *push_all(uintptr_t *base, char *sp, const char *str[],
  *
  * Note: passed argv and envp strings are copied on the top of the stack.
 */
-static void stack_init(uintptr_t *base, const char *argv[], const char *envp[])
+static void stack_init(uintptr_t *base, const char * const argv[],
+                       const char * const envp[])
 {
     char *sp = (char *)base + ARG_MAX;
     ptrdiff_t delta = (char *)KVBASE - sp;
@@ -94,7 +97,8 @@ static void stack_init(uintptr_t *base, const char *argv[], const char *envp[])
 }
 
 
-int sys_execve(const char *path, const char *argv[], const char *envp[])
+int sys_execve(const char *path, const char *const argv[],
+               const char *const envp[])
 {
     int ret = 0;
     struct elf_hdr eh;
@@ -198,7 +202,8 @@ int sys_execve(const char *path, const char *argv[], const char *envp[])
         if (current_task->fds[i].fil == NULL ||
            (current_task->fds[i].flags & O_CLOEXEC) == 0)
             continue;
-        sys_close(i);
+        if (sys_close(i) < 0)
+            kprintf("[warn] error closing an open file\n");
     }
 
 

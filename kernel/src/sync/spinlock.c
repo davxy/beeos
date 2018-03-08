@@ -26,7 +26,7 @@ void spinlock_init(struct spinlock *lock)
 
 void spinlock_lock(struct spinlock *lock)
 {
-    while (__sync_lock_test_and_set(&lock->value, 1));
+    while (__sync_lock_test_and_set(&lock->value, 1) != 0);
 }
 
 void spinlock_unlock(struct spinlock *lock)

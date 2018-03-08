@@ -25,24 +25,25 @@
 
 #define KPRINTF_BUFSIZ  64
 
-int kvprintf(const char *fmt, va_list arg)
+/*
+ * Log to the first console.
+ */
+void kvprintf(const char *fmt, va_list arg)
 {
     char str[KPRINTF_BUFSIZ];
     int n;
 
     n = vsnprintf(str, KPRINTF_BUFSIZ, fmt, arg);
-    if (n < 0)
-        return -1;
-    /* Write to the first console. */
-    return tty_write(DEV_CONSOLE1, str, n);
+    if (n > 0) 
+        (void) tty_write(DEV_CONSOLE1, str, n);
 }
 
-int kprintf(const char *fmt, ...)
+void kprintf(const char *fmt, ...)
 {
-    int n;
     va_list ap;
 
     va_start(ap, fmt);
-    n = kvprintf(fmt, ap);
+    kvprintf(fmt, ap);
     va_end(ap);
 }
+

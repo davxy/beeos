@@ -51,7 +51,7 @@ pid_t sys_waitpid(pid_t pid, int *wstatus, int options)
                 {
                     /* found one */
                     pid = t->pid;
-                    if (wstatus)
+                    if (wstatus != NULL)
                         *wstatus = t->exit_code;
                     /* resources already released by the sys_exit */
                     list_delete(&t->tasks);
@@ -67,7 +67,7 @@ pid_t sys_waitpid(pid_t pid, int *wstatus, int options)
         if (t == current_task)
         {
             /* We've not found any terminated children */
-            if (havekids)
+            if (havekids != 0)
             {
                 /* There are not terminated children around */
                 if ((options & WNOHANG) == 0)

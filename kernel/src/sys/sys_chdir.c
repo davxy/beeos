@@ -26,7 +26,7 @@
 int sys_chdir(const char *path)
 {
     struct dentry *dentry;
-    struct inode *inode;
+    const struct inode *inode;
 
     dentry = named(path);
     if (dentry == NULL)

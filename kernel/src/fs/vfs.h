@@ -251,7 +251,7 @@ void fs_file_free(struct file *file);
 int do_mount(struct dentry *mntpt, struct dentry *root);
 
 
-int vfs_init(void);
+void vfs_init(void);
 
 /* TODO... find a better way */
 struct dentry *follow_up(struct dentry *root);
