@@ -168,7 +168,7 @@ static void bufctl_list_put(struct slabctl *slab, struct bufctl *bctl)
 static void slab_space_free(struct slabctl* slab, size_t size)
 {
     int i;
-    struct slab_cache *cache = slab->cache;
+    const struct slab_cache *cache = slab->cache;
     void *data = slab->data;
     void *obj;
     unsigned int order;

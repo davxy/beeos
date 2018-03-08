@@ -272,9 +272,9 @@ static int devfs_dentry_readdir(struct dentry *dir, unsigned int i,
                                 struct dirent *dent)
 {
     static struct list_link *curr_link;
-    struct dentry *curr;
     int res = -1;
     const char *name = NULL;
+    const struct dentry *curr;
 
     if (i == 0) {
         name = ".";

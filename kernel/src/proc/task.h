@@ -86,7 +86,7 @@ int task_arch_init(struct task_arch *task, task_entry_t entry);
 
 void task_arch_deinit(struct task_arch *task);
 
-void task_arch_switch(struct task_arch *curr, struct task_arch *next);
+void task_arch_switch(struct task_arch *curr, const struct task_arch *next);
 
 
 

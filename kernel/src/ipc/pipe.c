@@ -124,7 +124,7 @@ static int pipe_write(struct inode *inode, const void *buf,
         size_t count, off_t offset)
 {
     size_t n, left;
-    char *ptr = (char *)buf;
+    const char *ptr = (char *)buf;
     struct pipe_inode *pnode = (struct pipe_inode *)inode;
 
     left = count;

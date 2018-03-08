@@ -117,7 +117,7 @@ struct elf_file
     uint32_t                strtabsz;
 };
 
-const char *elf_lookup_symbol(struct elf_file *elf, uint32_t addr);
+const char *elf_lookup_symbol(const struct elf_file *elf, uint32_t addr);
 
 
 #endif /* BEEOS_ELF_H_ */

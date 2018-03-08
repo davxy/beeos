@@ -41,7 +41,8 @@ static struct task *find_init(void)
 
 static void children_split(struct task *node)
 {
-    struct task *head, *curr, *prev;
+    struct task *head, *curr;
+    const struct task *prev;
 
     head = NULL;
     prev = node;

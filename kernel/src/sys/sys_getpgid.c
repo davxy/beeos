@@ -30,8 +30,8 @@
  */
 pid_t sys_getpgid(pid_t pid)
 {
-    struct task *t = NULL;
-    struct task *curr = current_task;
+    const struct task *t = NULL;
+    const struct task *curr = current_task;
 
     if (pid == 0)
         pid = current_task->pid;

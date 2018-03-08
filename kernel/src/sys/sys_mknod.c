@@ -25,7 +25,6 @@
 #include <string.h>
 
 
-
 static void split_path(const char *filepath, char *parent, char *name)
 {
     int i;
@@ -57,7 +56,7 @@ static void split_path(const char *filepath, char *parent, char *name)
 int sys_mknod(const char *pathname, mode_t mode, dev_t dev)
 {
     int res;
-    struct dentry *dentry;
+    const struct dentry *dentry;
     struct inode  *idir;
     char parent[PATH_MAX];
     char name[NAME_MAX];

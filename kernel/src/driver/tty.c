@@ -256,7 +256,7 @@ static void tty_struct_init(struct tty_st *tty, dev_t dev)
 
 static struct timer_event refresh_tm;
 
-static void refresh_func(void *_unused)
+static void refresh_func(void)
 {
     if (scr_table[tty_curr].dirty != 0)
         screen_update(&scr_table[tty_curr]);
@@ -276,7 +276,7 @@ void tty_init(void)
 
     uart_init();
 
-    timer_event_init(&refresh_tm, refresh_func, NULL,
+    timer_event_init(&refresh_tm, (timer_event_t *)refresh_func, NULL,
                      timer_ticks + msecs_to_ticks(100));
     timer_event_add(&refresh_tm);
 }

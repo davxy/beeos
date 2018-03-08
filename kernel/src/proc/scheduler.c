@@ -29,7 +29,7 @@ struct task ktask;
 struct task *current_task;
 
 
-static int sigpop(sigset_t *sigpend, sigset_t *sigmask)
+static int sigpop(sigset_t *sigpend, const sigset_t *sigmask)
 {
     int sig;
 
@@ -45,10 +45,10 @@ static int sigpop(sigset_t *sigpend, sigset_t *sigmask)
 
 int do_signal(void)
 {
-    struct sigaction *act;
     int sig;
-    struct isr_frame *ifr;
     uint32_t *esp;
+    struct isr_frame *ifr;
+    const struct sigaction *act;
 
     sig = sigpop(&current_task->sigpend, &current_task->sigmask);
     if (sig <= 0)
@@ -148,7 +148,7 @@ void scheduler_init(void)
     }
 }
 
-static void task_dump(struct task *t)
+static void task_dump(const struct task *t)
 {
     char state;
 

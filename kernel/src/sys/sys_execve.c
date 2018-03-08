@@ -39,10 +39,11 @@ static char *push(char *sp, const char *str)
     return sp;
 }
 
-static char *push_all(uintptr_t *base, char *sp, const char *str[],
-        ptrdiff_t delta, uintptr_t *nout)
+static char *push_all(uintptr_t *base, char *sp, const char * const str[],
+                      ptrdiff_t delta, uintptr_t *nout)
 {
     int n;
+
     for (n = 0; str[n]; n++);
     if (nout)
         *nout = n;
@@ -78,7 +79,8 @@ static char *push_all(uintptr_t *base, char *sp, const char *str[],
  *
  * Note: passed argv and envp strings are copied on the top of the stack.
 */
-static void stack_init(uintptr_t *base, const char *argv[], const char *envp[])
+static void stack_init(uintptr_t *base, const char * const argv[],
+                       const char * const envp[])
 {
     char *sp = (char *)base + ARG_MAX;
     ptrdiff_t delta = (char *)KVBASE - sp;
@@ -95,7 +97,8 @@ static void stack_init(uintptr_t *base, const char *argv[], const char *envp[])
 }
 
 
-int sys_execve(const char *path, const char *argv[], const char *envp[])
+int sys_execve(const char *path, const char *const argv[],
+               const char *const envp[])
 {
     int ret = 0;
     struct elf_hdr eh;

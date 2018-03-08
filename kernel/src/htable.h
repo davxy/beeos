@@ -65,7 +65,9 @@ static inline void htable_init(struct htable_link **htable, int bits)
 static inline void htable_insert(struct htable_link **htable,
         struct htable_link *node, long long key, int bits)
 {
-    int i = hash(key, bits);
+    int i;
+
+    i = hash(key, bits);
     node->next = htable[i];
     node->pprev = &htable[i];
     if (htable[i])
@@ -73,16 +75,18 @@ static inline void htable_insert(struct htable_link **htable,
     htable[i] = node;
 }
 
-static inline void htable_delete(struct htable_link *node)
+static inline void htable_delete(const struct htable_link *node)
 {
     struct htable_link *next = node->next;
     struct htable_link **pprev = node->pprev;
+
     *pprev = next;
     if (next)
         next->pprev = pprev;
 }
 
-static inline struct htable_link *htable_lookup(struct htable_link **htable,
+static inline struct htable_link *htable_lookup(
+        struct htable_link * const *htable,
         long long key, int bits)
 {
     return htable[hash(key, bits)];

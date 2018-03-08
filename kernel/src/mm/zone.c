@@ -21,7 +21,8 @@
 #include "util.h"
 #include <sys/types.h>
 
-void *zone_alloc(struct zone_st *ctx, int order)
+
+void *zone_alloc(const struct zone_st *ctx, int order)
 {
     struct frame *frame;
 
@@ -32,7 +33,7 @@ void *zone_alloc(struct zone_st *ctx, int order)
     return (ctx->addr + ctx->frame_size*(frame-ctx->buddy.frames));
 }
 
-void zone_free(struct zone_st *ctx, void *ptr, int order)
+void zone_free(const struct zone_st *ctx, const void *ptr, int order)
 {
     int i;
     struct frame *frame;
@@ -58,7 +59,7 @@ int zone_init(struct zone_st *ctx, void *addr, size_t size,
     return buddy_init(&ctx->buddy, size/frame_size, frame_size);
 }
 
-void zone_dump(struct zone_st *ctx)
+void zone_dump(const struct zone_st *ctx)
 {
     buddy_dump(&ctx->buddy, ctx->addr);
 }

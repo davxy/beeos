@@ -72,9 +72,10 @@ struct multiboot_info
 #define ZONE_LOW_TOP        0x400000
 #define MB_HIGH_MEM_START   0x100000
 
-static void mm_init(struct multiboot_info *mbi)
+static void mm_init(const struct multiboot_info *mbi)
 {
-    char *kend, *mend;
+    char *kend;
+    const char *mend;
     size_t msize, lsize;
     int ret;
 
@@ -118,7 +119,7 @@ static void mm_init(struct multiboot_info *mbi)
  * Architecture specific initialization.
  * Must be executed before other generic routines.
  */
-void arch_init(struct multiboot_info *mbi)
+void arch_init(const struct multiboot_info *mbi)
 {
     /* 
      * Check for initrd.

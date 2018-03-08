@@ -24,7 +24,7 @@
 
 int sys_fstat(int fd, struct stat *buf)
 {
-    struct inode *inode;
+    const struct inode *inode;
 
     if (current_task->fds[fd].fil == NULL)
         return -EBADF;  /* Bad file descriptor */

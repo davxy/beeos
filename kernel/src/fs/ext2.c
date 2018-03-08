@@ -51,8 +51,8 @@ static struct ext2_disk_super_block dsb;
 static uint32_t gd_block;
 
 
-static int offset_to_block(off_t offset, struct ext2_inode *inode,
-                           struct ext2_super_block *sb)
+static int offset_to_block(off_t offset, const struct ext2_inode *inode,
+                           const struct ext2_super_block *sb)
 {
     uint32_t triple_block, double_block, indirect_block, block;
     uint8_t ind, dbl, tpl;
@@ -97,11 +97,13 @@ static int offset_to_block(off_t offset, struct ext2_inode *inode,
 static ssize_t ext2_read(struct ext2_inode *inode, void *buf,
                          size_t count, off_t off)
 {
-    struct ext2_super_block *sb = (struct ext2_super_block *)inode->base.sb;
+    const struct ext2_super_block *sb;
     int left;
     int block;
     off_t ext2_off, block_off, file_off;
     ssize_t n;
+
+    sb = (struct ext2_super_block *)inode->base.sb;
 
     if (inode->base.size < off)
         return 0; /* EOF */
@@ -277,10 +279,10 @@ static int ext2_super_inode_read(struct inode *inode)
 {
     int n;
     struct ext2_disk_inode dnode;
-    struct ext2_super_block *sb = (struct ext2_super_block *) inode->sb;
+    const struct ext2_super_block *sb = (struct ext2_super_block *) inode->sb;
 
     int group = ((inode->ino - 1) / sb->inodes_per_group);
-    struct ext2_group_desc *gd = &sb->gd_table[group];
+    const struct ext2_group_desc *gd = &sb->gd_table[group];
 
     int table_index = (inode->ino - 1 ) % sb->inodes_per_group;
     int blockno = ((table_index * 128) / 1024 ) + gd->inode_table;

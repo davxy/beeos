@@ -175,8 +175,9 @@ uint32_t page_unmap(void *virt, int retain)
 void page_dir_del(uint32_t phys)
 {
     int di, ti;
-    uint32_t *tab;
-    uint32_t *dir_curr, *dir;
+    const uint32_t *tab;
+    const uint32_t *dir;
+    uint32_t *dir_curr;
 
     dir_curr = (uint32_t *)PAGE_DIR_MAP;
     /* Temporary map the dir in under the current dir */
@@ -211,9 +212,10 @@ uint32_t page_dir_dup(int dup_user)
     int i, j;
     uint32_t *dir_src;
     uint32_t *dir_dst;
-    uint32_t *tab_src;
+    const uint32_t *tab_src;
     uint32_t *tab_dst;
-    void *mem_src, *mem_dst;
+    const void *mem_src;
+    void *mem_dst;
     uint32_t phys;
     int flags = PTE_W | PTE_P;
 
@@ -285,10 +287,9 @@ uint32_t page_dir_dup(int dup_user)
 static void map_propagate(int idx)
 {
     uint32_t *dir_src, *dir_dst;
-    struct task *other;
+    const struct task *other;
 
-    other = list_container(current_task->tasks.next,
-            struct task, tasks);
+    other = list_container(current_task->tasks.next, struct task, tasks);
     /*
      * The non-current process page dir is mapped just below the
      * current process page directory.

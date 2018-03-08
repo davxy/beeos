@@ -46,7 +46,7 @@ void init(void);
 
 static void mount_root(void)
 {
-    struct super_block *sb;
+    const struct super_block *sb;
     struct dentry *de;
 
     /*

@@ -31,8 +31,8 @@
  * This function toggles the bit corresponding to the couple 
  * and returns the modified bit value.
  */
-static int toggle_bit(struct buddy_sys *ctx, int block_idx, 
-        unsigned int order)
+static int toggle_bit(const struct buddy_sys *ctx, int block_idx,
+                      unsigned int order)
 {
     unsigned int i;
     unsigned long *word, bit;
@@ -47,7 +47,8 @@ static int toggle_bit(struct buddy_sys *ctx, int block_idx,
 /*
  * Deallocate a frame
  */
-void buddy_free(struct buddy_sys *ctx, struct frame *frame, unsigned int order)
+void buddy_free(const struct buddy_sys *ctx, const struct frame *frame,
+                unsigned int order)
 {
     unsigned int block_idx, buddy_idx;
 
@@ -81,7 +82,7 @@ void buddy_free(struct buddy_sys *ctx, struct frame *frame, unsigned int order)
 /*
  * Allocate a frame
  */
-struct frame *buddy_alloc(struct buddy_sys *ctx, unsigned int order)
+struct frame *buddy_alloc(const struct buddy_sys *ctx, unsigned int order)
 {
     struct frame *frame = NULL;
     int left_idx, right_idx;
@@ -187,11 +188,14 @@ e0: return -1;
 /*
  * Dump buddy status
  */
-void buddy_dump(struct buddy_sys *ctx, char *base)
+void buddy_dump(const struct buddy_sys *ctx, char *base)
 {
     unsigned int i;
     size_t freemem = 0;
-    struct list_link *frame_link;
+    const struct list_link *frame_link;
+    const struct frame *frame;
+    unsigned int frame_idx;
+    char *frame_ptr;
 
     kprintf("-----------------------------------------\n");
     kprintf("   Buddy Dump\n");
@@ -209,9 +213,9 @@ void buddy_dump(struct buddy_sys *ctx, char *base)
                  frame_link != &ctx->free_area[i].list; 
                  frame_link = frame_link->next)
             {
-                struct frame *frame = list_container(frame_link, struct frame, link); 
-                unsigned int frame_idx = frame - ctx->frames;
-                char *frame_ptr = base + (frame_idx << ctx->order_bit);
+                frame = list_container(frame_link, struct frame, link);
+                frame_idx = frame - ctx->frames;
+                frame_ptr = base + (frame_idx << ctx->order_bit);
                 kprintf("    [0x%p : 0x%p)\n", frame_ptr, frame_ptr + (1 << (ctx->order_bit+i)));
                 freemem += (1 << (ctx->order_bit + i));
             }

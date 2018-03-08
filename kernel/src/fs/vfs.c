@@ -268,8 +268,8 @@ int do_mount(struct dentry *mntpt, struct dentry *root)
 struct dentry *follow_up(struct dentry *root)
 {
     struct dentry *res = root;
-    struct vfsmount *mnt;
-    struct list_link *curr;
+    const struct list_link *curr;
+    const struct vfsmount *mnt;
 
     /* TODO: this is not efficient... use a hash map here */
     curr = mounts.next;
@@ -290,8 +290,8 @@ struct dentry *follow_up(struct dentry *root)
 static struct dentry *follow_down(struct dentry *mntpt)
 {
     struct dentry *res = mntpt;
-    struct vfsmount *mnt;
-    struct list_link *curr;
+    const struct list_link *curr;
+    const struct vfsmount *mnt;
 
     /* TODO: this is not efficient... use a hash map here */
     curr = mounts.next;
@@ -310,7 +310,7 @@ static struct dentry *follow_down(struct dentry *mntpt)
 }
 
 
-static struct dentry *dentry_lookup(struct dentry *dir, const char *name)
+static struct dentry *dentry_lookup(const struct dentry *dir, const char *name)
 {
     struct list_link *curr;
     struct dentry *curr_de, *res = NULL;
@@ -376,7 +376,7 @@ struct dentry *named(const char *path)
 
 struct inode *namei(const char *path)
 {
-    struct dentry *de;
+    const struct dentry *de;
     struct inode  *inode = NULL;
 
     de = named(path);
