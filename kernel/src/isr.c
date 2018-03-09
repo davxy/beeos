@@ -60,7 +60,7 @@ void isr_handler(struct isr_frame *ifr)
     if (32 <= num && num <= 47)
         pic_eoi(num);
 
-    if (need_resched)
+    if (need_resched != 0)
     {
         need_resched = 0;
         scheduler();
@@ -73,7 +73,7 @@ void isr_handler(struct isr_frame *ifr)
      */
     if (!sigisemptyset(&current_task->sigpend) &&
             current_task->arch.sfr == NULL && (ifr->cs & 0x3) == 0x3)
-        do_signal();
+        (void)do_signal();
 
     /* Eventually restore the previous ifr */
     current_task->arch.ifr = previfr;
@@ -100,12 +100,12 @@ void isr_register_handler(unsigned int num, isr_handler_t func)
 
 static void divide_error(void)
 {
-    sys_kill(current_task->pid, SIGFPE);
+    task_signal(current_task, SIGFPE);
 }
 
 static void invalid_opcode(void)
 {
-    sys_kill(current_task->pid, SIGILL);
+    task_signal(current_task, SIGILL);
 }
 
 void isr_init(void)

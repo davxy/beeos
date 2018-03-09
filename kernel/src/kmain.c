@@ -46,8 +46,7 @@ void init(void);
 
 static void mount_root(void)
 {
-    struct super_block *sb;
-    struct dentry *de;
+    const struct super_block *sb;
 
     /*
      * DEVFS is temporary mounted as system root.
@@ -56,16 +55,13 @@ static void mount_root(void)
     sb = vfs_super_create(0, "dev");
     if (sb == NULL)
         panic("Unable to create dev fs");
-    current_task->cwd = sb->root;
-    current_task->root = sb->root;
-    dget(sb->root);
-    dget(sb->root);
+
+    current_task->cwd = ddup(sb->root);
+    current_task->root = ddup(sb->root);
 
     /* Initrd node created to read data from ramdisk */
-    sys_mknod("/initrd", S_IFBLK, DEV_INITRD);
-    de = named("/initrd");
-    dget(de);
-    //sys_open("/initrd", O_RDONLY | O_CLOEXEC, 0);
+    if (sys_mknod("/initrd", S_IFBLK, DEV_INITRD) < 0)
+        panic("Creating initrd temporary root");
 
     /*
      * Initialization finished
@@ -74,10 +70,11 @@ static void mount_root(void)
     sb = vfs_super_create(ROOT_DEV, ROOT_FS_TYPE);
     if (sb == NULL)
         panic("Unable to create root file system");
-    current_task->cwd = sb->root;
-    current_task->root = sb->root;
-    dget(sb->root);
-    dget(sb->root);
+
+    dput(current_task->root);
+    dput(current_task->cwd);
+    current_task->root = ddup(sb->root);
+    current_task->cwd  = ddup(sb->root);
 }
 
 

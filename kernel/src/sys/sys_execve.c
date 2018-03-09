@@ -21,6 +21,7 @@
 #include "fs/vfs.h"
 #include "elf.h"
 #include "kmalloc.h"
+#include "kprintf.h"
 #include "proc.h"
 #include "arch/x86/paging.h"
 #include <sys/types.h>
@@ -38,12 +39,13 @@ static char *push(char *sp, const char *str)
     return sp;
 }
 
-static char *push_all(uintptr_t *base, char *sp, const char *str[],
-        ptrdiff_t delta, uintptr_t *nout)
+static char *push_all(uintptr_t *base, char *sp, const char * const str[],
+                      ptrdiff_t delta, uintptr_t *nout)
 {
     int n;
-    for (n = 0; str[n]; n++);
-    if (nout)
+
+    for (n = 0; str[n] != NULL; n++);
+    if (nout != NULL)
         *nout = n;
     base[n] = 0;
     while (n-- > 0)
@@ -77,7 +79,8 @@ static char *push_all(uintptr_t *base, char *sp, const char *str[],
  *
  * Note: passed argv and envp strings are copied on the top of the stack.
 */
-static void stack_init(uintptr_t *base, const char *argv[], const char *envp[])
+static void stack_init(uintptr_t *base, const char * const argv[],
+                       const char * const envp[])
 {
     char *sp = (char *)base + ARG_MAX;
     ptrdiff_t delta = (char *)KVBASE - sp;
@@ -94,12 +97,14 @@ static void stack_init(uintptr_t *base, const char *argv[], const char *envp[])
 }
 
 
-int sys_execve(const char *path, const char *argv[], const char *envp[])
+int sys_execve(const char *path, const char *const argv[],
+               const char *const envp[])
 {
     int ret = 0;
     struct elf_hdr eh;
     struct elf_prog_hdr ph;
-    struct inode *inode;
+    struct dentry *dent;
+    struct inode *inod;
     unsigned int i, off;
     uint32_t pgdir, vaddr;
     void *ustack;
@@ -107,19 +112,26 @@ int sys_execve(const char *path, const char *argv[], const char *envp[])
     if (current_task->arch.ifr == NULL || argv == NULL)
         return -EINVAL;
 
-    inode = namei(path);
-    if (!inode)
+    dent = named(path);
+    if (dent == NULL)
         return -ENOENT;
+    inod = dent->inod;
 
-    if (vfs_read(inode, &eh, sizeof(eh), 0) != sizeof(eh)
-        || eh.magic != ELF_MAGIC)
+    if (vfs_read(inod, &eh, sizeof(eh), 0) != sizeof(eh)
+        || eh.magic != ELF_MAGIC) {
+        dput(dent);
         return -ENOEXEC;
+    }
 
-    /* Immediatelly copy argv and envp arrays in a temporary user stack
-     * allocated via kmalloc (shared betweek virtual spaces). */
+    /*
+     * Immediatelly copy argv and envp arrays in a temporary user stack
+     * allocated via kmalloc (shared betweek virtual spaces).
+     */
     ustack = kmalloc(ARG_MAX, 0);
-    if (!ustack)
+    if (!ustack) {
+        dput(dent);
         return -ENOMEM;
+    }
     stack_init(ustack, argv, envp);
 
     pgdir = page_dir_dup(0);
@@ -130,7 +142,6 @@ int sys_execve(const char *path, const char *argv[], const char *envp[])
      * Otherwise esp is not in the frame */
     /* Minimal user stack */
     if ((ret = (int)page_map((char *)KVBASE-PAGE_SIZE, -1)) < 0) {
-        kfree(ustack, ARG_MAX);
         goto bad;
     }
     memcpy((char *)KVBASE-ARG_MAX, ustack, ARG_MAX);
@@ -143,7 +154,7 @@ int sys_execve(const char *path, const char *argv[], const char *envp[])
 
     for (i = 0, off = eh.phoff; i < eh.phnum; i++, off += sizeof(ph)) {
 
-        if (vfs_read(inode, &ph, sizeof(ph), off) != sizeof(ph)) {
+        if (vfs_read(inod, &ph, sizeof(ph), off) != sizeof(ph)) {
             ret = -ENOEXEC;
             goto bad;
         }
@@ -172,7 +183,7 @@ int sys_execve(const char *path, const char *argv[], const char *envp[])
         }
 
         if (ph.filesz != 0) {
-            if ((ret = vfs_read(inode, (void *)ph.vaddr, ph.filesz, ph.offset))
+            if ((ret = vfs_read(inod, (void *)ph.vaddr, ph.filesz, ph.offset))
                     != ph.filesz)
                 goto bad;
         }
@@ -198,7 +209,8 @@ int sys_execve(const char *path, const char *argv[], const char *envp[])
         if (current_task->fds[i].fil == NULL ||
            (current_task->fds[i].flags & O_CLOEXEC) == 0)
             continue;
-        sys_close(i);
+        if (sys_close(i) < 0)
+            kprintf("[warn] error closing an open file\n");
     }
 
 
@@ -215,9 +227,12 @@ int sys_execve(const char *path, const char *argv[], const char *envp[])
         }
     }
 
+    dput(dent);
     return ret;
 
 bad:
+    dput(dent);
+    kfree(ustack, ARG_MAX);
     /* Switch back to the old dir */
     page_dir_switch(current_task->arch.pgdir);
     /* Release the new dir, this also release all the mapped pages. */

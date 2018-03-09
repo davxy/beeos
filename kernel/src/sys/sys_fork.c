@@ -27,7 +27,7 @@ void fork_ret(void);
 
 pid_t sys_fork(void)
 {
-    struct task *child;
+    const struct task *child;
 
     child = task_create(fork_ret);
     if (child == NULL)

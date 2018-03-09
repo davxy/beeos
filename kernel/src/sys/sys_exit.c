@@ -41,7 +41,8 @@ static struct task *find_init(void)
 
 static void children_split(struct task *node)
 {
-    struct task *head, *curr, *prev;
+    struct task *head, *curr;
+    const struct task *prev;
 
     head = NULL;
     prev = node;
@@ -118,10 +119,13 @@ void sys_exit(int status)
     }
 
     /* close all open files */
-    for (i = 0; i < OPEN_MAX; i++)
-    {
-        if (current_task->fds[i].fil)
-            sys_close(i);
+    for (i = 0; i < OPEN_MAX; i++) {
+        if (current_task->fds[i].fil != NULL) {
+            if (sys_close(i) < 0) {
+                /* Should never happen... */
+                kprintf("[warn] sys_close error on opened file\n");
+            }
+        }
     }
 
     /* Give children to init */
@@ -131,7 +135,7 @@ void sys_exit(int status)
         children_give(child); /* Wrap around, current is not a leaf */
 
     /* Send SIGCHLD to the parent */
-    sys_kill(current_task->pptr->pid, SIGCHLD);
+    task_signal(current_task->pptr, SIGCHLD);
 
     /* Acquire the father conditional variable to prevent lost signals */
     spinlock_lock(&current_task->pptr->chld_exit.lock);

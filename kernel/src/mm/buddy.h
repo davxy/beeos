@@ -80,7 +80,7 @@ int buddy_init(struct buddy_sys *ctx, unsigned int frames_num,
  * @param order     Requested chunk order.
  * @return          Memory chunk start frame.
  */
-struct frame *buddy_alloc(struct buddy_sys *ctx, unsigned int order);
+struct frame *buddy_alloc(const struct buddy_sys *ctx, unsigned int order);
 
 /**
  * Release a chunk of memory.
@@ -89,7 +89,8 @@ struct frame *buddy_alloc(struct buddy_sys *ctx, unsigned int order);
  * @param frame     Memory chunk start frame.
  * @param order     Memory chunk order.
  */
-void buddy_free(struct buddy_sys *ctx, struct frame *frame, unsigned int order);
+void buddy_free(const struct buddy_sys *ctx, const struct frame *frame,
+                unsigned int order);
 
 /**
  * Prints buddy system status.
@@ -97,7 +98,7 @@ void buddy_free(struct buddy_sys *ctx, struct frame *frame, unsigned int order);
  * @param ctx       Buddy system context pointer.
  * @param base      Memory start
  */
-void buddy_dump(struct buddy_sys *ctx, char *base);
+void buddy_dump(const struct buddy_sys *ctx, char *base);
 
 #endif /* BEEOS_MM_BUDDY_H_ */ 
 

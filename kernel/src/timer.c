@@ -33,8 +33,10 @@ void timer_arch_init(void);
 
 void timer_event_add(struct timer_event *tm)
 {
-    struct timer_event *e;
-    struct list_link *curr = timer_events.next;
+    const struct timer_event *e;
+    struct list_link *curr;
+
+    curr = timer_events.next;
     while (curr != &timer_events)
     {
         e = list_container(curr, struct timer_event, link);

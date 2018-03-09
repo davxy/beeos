@@ -40,7 +40,8 @@ int sys_open(const char *pathname, int flags, mode_t mode)
     if (strcmp(pathname, "/dev/tty") == 0)
     {
         dev_t dev = tty_get();
-        snprintf(buf, sizeof(buf), "/dev/tty%d", minor(dev));
+        if (snprintf(buf, sizeof(buf), "/dev/tty%d", minor(dev)) < 0)
+            return -EINVAL;
         pathname = buf;
     }
 
@@ -63,7 +64,7 @@ int sys_open(const char *pathname, int flags, mode_t mode)
     file->mode = mode;
     file->flags = flags & ~O_CLOEXEC;
     file->dent = dentry;
-    dget(dentry);
+    //dget(dentry);
 
     current_task->fds[fdn].fil = file;
     current_task->fds[fdn].flags = flags & O_CLOEXEC;

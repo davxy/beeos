@@ -25,6 +25,11 @@
 #include "proc.h"
 #include "panic.h"
 #include <limits.h>
+#include <errno.h>
+
+#ifdef DEBUG_VFS
+#include "kprintf.h"
+#endif
 
 
 static struct vfs_type fs_list[] = {
@@ -40,7 +45,7 @@ void super_init(struct super_block *sb, dev_t dev, struct dentry *root,
                 const struct super_ops *ops)
 {
     sb->dev = dev;
-    sb->root = root;
+    sb->root = ddup(root);
     sb->ops = ops;
 }
 
@@ -81,7 +86,7 @@ void fs_file_free(struct file *file)
     slab_cache_free(&file_cache, file);
 }
 
-struct inode *inode_lookup(dev_t dev, ino_t ino)
+static struct inode *inode_lookup(dev_t dev, ino_t ino)
 {
     struct inode *ip;
     struct htable_link *lnk;
@@ -92,7 +97,6 @@ struct inode *inode_lookup(dev_t dev, ino_t ino)
         ip = struct_ptr(lnk, struct inode, hlink);
         if (ip->ref > 0 && ip->sb->dev == dev && ip->ino == ino)
         {
-            ip->ref++;
             return ip;
         }
         lnk = lnk->next;
@@ -101,8 +105,8 @@ struct inode *inode_lookup(dev_t dev, ino_t ino)
 }
 
 
-void inode_init(struct inode *inode, struct super_block *sb, ino_t ino, mode_t mode,
-                dev_t dev, const struct inode_ops *ops)
+void inode_init(struct inode *inode, struct super_block *sb,
+                ino_t ino, mode_t mode, const struct inode_ops *ops)
 {
     memset(inode, 0, sizeof(*inode));
 
@@ -111,27 +115,31 @@ void inode_init(struct inode *inode, struct super_block *sb, ino_t ino, mode_t m
     inode->mode = mode;
     inode->sb  = sb;
 
-    if (S_ISBLK(mode) || S_ISCHR(mode))
-        inode->rdev = dev;
-
+    /*
+     * TODO: consider the inode read return value.
+     * This is just a quick and dirty solution for MISRA compliance
+     */
     if (sb->ops->inode_read != NULL)
-        sb->ops->inode_read(inode);
+        (void)sb->ops->inode_read(inode);
 
     htable_insert(inode_htable, &inode->hlink,
                   KEY(inode->sb->dev, inode->ino), INODE_HTABLE_BITS);
 }
 
 
-
-void iput(struct inode *inod)
+struct inode *inode_create(struct super_block *sb, ino_t ino, mode_t mode,
+                           const struct inode_ops *ops)
 {
-    inod->ref--;
-#if 0
-    kprintf("iput: ino=%d, ref=%d\n", inod->ino, inod->ref);
-#endif
-    if (inod->ref != 0)
-        return;
+    struct inode *inod;
 
+    inod = sb->ops->inode_alloc(sb);
+    if (inod != NULL)
+        inode_init(inod, sb, ino, mode, ops);
+    return inod;
+}
+
+void inode_delete(struct inode *inod)
+{
     /* Check if was in the hash table (e.g. pipe inodes are not) */
     if (inod->hlink.pprev != NULL)
         htable_delete(&inod->hlink);
@@ -142,12 +150,37 @@ void iput(struct inode *inod)
         slab_cache_free(&inode_cache, inod);
 }
 
-void iget(struct inode *inod)
+
+
+void iput(struct inode *inod)
 {
-    inod->ref++;
-#if 0
-    kprintf("idup: ino=%d, ref=%d\n", inod->ino, inod->ref);
+    inod->ref--;
+#ifdef DEBUG_VFS
+    kprintf("iput: ino=%d, ref=%d\n", inod->ino, inod->ref);
+    if (inod->ref < 0)
+        kprintf("WARNING iref < 0\n");
 #endif
+    if (inod->ref == 0) {
+        inode_delete(inod);
+    }
+}
+
+struct inode *iget(struct super_block *sb, ino_t ino)
+{
+    struct inode *inod;
+
+    inod = inode_lookup(sb->dev, ino);
+    if (inod == NULL)
+    {
+        inod = inode_create(sb, ino, 0, sb->root->inod->ops);
+        if (inod == NULL)
+            return NULL;
+    }
+    inod->ref++;
+#ifdef DEBUG_VFS
+    kprintf("iget: ino=%d, ref=%d\n", inod->ino, inod->ref);
+#endif
+    return inod;
 }
 
 
@@ -213,99 +246,24 @@ struct dentry *dentry_create(const char *name, struct dentry *parent,
 
 void dentry_delete(struct dentry *de)
 {
+    struct list_link *curr;
+    struct dentry *curr_de;
+
+    /* Eventually remove the reference in the children */
+    curr = de->child.next;
+    while (curr != &de->child) {
+        curr_de = list_container(curr, struct dentry, link);
+        curr_de->parent = NULL;
+        curr = curr->next;
+    }
+
+    /* Delete from siblings list */
     list_delete(&de->link);
+
     kfree(de, sizeof(*de));
 }
 
-void dget(struct dentry *de)
-{
-    de->ref++;
-#if 0
-    kprintf("dget: (%s) ino=%d, iref=%d, dref=%d\n",
-            de->name, de->inode->ino, de->inode->ref, de->ref);
-#endif
-}
-
-void dput(struct dentry *de)
-{
-    de->ref--;
-#if 0
-    kprintf("dput: (%s) ino=%d, iref=%d, dref=%d\n",
-            de->name, de->inode->ino, de->inode->ref, de->ref);
-#endif
-    if (de->ref != 0)
-        return;
-
-    if (de->inod != NULL)
-        iput(de->inod);
-    dentry_delete(de);
-}
-
-
-
-static struct list_link mounts;
-
-int do_mount(struct dentry *mntpt, struct dentry *root)
-{
-    struct vfsmount *mnt;
-
-    mnt = kmalloc(sizeof(*mnt), 0);
-    if (mnt == NULL)
-        return -1;
-    mnt->mntpt = mntpt;
-    mnt->root  = root;
-    list_insert_after(&mounts, &mnt->link);
-    mntpt->mounted = 1;
-    return 0;
-}
-
-/* Used by sys_getcwd() */
-struct dentry *follow_up(struct dentry *root)
-{
-    struct dentry *res = root;
-    struct vfsmount *mnt;
-    struct list_link *curr;
-
-    /* TODO: this is not efficient... use a hash map here */
-    curr = mounts.next;
-    while (curr != &mounts) {
-        mnt = list_container(curr, struct vfsmount, link);
-        if (mnt->root == res)
-        {
-            res = mnt->mntpt;
-            /* Reiterate to see if this is a also mount point */
-            curr = mounts.next;
-        } else {
-            curr = curr->next;
-        }
-    }
-    return res;
-}
-
-static struct dentry *follow_down(struct dentry *mntpt)
-{
-    struct dentry *res = mntpt;
-    struct vfsmount *mnt;
-    struct list_link *curr;
-
-    /* TODO: this is not efficient... use a hash map here */
-    curr = mounts.next;
-    while (curr != &mounts) {
-        mnt = list_container(curr, struct vfsmount, link);
-        if (mnt->mntpt == res)
-        {
-            res = mnt->root;
-            /* Reiterate to see if this is a also mount point */
-            curr = mounts.next;
-        } else {
-            curr = curr->next;
-        }
-    }
-    return res;
-}
-
-
-static struct dentry *dentry_lookup(struct dentry *dir, const char *name)
+static struct dentry *dentry_lookup(const struct dentry *dir, const char *name)
 {
     struct list_link *curr;
     struct dentry *curr_de, *res = NULL;
@@ -323,16 +281,154 @@ static struct dentry *dentry_lookup(struct dentry *dir, const char *name)
 }
 
 
+struct dentry *dget(struct dentry *dir, const char *name)
+{
+    struct dentry *de;
+    struct inode  *inode;
+
+    de = dentry_lookup(dir, name);
+    if (de == NULL) {
+        inode = vfs_lookup(dir->inod, name);
+        if (inode == NULL)
+            return NULL;
+        de = dentry_create(name, dir, dir->ops);
+        if (de == NULL)
+            return NULL;
+        de->inod = idup(inode);
+    }
+
+    de->ref++;
+#ifdef DEBUG_VFS
+    kprintf("dget: (%s) ino=%d, iref=%d, dref=%d\n",
+            de->name, de->inod->ino, de->inod->ref, de->ref);
+#endif
+    return de;
+}
+
+#if 0
+/*
+ * Actually this doesn't work...
+ * For example doesn't handle the following case:
+ * 1. I'm in the root dir
+ * 2. I jump two levels. (e.g. cd /usr/bin)
+ * The cwd is still '/' thus the 'usr' dentry reference is destroyed.
+ * The getcwd thus is not able to reconstruct the path from the 'dentry parent'
+ * hierarchy.
+ */
+static int dentry_can_delete(const struct dentry *dent)
+{
+    int res = 1;
+    struct dentry *curr = current_task->cwd;
+
+    while (curr->parent != curr) {
+        if (curr == dent) {
+            res = 0;
+            break;
+        }
+        curr = curr->parent;
+    }
+    return res;
+}
+#endif
+
+void dput(struct dentry *de)
+{
+    de->ref--;
+
+#ifdef DEBUG_VFS
+    kprintf("dput: (%s) ino=%d, iref=%d, dref=%d\n",
+            de->name, de->inod->ino, de->inod->ref, de->ref);
+    if (de->ref < 0)
+        kprintf("WARNING dref < 0\n");
+#endif
+
+#if 0
+    if (de->ref == 0 && dentry_can_delete(de) != 0) {
+        if (de->inod != NULL)
+            iput(de->inod);
+        dentry_delete(de);
+    }
+#endif
+}
+
+
+
+static struct list_link mounts;
+
+int do_mount(struct dentry *mntpt, struct dentry *root)
+{
+    struct vfsmount *mnt;
+
+    mnt = kmalloc(sizeof(*mnt), 0);
+    if (mnt == NULL)
+        return -1;
+    mnt->mntpt = ddup(mntpt);
+    mnt->root  = ddup(root);
+    list_insert_after(&mounts, &mnt->link);
+    mntpt->mounted = 1;
+    return 0;
+}
+
+
+static struct dentry *follow_up(struct dentry *root)
+{
+    struct dentry *res = root;
+    const struct list_link *curr;
+    const struct vfsmount *mnt;
+
+    /* TODO: this is not efficient... use a hash map here */
+    curr = mounts.next;
+    while (curr != &mounts) {
+        mnt = list_container(curr, struct vfsmount, link);
+        if (mnt->root == res)
+        {
+            dput(mnt->mntpt);
+            res = ddup(mnt->mntpt);
+            /* Reiterate to see if this is a also mount point */
+            curr = mounts.next;
+        } else {
+            curr = curr->next;
+        }
+    }
+    return res;
+}
+
+static struct dentry *follow_down(struct dentry *mntpt)
+{
+    struct dentry *res = mntpt;
+    const struct list_link *curr;
+    const struct vfsmount *mnt;
+
+    /* TODO: this is not efficient... use a hash map here */
+    curr = mounts.next;
+    while (curr != &mounts) {
+        mnt = list_container(curr, struct vfsmount, link);
+        if (mnt->mntpt == res)
+        {
+            dput(res);
+            res = ddup(mnt->root);
+            /* Reiterate to see if this is a also mount point */
+            curr = mounts.next;
+        } else {
+            curr = curr->next;
+        }
+    }
+    return res;
+}
+
+
+
 struct dentry *named(const char *path)
 {
     char name[NAME_MAX];
-    struct dentry *de, *tmp;
-    struct inode *inode;
+    struct dentry *de;
+    struct dentry *tmp;
 
     if (path == NULL || *path == '\0')
         return NULL;
 
     de = (*path == '/') ? current_task->root : current_task->cwd;
+    ddup(de);
 
     while ((path = skipelem(path, name)) != NULL)
     {
@@ -344,45 +440,61 @@ struct dentry *named(const char *path)
         } else if (strcmp(name, "..") == 0) {
             if (strcmp(de->name, "/") == 0)
                 de = follow_up(de);
-            de = de->parent;
+            tmp = ddup(de->parent);
         } else {
-            if (de->mounted)
+            if (de->mounted != 0)
                 de = follow_down(de);
-            tmp = dentry_lookup(de, name);
-            if (tmp != NULL) {
-                de = tmp;
-            } else if (de->inod != NULL) {
-                inode = vfs_lookup(de->inod, name);
-                if (inode == NULL)
-                    return NULL;
-                de = dentry_create(name, de, de->ops);
-                if (de == NULL)
-                    return NULL;
-                de->inod = inode;
-                iget(inode);
-            } else
-                return NULL;
+            tmp = dget(de, name);
         }
+        dput(de);
+        if (tmp == NULL)
+            return NULL;
+        de = tmp;
     }
-    if (S_ISDIR(de->inod->mode) && de->mounted)
+    if (S_ISDIR(de->inod->mode) && de->mounted != 0)
         de = follow_down(de);
     return de;
 }
 
-struct inode *namei(const char *path)
-{
-    struct dentry *de;
-    struct inode  *inode = NULL;
 
-    de = named(path);
-    if (de != NULL)
-        inode = de->inod;
-    return inode;
+int dentry_path(struct dentry *dent, char *buf, size_t size)
+{
+    int res = 0;
+    size_t j;
+    size_t slen;
+    struct dentry *curr = dent;
+
+    j = size;
+    do {
+        if (strcmp(curr->name, "/") == 0)
+            curr = follow_up(curr);
+        if (curr == curr->parent)
+            break;
+
+        slen = strlen(curr->name);
+        if (slen < j) {
+            j -= slen;
+            memcpy(&buf[j], curr->name, slen);
+            buf[--j] = '/';
+
+            curr = curr->parent;
+        } else {
+            res = -ENAMETOOLONG;
+        }
+    } while (res == 0);
+
+    if (res == 0) {
+        if (j == size)
+            buf[--j] = '/';
+        size -= j;
+        memmove(buf, buf + j, size);
+        buf[size] = '\0';
+    }
+    return res;
 }
 
 
-
-int vfs_init(void)
+void vfs_init(void)
 {
     slab_cache_init(&inode_cache, "inode-cache", sizeof(struct inode),
             0, 0, NULL, NULL);
@@ -393,6 +505,5 @@ int vfs_init(void)
     htable_init(inode_htable, INODE_HTABLE_BITS);
 
     list_init(&mounts);
-
-    return 0;
 }
+

@@ -27,8 +27,7 @@
  */
 void idle(void)
 {
-    while (1)
-    {
+    while(1) {
         current_task->state = TASK_SLEEPING;
         scheduler();
         sti(); /* Enable interrupts */
@@ -36,3 +35,4 @@ void idle(void)
         cli(); /* Disable interrupts in kernel code */
     }
 }
+

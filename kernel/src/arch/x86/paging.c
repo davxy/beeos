@@ -143,21 +143,23 @@ uint32_t page_unmap(void *virt, int retain)
     uint32_t *tab = (uint32_t *)(PAGE_TAB_MAP + (di * 0x1000));
     uint32_t tab_phys, pag_phys = -1;
 
-    if(dir[di] & PTE_P) {
-        if (tab[ti] & PTE_P) {
-            pag_phys = tab[ti] & PTE_MASK;
+    if((dir[di] & PTE_P) != 0) {
+        if ((tab[ti] & PTE_P) != 0) {
+            pag_phys = (tab[ti] & PTE_MASK);
             tab[ti] = 0;
             page_invalidate(pag_phys);
-            if (!retain)
+            if (retain == 0)
                 frame_free((void *)pag_phys, 0);
         }
 
         /* Check if that was the last page in the page table */
-        for (i = 0; i < 1024; i++)
-            if (tab[i] & PTE_P)
+        for (i = 0; i < 1024; i++) {
+            if ((tab[i] & PTE_P) != 0)
                 break;
+        }
+
         if (i == 1024) { /* If is the last page, delete the page table */
-            tab_phys = PTE_MASK & dir[di];
+            tab_phys = (PTE_MASK & dir[di]);
             dir[di] = 0;
             page_invalidate(tab_phys);
             frame_free((void *)tab_phys, 0);
@@ -173,8 +175,9 @@ uint32_t page_unmap(void *virt, int retain)
 void page_dir_del(uint32_t phys)
 {
     int di, ti;
-    uint32_t *tab;
-    uint32_t *dir_curr, *dir;
+    const uint32_t *tab;
+    const uint32_t *dir;
+    uint32_t *dir_curr;
 
     dir_curr = (uint32_t *)PAGE_DIR_MAP;
     /* Temporary map the dir in under the current dir */
@@ -185,10 +188,10 @@ void page_dir_del(uint32_t phys)
      * Release user space
      */
     for (di = 0; di < 768; di++) {
-        if (dir[di] & PTE_P) {
+        if ((dir[di] & PTE_P) != 0) {
             tab = (uint32_t *)(PAGE_TAB_MAP2 + (di * 4096));
             for (ti = 0; ti < 1024; ti++) {
-                if (tab[ti] & PTE_P)
+                if ((tab[ti] & PTE_P) != 0)
                     frame_free((char *)(tab[ti] & PTE_MASK), 0);
             }
             frame_free((char *)(dir[di] & PTE_MASK), 0);
@@ -209,16 +212,17 @@ uint32_t page_dir_dup(int dup_user)
     int i, j;
     uint32_t *dir_src;
     uint32_t *dir_dst;
-    uint32_t *tab_src;
+    const uint32_t *tab_src;
     uint32_t *tab_dst;
-    void *mem_src, *mem_dst;
+    const void *mem_src;
+    void *mem_dst;
     uint32_t phys;
     int flags = PTE_W | PTE_P;
 
     dir_src = (uint32_t *)PAGE_DIR_MAP;
     dir_dst = (uint32_t *)(PAGE_TAB_MAP + (1022 * 4096));
     phys = (uint32_t) frame_alloc(0, 0);
-    dir_src[1022] = phys | flags; /* Temporary map the dst page table */
+    dir_src[1022] = (phys | flags); /* Temporary map the dst page table */
     memset(dir_dst, 0, PAGE_SIZE);
 
     /*
@@ -239,7 +243,7 @@ uint32_t page_dir_dup(int dup_user)
         flags |= PTE_U;
         for (i = 0; i < 768; i++)
         {
-            if (!dir_src[i])
+            if (dir_src[i] == 0)
                 continue;
 
             tab_src = (uint32_t *)(PAGE_TAB_MAP + (i * PAGE_SIZE));
@@ -250,23 +254,26 @@ uint32_t page_dir_dup(int dup_user)
 
             for (j = 0; j < 1024; j++)
             {
-                if (!tab_src[j])
+                if (tab_src[j] == 0)
                     continue;
 
                 /* TODO: copy on write (in the page fault handler) */
-                //tab_src[j] &= ~PTE_W; // NON SEMBRA FUNZIONARE...
-                //tab_dst[j] = tab_src[j];
+                /* 
+                 * tab_src[j] &= ~PTE_W; // NON SEMBRA FUNZIONARE...
+                 * tab_dst[j] = tab_src[j];
+                 */
                 mem_src = (void *)((i * 0x400000) + (j * 0x1000));
                 mem_dst = (void *)PAGE_WILD;
                 phys = page_map(mem_dst, -1);
                 memcpy(mem_dst, mem_src, PAGE_SIZE);
-                page_unmap(mem_dst, 1);
+                if ((int)page_unmap(mem_dst, 1) < 0)
+                    panic("Unmapping a mapped page");
                 tab_dst[j] = phys | flags;
             }
         }
     }
 
-    phys = dir_src[1022] & PTE_MASK;
+    phys = (dir_src[1022] & PTE_MASK);
     dir_src[1022] = 0;
     page_invalidate(phys);
     return phys;
@@ -280,18 +287,16 @@ uint32_t page_dir_dup(int dup_user)
 static void map_propagate(int idx)
 {
     uint32_t *dir_src, *dir_dst;
-    struct task *other;
+    const struct task *other;
 
-    other = list_container(current_task->tasks.next,
-            struct task, tasks);
+    other = list_container(current_task->tasks.next, struct task, tasks);
     /*
      * The non-current process page dir is mapped just below the
      * current process page directory.
      */
     dir_src = (uint32_t *)PAGE_DIR_MAP;
     dir_dst = (uint32_t *)(PAGE_TAB_MAP + (1022 * 4096));
-    while (other != current_task)
-    {
+    while (other != current_task) {
         dir_src[1022] = other->arch.pgdir | PTE_W | PTE_P;
         dir_dst[idx] = dir_src[idx];
         flush_tlb();
@@ -340,7 +345,7 @@ static void page_fault_handler(void)
     }
 
     phys = (uint32_t)frame_alloc(0, flags);
-    if (!phys)
+    if (phys == 0)
         panic("Out of mem in page fault handler");
     if ((int)page_map((char *)virt, (uint32_t)-1) < 0)
         panic("Map page error");
@@ -369,7 +374,7 @@ void paging_init(void)
     kpage_dir[1023] = (uint32_t)virt_to_phys(kpage_dir) | PTE_W | PTE_P;
 
     /* Temporary mapping to construct the page table */
-    kpage_dir[0] = phys | PTE_W | PTE_P;
+    kpage_dir[0] = (phys | PTE_W | PTE_P);
     flush_tlb();
 
     tab = (uint32_t *)PAGE_TAB_MAP; /* Page table for virtual address 0x0 */
@@ -388,3 +393,4 @@ void paging_init(void)
     /* Register the page fault handler */
     isr_register_handler(ISR_PAGE_FAULT, page_fault_handler);
 }
+

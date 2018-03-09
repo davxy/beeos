@@ -51,8 +51,8 @@ static struct ext2_disk_super_block dsb;
 static uint32_t gd_block;
 
 
-static int offset_to_block(off_t offset, struct ext2_inode *inode,
-                           struct ext2_super_block *sb)
+static int offset_to_block(off_t offset, const struct ext2_inode *inode,
+                           const struct ext2_super_block *sb)
 {
     uint32_t triple_block, double_block, indirect_block, block;
     uint8_t ind, dbl, tpl;
@@ -76,11 +76,11 @@ static int offset_to_block(off_t offset, struct ext2_inode *inode,
     dbl = offset >> 8;
     tpl = offset >> 16;
 
-    if (tpl) {
+    if (tpl != 0) {
         panic("ext2: required triple block %d", triple_block);
     }
 
-    if (dbl) {
+    if (dbl != 0) {
         panic("ext2: required double block %d", double_block);
     }
 
@@ -97,11 +97,13 @@ static int offset_to_block(off_t offset, struct ext2_inode *inode,
 static ssize_t ext2_read(struct ext2_inode *inode, void *buf,
                          size_t count, off_t off)
 {
-    struct ext2_super_block *sb = (struct ext2_super_block *)inode->base.sb;
+    const struct ext2_super_block *sb;
     int left;
     int block;
     off_t ext2_off, block_off, file_off;
     ssize_t n;
+
+    sb = (struct ext2_super_block *)inode->base.sb;
 
     if (inode->base.size < off)
         return 0; /* EOF */
@@ -151,14 +153,9 @@ static struct inode *ext2_lookup(struct inode *dir, const char *name)
         if(dirent->name_len == strlen(name)
             && strncmp(dirent->name, name, dirent->name_len) == 0)
         {
-            /* TODO: iget first...?!?! (old comment... cannot remember :D) */
-            inode = inode_lookup(dir->sb->dev, dirent->inode);
-            if (inode == NULL)
-            {
-                inode = dir->sb->ops->inode_alloc(dir->sb);
-                inode_init(inode, dir->sb, dirent->inode, 0,
-                           dir->sb->dev, dir->ops);
-            }
+            inode = iget(dir->sb, dirent->inode);
+            if (inode != NULL)
+                inode->ref--; /* iget incremented the counter... release it */
             break;
         }
         if((dirent->rec_len) == 0)
@@ -172,24 +169,10 @@ end:
     return inode;
 }
 
-static int ext2_mknod(struct inode *idir, mode_t mode, dev_t dev)
-{
-    struct inode *inode;
-    int res = -1;
-
-    inode = idir->sb->ops->inode_alloc(idir->sb);
-    if (inode != NULL)
-    {
-        inode_init(inode, idir->sb, 0, mode, dev, idir->ops);
-        res = 0;
-    }
-    return res;
-}
 
 static const struct inode_ops ext2_inode_ops =
 {
-    .read = (inode_read_t)ext2_read,
-    .mknod  = ext2_mknod,
+    .read   = (inode_read_t)ext2_read,
     .lookup = ext2_lookup,
 };
 
@@ -277,10 +260,10 @@ static int ext2_super_inode_read(struct inode *inode)
 {
     int n;
     struct ext2_disk_inode dnode;
-    struct ext2_super_block *sb = (struct ext2_super_block *) inode->sb;
+    const struct ext2_super_block *sb = (struct ext2_super_block *) inode->sb;
 
     int group = ((inode->ino - 1) / sb->inodes_per_group);
-    struct ext2_group_desc *gd = &sb->gd_table[group];
+    const struct ext2_group_desc *gd = &sb->gd_table[group];
 
     int table_index = (inode->ino - 1 ) % sb->inodes_per_group;
     int blockno = ((table_index * 128) / 1024 ) + gd->inode_table;
@@ -322,6 +305,9 @@ static const struct super_ops ext2_sb_ops =
 };
 
 
+/*
+ * TODO: rollback on error
+ */
 struct super_block *ext2_super_create(dev_t dev)
 {
     int n;
@@ -355,15 +341,11 @@ struct super_block *ext2_super_create(dev_t dev)
         return NULL;
 
     droot = dentry_create("/", NULL, &ext2_dentry_ops);
-
     super_init(&sb->base, dev, droot, &ext2_sb_ops);
 
     /* Now that we can read inodes, we cache the root inode */
-    iroot = ext2_super_inode_alloc(&sb->base);
-    inode_init(iroot, &sb->base, EXT2_ROOT_INO, S_IFDIR, dev, &ext2_inode_ops);
-
-    droot->inod = iroot;
-    iget(droot->inod);
+    iroot = inode_create(&sb->base, EXT2_ROOT_INO, S_IFDIR, &ext2_inode_ops);
+    droot->inod = idup(iroot);
 
     return &sb->base;
 }

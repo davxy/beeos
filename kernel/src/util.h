@@ -23,8 +23,8 @@
 #include <stdint.h>
 #include <sys/types.h>
 
-#define ALIGN_UP(val, a) (((val) + ((a) - 1)) & ~((a) - 1))
 
+#define ALIGN_UP(val, a) (((val) + ((a) - 1)) & ~((a) - 1))
 #define ALIGN_DOWN(val, a) ((val) & ~((a) - 1))
 
 /**
@@ -53,25 +53,30 @@ static inline unsigned long next_pow2(unsigned long v)
 static inline unsigned int fnzb(unsigned long v)
 {
     unsigned int n = 0;
-    if (v >> 16) { v >>= 16; n += 16;}
-    if (v >> 8)  { v >>= 8;  n += 8;}
-    if (v >> 4)  { v >>= 4;  n += 4;}
-    if (v >> 2)  { v >>= 2;  n += 2;}
-    if (v >> 1)  { v >>= 1;  n += 1;}
+
+    if ((v >> 16) != 0) { v >>= 16; n += 16;}
+    if ((v >> 8)  != 0) { v >>= 8;  n += 8;}
+    if ((v >> 4)  != 0) { v >>= 4;  n += 4;}
+    if ((v >> 2)  != 0) { v >>= 2;  n += 2;}
+    if ((v >> 1)  != 0) { v >>= 1;  n += 1;}
     return n;
 }
 
-static inline int overlaps(uintptr_t b1, size_t sz1, uintptr_t b2, size_t sz2)
+static inline int overlaps(uintptr_t b1, size_t sz1,
+                           uintptr_t b2, size_t sz2)
 {
     uintptr_t e1 = b1 + sz1;
     uintptr_t e2 = b2 + sz2;
+
     return ((b1 < e2) & (b2 < e1));
 }
 
-static inline int iswithin(uintptr_t b1, size_t sz1, uintptr_t b2, size_t sz2)
+static inline int iswithin(uintptr_t b1, size_t sz1,
+                           uintptr_t b2, size_t sz2)
 {
     uintptr_t e1;
     uintptr_t e2;
+
     if (sz1 == 0)
         return ((b1 == b2) && (sz2 == 0));
     e1 = b1 + sz1 - 1;
@@ -94,6 +99,7 @@ static inline int iswithin(uintptr_t b1, size_t sz1, uintptr_t b2, size_t sz2)
  */
 #define struct_ptr(member_ptr, struct_type, member_name) \
     ((struct_type *)((char *)(member_ptr)-offsetof(struct_type,member_name)))
+
 
 #endif /* BEEOS_UTIL_H_ */
 

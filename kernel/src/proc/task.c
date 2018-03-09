@@ -26,6 +26,21 @@
 #include <string.h>
 
 
+void task_signal(struct task *task, int sig)
+{
+    sigaddset(&task->sigpend, sig);
+
+    /* check if signal is not masked */
+    if (sigismember(&task->sigmask, sig) <= 0) {
+        /* check if the process must be awake */
+        if (task->state == TASK_SLEEPING) {
+            if (!list_empty(&task->condw))
+                list_delete(&task->condw);
+            task->state = TASK_RUNNING;
+        }
+    }
+}
+
 int task_init(struct task *task, task_entry_t entry)
 {
     static pid_t next_pid = 1;
@@ -46,10 +61,8 @@ int task_init(struct task *task, task_entry_t entry)
     task->sgid = current_task->sgid;
 
     /* file system */
-    task->cwd = current_task->cwd;
-    task->root = current_task->root;
-    dget(task->cwd);
-    dget(task->root);
+    task->cwd = ddup(current_task->cwd);
+    task->root = ddup(current_task->root);
 
     /* duplicate valid file descriptors */
     memset(task->fds, 0, sizeof(task->fds));
@@ -95,9 +108,7 @@ int task_init(struct task *task, task_entry_t entry)
     /* Conditional wait link */
     list_init(&task->condw);
 
-    task_arch_init(&task->arch, entry);
-
-    return 0;
+    return task_arch_init(&task->arch, entry);
 }
 
 
@@ -111,11 +122,15 @@ void task_deinit(struct task *task)
 
 struct task *task_create(task_entry_t entry)
 {
-    struct task *task = kmalloc(sizeof(struct task), 0);
-    if (task)
-    {
+    struct task *task;
+    
+    task = kmalloc(sizeof(struct task), 0);
+    if (task != NULL) {
         memset(task, 0, sizeof(*task));
-        task_init(task, entry);
+        if (task_init(task, entry) < 0) {
+            kfree(task, sizeof(struct task));
+            task = NULL;
+        }
     }
     return task;
 }

@@ -83,7 +83,7 @@ void task_arch_deinit(struct task_arch *task)
     page_dir_del(task->pgdir);
 }
 
-void task_arch_switch(struct task_arch *curr, struct task_arch *next)
+void task_arch_switch(struct task_arch *curr, const struct task_arch *next)
 {
     tss.esp0 = ALIGN_UP((uint32_t)next->ctx, KSTACK_SIZE);
     page_dir_switch(next->pgdir);
