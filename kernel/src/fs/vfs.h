@@ -31,9 +31,6 @@
  */
 
 
-#define DEBUG_VFS
-#undef DEBUG_VFS
-
 #ifdef DEBUG_VFS
 #include "kprintf.h"
 #endif

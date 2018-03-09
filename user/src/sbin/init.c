@@ -28,7 +28,7 @@
 #include <sys/mount.h>
 #include <fcntl.h>
 
-#define NTTY    1
+#define NTTY    4
 
 #define DEFAULT_HOSTNAME    "localhost"
 #define SHELL               "/bin/sh"
