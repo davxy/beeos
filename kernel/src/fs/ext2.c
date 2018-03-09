@@ -153,13 +153,9 @@ static struct inode *ext2_lookup(struct inode *dir, const char *name)
         if(dirent->name_len == strlen(name)
             && strncmp(dirent->name, name, dirent->name_len) == 0)
         {
-            inode = inode_lookup(dir->sb->dev, dirent->inode);
-            if (inode == NULL)
-            {
-                inode = dir->sb->ops->inode_alloc(dir->sb);
-                inode_init(inode, dir->sb, dirent->inode, 0,
-                           dir->sb->dev, dir->ops);
-            }
+            inode = iget(dir->sb, dirent->inode);
+            if (inode != NULL)
+                inode->ref--; /* iget incremented the counter... release it */
             break;
         }
         if((dirent->rec_len) == 0)
@@ -173,24 +169,10 @@ end:
     return inode;
 }
 
-static int ext2_mknod(struct inode *idir, mode_t mode, dev_t dev)
-{
-    struct inode *inode;
-    int res = -1;
-
-    inode = idir->sb->ops->inode_alloc(idir->sb);
-    if (inode != NULL)
-    {
-        inode_init(inode, idir->sb, 0, mode, dev, idir->ops);
-        res = 0;
-    }
-    return res;
-}
 
 static const struct inode_ops ext2_inode_ops =
 {
-    .read = (inode_read_t)ext2_read,
-    .mknod  = ext2_mknod,
+    .read   = (inode_read_t)ext2_read,
     .lookup = ext2_lookup,
 };
 
@@ -323,6 +305,9 @@ static const struct super_ops ext2_sb_ops =
 };
 
 
+/*
+ * TODO: rollback on error
+ */
 struct super_block *ext2_super_create(dev_t dev)
 {
     int n;
@@ -356,16 +341,11 @@ struct super_block *ext2_super_create(dev_t dev)
         return NULL;
 
     droot = dentry_create("/", NULL, &ext2_dentry_ops);
-    droot->ref++;
-
     super_init(&sb->base, dev, droot, &ext2_sb_ops);
 
     /* Now that we can read inodes, we cache the root inode */
-    iroot = ext2_super_inode_alloc(&sb->base);
-    inode_init(iroot, &sb->base, EXT2_ROOT_INO, S_IFDIR, dev, &ext2_inode_ops);
-
-    droot->inod = iroot;
-    iget(droot->inod);
+    iroot = inode_create(&sb->base, EXT2_ROOT_INO, S_IFDIR, &ext2_inode_ops);
+    droot->inod = idup(iroot);
 
     return &sb->base;
 }

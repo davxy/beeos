@@ -31,6 +31,14 @@
  */
 
 
+#define DEBUG_VFS
+#undef DEBUG_VFS
+
+#ifdef DEBUG_VFS
+#include "kprintf.h"
+#endif
+
+
 /** File system super block */
 struct super_block
 {
@@ -216,23 +224,24 @@ static inline int vfs_readdir(struct dentry *dir, int i, struct dirent *dent)
 }
 
 
+struct inode *inode_create(struct super_block *sb, ino_t ino, mode_t mode,
+                           const struct inode_ops *ops);
 
-struct inode *inode_lookup(dev_t dev, ino_t ino);
+void inode_delete(struct inode *inode);
 
-void inode_init(struct inode *inode, struct super_block *sb, ino_t ino,
-                mode_t mode, dev_t dev, const struct inode_ops *ops);
 
 struct inode *namei(const char *path);
 
-void iget(struct inode *inod);
+struct inode *iget(struct super_block *sb, ino_t ino);
 
 void iput(struct inode *inod);
-
-//#define idup(inod) ((inod)->ref++)
 
 static inline struct inode *idup(struct inode *inod)
 {
     inod->ref++;
+#ifdef DEBUG_VFS
+    kprintf("idup: ino=%d, ref=%d\n", inod->ino, inod->ref);
+#endif
     return inod;
 }
 
@@ -241,6 +250,7 @@ struct dentry *dentry_create(const char *name, struct dentry *parent,
                              const struct dentry_ops *ops);
 
 void dentry_delete(struct dentry *de);
+
 
 struct dentry *named(const char *path);
 
@@ -251,8 +261,14 @@ void dput(struct dentry *de);
 static inline struct dentry *ddup(struct dentry *de)
 {
     de->ref++;
+#ifdef DEBUG_VFS
+    kprintf("ddup: (%s) ino=%d, iref=%d, dref=%d\n",
+            de->name, de->inod->ino, de->inod->ref, de->ref);
+#endif
     return de;
 }
+
+int dentry_path(struct dentry *dent, char *buf, size_t size);
 
 
 struct file *fs_file_alloc(void);
@@ -266,8 +282,6 @@ int do_mount(struct dentry *mntpt, struct dentry *root);
 
 void vfs_init(void);
 
-/* TODO... find a better way */
-struct dentry *follow_up(struct dentry *root);
 
 #endif /* BEEOS_FS_VFS_H_ */
 

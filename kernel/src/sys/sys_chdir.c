@@ -25,7 +25,7 @@
 
 int sys_chdir(const char *path)
 {
-    struct dentry *dentry;
+    struct dentry *dentry, *tmp;
     const struct inode *inode;
 
     dentry = named(path);
@@ -36,8 +36,8 @@ int sys_chdir(const char *path)
     if (!S_ISDIR(inode->mode))
         return -ENOTDIR;
 
-   // dget(dentry);
-    dput(current_task->cwd);
+    tmp = current_task->cwd;
     current_task->cwd = dentry;
+    dput(tmp);
     return 0;
 }

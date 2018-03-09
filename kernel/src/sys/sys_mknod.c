@@ -56,33 +56,38 @@ static void split_path(const char *filepath, char *parent, char *name)
 int sys_mknod(const char *pathname, mode_t mode, dev_t dev)
 {
     int res;
-    const struct dentry *dentry;
-    struct inode  *idir;
+    struct dentry *dent;
     char parent[PATH_MAX];
     char name[NAME_MAX];
 
-    dentry = named(pathname);
-    if (dentry != NULL)
+    dent = named(pathname);
+    if (dent != NULL)
     {
-        return -EEXIST; /* file exists */
+        dput(dent);
+        return -EEXIST;
     }
 
     split_path(pathname, parent, name);
 
-    dentry = named(parent);
-    if (dentry == NULL)
+    dent = named(parent);
+    if (dent == NULL)
         return -1;
-    idir = dentry->inod;
 
-    res = vfs_mknod(idir, mode, dev);
-//#if 0
+    res = vfs_mknod(dent->inod, mode, dev);
+
+    /*
+     * Create a dentry and keep a reference to it.
+     */
     if (res == 0)
     {
-        struct dentry *dchild = named(pathname);
-        if (dchild == NULL)
+        struct dentry *dnew;
+
+        //dnew = dentry_create(name, dent, dent->ops);
+        dnew = dget(dent, name);
+        if (dnew == NULL)
             res = -1;
     }
-//#endif
+    dput(dent);
     return res;
 }
 

@@ -163,13 +163,12 @@ static int devfs_mknod(struct inode *idir, mode_t mode, dev_t dev)
     struct inode *inode;
     int res = -1;
 
-    inode = idir->sb->ops->inode_alloc(idir->sb);
-    if (inode != NULL)
-    {
-        inode_init(inode, idir->sb, ++devfs_ino, mode, dev, idir->ops);
+    inode = inode_create(idir->sb, ++devfs_ino, mode, idir->ops);
+    if (inode != NULL) {
+        if (S_ISBLK(mode) || S_ISCHR(mode))
+            inode->rdev = dev;
         res = 0;
     }
-
     return res;
 }
 
@@ -195,6 +194,7 @@ static struct inode *devfs_lookup(struct inode *dir, const char *name)
     }
     return inode;
 }
+
 
 static const struct inode_ops devfs_inode_ops = {
     .read    = devfs_inode_read,
@@ -302,7 +302,6 @@ static const struct dentry_ops devfs_dentry_ops = {
     .readdir = devfs_dentry_readdir,
 };
 
-
 struct super_block *devfs_sb_get(void)
 {
     return &devfs_sb;
@@ -311,22 +310,21 @@ struct super_block *devfs_sb_get(void)
 
 struct super_block *devfs_super_create(dev_t dev)
 {
-    struct devfs_inode *iroot;
+    struct inode *iroot;
     struct dentry *droot;
-
-    list_init(&devfs_nodes);
+    struct super_block *sb = NULL;
 
     droot = dentry_create("/", NULL, &devfs_dentry_ops);
-    droot->ref++;
+    if (droot != NULL) {
+        super_init(&devfs_sb, dev, droot, &devfs_sb_ops);
 
-    super_init(&devfs_sb, dev, droot, &devfs_sb_ops);
+        iroot = inode_create(&devfs_sb, ++devfs_ino, S_IFDIR, &devfs_inode_ops);
+        if (iroot != NULL) {
+            droot->inod = idup(iroot);
+            list_init(&devfs_nodes);
+            sb = &devfs_sb;
+        }
+    }
 
-    iroot = devfs_sb_inode_alloc(&devfs_sb);
-    inode_init(&iroot->base, &devfs_sb, ++devfs_ino, S_IFDIR, 0,
-               &devfs_inode_ops);
-
-    droot->inod = &iroot->base;
-    iget(droot->inod);
-
-    return &devfs_sb;
+    return sb;
 }

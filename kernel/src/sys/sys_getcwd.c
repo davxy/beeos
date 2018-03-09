@@ -26,39 +26,13 @@
 
 char *sys_getcwd(char *buf, size_t size)
 {
-    size_t j;
-    size_t slen;
-    struct dentry *curr;
+    int res;
 
     if (buf == NULL)
         return (char *)-EINVAL;
 
-    curr = current_task->cwd;
-
-    j = size;
-    while (1) {
-        if (strcmp(curr->name, "/") == 0)
-            curr = follow_up(curr);
-        if (curr == curr->parent)
-            break;
-
-        slen = strlen(curr->name);
-        if (slen > j)
-            return (char *)-ENAMETOOLONG;
-        j -= slen;
-        memcpy(&buf[j], curr->name, slen);
-        if (j == 0)
-            return (char *)-ENAMETOOLONG;
-        buf[--j] = '/';
-
-        curr = curr->parent;
-    }
-    if (j == size)
-        buf[--j] = '/';
-
-    size -= j;
-    memmove(buf, buf + j, size);
-    buf[size] = '\0';
+    if ((res = dentry_path(current_task->cwd, buf, size)) < 0)
+        return (char *)res;
 
     return buf;
 }
