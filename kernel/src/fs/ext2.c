@@ -25,6 +25,7 @@
 #include "util.h"
 #include "panic.h"
 #include <errno.h>
+#include <string.h>
 
 #define EXT2_MAGIC          0xef53
 #define EXT2_NDIR_BLOCKS    12  /* Number of direct blocks */
@@ -149,9 +150,9 @@ static struct inode *ext2_lookup(struct inode *dir, const char *name)
     dirent = dirbuf;
     while(count > 0)
     {
-        /* name are not null terminated */
-        if(dirent->name_len == strlen(name)
-            && strncmp(dirent->name, name, dirent->name_len) == 0)
+        /* dirent->name is not null terminated */
+        if(strlen(name) == dirent->name_len &&
+           memcmp(name, dirent->name, dirent->name_len) == 0)
         {
             inode = iget(dir->sb, dirent->inode);
             if (inode != NULL)

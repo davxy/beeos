@@ -1,4 +1,5 @@
-local_sources := memcpy.c \
+local_sources := memcmp.c \
+				 memcpy.c \
 				 memmove.c \
 				 memset.c \
 				 strcmp.c \
