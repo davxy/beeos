@@ -27,7 +27,7 @@
 
 static void split_path(const char *filepath, char *parent, char *name)
 {
-    int i;
+    int i, k;
 
     i = strlen(filepath);
     while (i > 0) {
@@ -36,7 +36,7 @@ static void split_path(const char *filepath, char *parent, char *name)
             break;
     }
     if (i > 0) {
-        int k = (*filepath == '/') ? 1 : 0;
+        k = (*filepath == '/') ? 1 : 0;
         strncpy(parent, filepath, i);
         strcpy(name, filepath + i + k);
     } else {

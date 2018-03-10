@@ -27,25 +27,29 @@
 
 static inline int hash_32(uint32_t val, int bits)
 {
-    val = (val ^ 61) ^ (val >> 16);
-    val = val + (val << 3);
-    val = val ^ (val >> 4);
-    val = val * 0x27d4eb2d;   /* a prime or an odd constant */
-    val = val ^ (val >> 15);
+    uint32_t v = val;
+
+    v = (v ^ 61) ^ (v >> 16);
+    v = v + (v << 3);
+    v = v ^ (v >> 4);
+    v = v * 0x27d4eb2d;   /* a prime or an odd constant */
+    v = v ^ (v >> 15);
     /* High bits are more random, so use them */
-    return val >> (32 - bits);
+    return v >> (32 - bits);
 }
 
 static inline int hash_64(uint64_t val, int bits)
 {
-    val = (~val) + (val << 21); // val = (val << 21) - val - 1;
-    val = val ^ (val >> 24);
-    val = (val + (val << 3)) + (val << 8); // val * 265
-    val = val ^ (val >> 14);
-    val = (val + (val << 2)) + (val << 4); // val * 21
-    val = val ^ (val >> 28);
-    val = val + (val << 31);
-    return (int)(val >> (64 - bits));
+    uint64_t v = val;
+
+    v = (~v) + (v << 21); // v = (v << 21) - v - 1;
+    v = v ^ (v >> 24);
+    v = (v + (v << 3)) + (v << 8); // v * 265
+    v = v ^ (v >> 14);
+    v = (v + (v << 2)) + (v << 4); // v * 21
+    v = v ^ (v >> 28);
+    v = v + (v << 31);
+    return (int)(v >> (64 - bits));
 }
 
 #define hash(val, bits) \
