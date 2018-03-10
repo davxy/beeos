@@ -59,6 +59,10 @@ static void *syscalls[SYSCALLS_NUM] =
     [__NR_chdir]        = sys_chdir,
     [__NR_alarm]        = sys_alarm,
     [__NR_mount]        = sys_mount,
+    [__NR_getuid]       = sys_getuid,
+    [__NR_setuid]       = sys_setuid,
+    [__NR_getgid]       = sys_getgid,
+    [__NR_setgid]       = sys_setgid,
     [__NR_info]         = sys_info,
 };
 

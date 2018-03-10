@@ -82,8 +82,8 @@
 #define W_OK                2       /* Test for write permission */
 #define R_OK                4       /* Test for read permission */
 
-#ifndef __ASSEMBLER__
 
+#ifndef __ASSEMBLER__
 
 extern char **environ;  /**< Pointer to the environment strings */
 
@@ -239,7 +239,6 @@ static inline int usleep(unsigned int usec)
     return 0;
 }
 
-
 int access(const char *path, int amode);
 
 int pause(void);
@@ -249,6 +248,27 @@ int gethostname(char *name, size_t len);
 static inline unsigned int alarm(unsigned int seconds)
 {
     return syscall(__NR_alarm, seconds);
+}
+
+
+static inline uid_t getuid(void)
+{
+    return syscall(__NR_getuid);
+}
+
+static inline int setuid(uid_t uid)
+{
+    return syscall(__NR_setuid, uid);
+}
+
+static inline gid_t getgid(void)
+{
+    return syscall(__NR_getgid);
+}
+
+static inline int setgid(gid_t gid)
+{
+    return syscall(__NR_setgid, gid);
 }
 
 
