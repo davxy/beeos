@@ -123,7 +123,7 @@ ssize_t tty_read(dev_t dev, void *buf, size_t size)
 {
     ssize_t n = 0;
     int key;
-    uint8_t *buf8 = (uint8_t *)buf;
+    unsigned char *p = (unsigned char *)buf;
 
     while (n < size)
     {
@@ -141,7 +141,7 @@ ssize_t tty_read(dev_t dev, void *buf, size_t size)
             /* Finished to read */
             break;
         else
-            buf8[n] = key;
+            p[n] = key;
         n++;
     }
     return n;
@@ -167,9 +167,10 @@ static void tty_putchar(dev_t dev, int c)
 
 ssize_t tty_write(dev_t dev, const void *buf, size_t n)
 {
-    size_t i; 
+    size_t i;
+
     for (i = 0; i < n; i++)
-        tty_putchar(dev, ((uint8_t *)buf)[i]);
+        tty_putchar(dev, ((const unsigned char *)buf)[i]);
     return (ssize_t)n;
 }
 

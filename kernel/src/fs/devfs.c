@@ -179,8 +179,10 @@ static struct inode *devfs_lookup(struct inode *dir, const char *name)
     struct list_link *curr_link = devfs_nodes.next;
     dev_t dev;
 
+#if 0
     if (strcmp(name, ".") == 0 || strcmp(name, "..") == 0)
         return dir;
+#endif
 
     dev = name_to_dev(name);
     while (curr_link != &devfs_nodes)

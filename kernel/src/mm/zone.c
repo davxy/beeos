@@ -38,7 +38,7 @@ void zone_free(const struct zone_st *ctx, const void *ptr, int order)
     int i;
     struct frame *frame;
     
-    i = ((char *) ptr - ctx->addr) / ctx->frame_size;
+    i = ((const char *) ptr - ctx->addr) / ctx->frame_size;
     frame = &ctx->buddy.frames[i];
     if (frame->refs > 0)
     {

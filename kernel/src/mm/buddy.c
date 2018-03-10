@@ -200,23 +200,21 @@ void buddy_dump(const struct buddy_sys *ctx, char *base)
     kprintf("-----------------------------------------\n");
     kprintf("   Buddy Dump\n");
     kprintf("-----------------------------------------\n");
-    for (i = 0; i <= ctx->order_max; i++)
-    {
+    for (i = 0; i <= ctx->order_max; i++) {
         kprintf("order: %d", i);
-        
-        if (list_empty(&ctx->free_area[i].list))
+        if (list_empty(&ctx->free_area[i].list)) {
             kprintf("   [ empty ]\n");
-        else
-        {
+        } else {
             kprintf("\n");
             for (frame_link = ctx->free_area[i].list.next; 
                  frame_link != &ctx->free_area[i].list; 
                  frame_link = frame_link->next)
             {
-                frame = list_container(frame_link, struct frame, link);
+                frame = list_container_const(frame_link, struct frame, link);
                 frame_idx = frame - ctx->frames;
                 frame_ptr = base + (frame_idx << ctx->order_bit);
-                kprintf("    [0x%p : 0x%p)\n", frame_ptr, frame_ptr + (1 << (ctx->order_bit+i)));
+                kprintf("    [0x%p : 0x%p)\n", frame_ptr, frame_ptr +
+                        (1 << (ctx->order_bit+i)));
                 freemem += (1 << (ctx->order_bit + i));
             }
         }
