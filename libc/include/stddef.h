@@ -29,6 +29,7 @@
 
 
 #include <sys/types.h>
+#include <stdint.h>
 
 
 /** Null pointer constant. */
@@ -43,7 +44,7 @@
  * offset in bytes to the structure member (member-designator), from the
  * beginning of its structure (type).
  */
-#define offsetof(type, member)	((size_t) &((type *)0)->member)
+#define offsetof(type, memb) ((size_t)((char *)&((type *)0)->memb - (char *)0))
 
 typedef long ptrdiff_t;
 
