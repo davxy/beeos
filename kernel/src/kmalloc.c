@@ -37,8 +37,8 @@ static void *ksbrk(intptr_t increment)
 {
     void *ptr;
     extern char kend;        /* Defined in the linker script. */
-    static char *brk = 0;
-    if (!brk)
+    static char *brk = NULL;
+    if (brk == NULL)
         brk = (char *)ALIGN_UP((uintptr_t)&kend, sizeof(uintptr_t));
 
     ptr = brk;
@@ -49,7 +49,8 @@ static void *ksbrk(intptr_t increment)
 void *kmalloc(size_t size, int flags)
 {
     unsigned int i;
-    if (!kmalloc_initialized)
+
+    if (kmalloc_initialized == 0)
         return ksbrk(size);
     i = (size < 16) ? 16 : next_pow2(size);
     i >>= 4;
@@ -60,7 +61,8 @@ void *kmalloc(size_t size, int flags)
 void kfree(void *ptr, size_t size)
 {
     unsigned int i;
-    if (!kmalloc_initialized)
+
+    if (kmalloc_initialized == 0)
         return;
     i= (size < 16) ? 16 : next_pow2(size);
     i >>= 4;

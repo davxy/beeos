@@ -26,7 +26,7 @@ typedef unsigned char *va_list;
 	((void) ((ap) = ((va_list) &(last)) + (sizeof (last))))
 
 #define va_end(ap) \
-	((void) ((ap) = 0))
+	((void) ((ap) = (va_list)0))
 
 #define va_copy(dest, src) \
     ((void) ((dest) = (va_list) (src)))
