@@ -108,10 +108,12 @@ void kmain(void)
      * Start the init process
      */
     if (task_create(init) == NULL)
-        panic("init_start");
+        panic("Unable to start init task");
 
     /*
      * Process 0 continues with the idle procedure
      */
     idle();
+    /* Should never happen */
+    panic("Idle task exited");
 }
