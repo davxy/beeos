@@ -57,6 +57,7 @@ int sys_mknod(const char *pathname, mode_t mode, dev_t dev)
 {
     int res;
     struct dentry *dent;
+    const struct dentry *dnew;
     char parent[PATH_MAX];
     char name[NAME_MAX];
 
@@ -80,9 +81,6 @@ int sys_mknod(const char *pathname, mode_t mode, dev_t dev)
      */
     if (res == 0)
     {
-        struct dentry *dnew;
-
-        //dnew = dentry_create(name, dent, dent->ops);
         dnew = dget(dent, name);
         if (dnew == NULL)
             res = -1;

@@ -29,7 +29,7 @@ static struct zone_st *zone_list;
 void *frame_alloc(unsigned int order, int flags)
 {
     void *ptr = NULL;
-    struct zone_st *zone;
+    const struct zone_st *zone;
     
     for (zone = zone_list; zone != NULL; zone = zone->next) {
         if ((zone->flags & flags) != flags)
@@ -43,7 +43,7 @@ void *frame_alloc(unsigned int order, int flags)
 
 void frame_free(void *ptr, unsigned int order)
 {
-    struct zone_st *zone;
+    const struct zone_st *zone;
 
     if (!ptr)
         return;
@@ -79,7 +79,7 @@ int frame_zone_add(void *addr, size_t size, size_t frame_size, int flags)
 
 void frame_dump(void)
 {
-    struct zone_st *zone;
+    const struct zone_st *zone;
 
     for (zone = zone_list; zone != NULL; zone = zone->next)
         zone_dump(zone);
