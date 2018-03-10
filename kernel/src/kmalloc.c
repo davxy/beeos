@@ -38,9 +38,9 @@ static void *ksbrk(intptr_t increment)
     void *ptr;
     extern char kend;        /* Defined in the linker script. */
     static char *brk = NULL;
+
     if (brk == NULL)
         brk = (char *)ALIGN_UP((uintptr_t)&kend, sizeof(uintptr_t));
-
     ptr = brk;
     brk += ALIGN_UP(increment, sizeof(uintptr_t));
     return ptr;

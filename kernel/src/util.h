@@ -93,6 +93,7 @@ static inline int iswithin(uintptr_t b1, size_t sz1,
 
 /**
  * Get a pointer to the struct start given a pointer to a member.
+ *
  * @param member_ptr    Struct member pointer.
  * @param struct_type   Type of the structure the element is embedded in.
  * @param member_name   Name of the member within the struct.

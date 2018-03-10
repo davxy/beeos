@@ -24,7 +24,9 @@
 #include <unistd.h>
 
 
-static void *syscalls[] =
+#define SYSCALLS_NUM    (__NR_info + 1)
+
+static void *syscalls[SYSCALLS_NUM] =
 {
     [__NR_exit]         = sys_exit,
     [__NR_fork]         = sys_fork,
@@ -60,20 +62,17 @@ static void *syscalls[] =
     [__NR_info]         = sys_info,
 };
 
-#define SYSCALLS_NUM    (sizeof(syscalls)/sizeof(*syscalls))
 
 
 /* TODO this is arch specific */
-
 typedef uint32_t (* syscall_f)(uint32_t arg1, ...);
-
 
 
 static void syscall_handler(void)
 {
     struct isr_frame *ifr = current_task->arch.ifr;
 
-    if (ifr->eax < SYSCALLS_NUM && syscalls[ifr->eax])
+    if (ifr->eax < SYSCALLS_NUM && syscalls[ifr->eax] != NULL)
     {
         ifr->eax = ((syscall_f)syscalls[ifr->eax])(
                 ifr->ebx, ifr->ecx, ifr->edx,
