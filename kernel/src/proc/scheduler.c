@@ -83,8 +83,8 @@ int do_signal(void)
 
     /* Adjust user stack to return in the signal handler */
     esp = (uint32_t *)ifr->usr_esp;
-    *--esp = sig;   // signum
-    *--esp = (uint32_t)act->sa_restorer;
+    *(--esp) = sig;   // signum
+    *(--esp) = (uint32_t)act->sa_restorer;
     ifr->usr_esp = (uint32_t)esp;
     ifr->eip = (uint32_t)act->sa_handler;
 
@@ -100,10 +100,11 @@ void scheduler(void)
     next = list_container(current_task->tasks.next,
             struct task, tasks);
 
-    while (next->state != TASK_RUNNING && next != current_task)
+    while (next->state != TASK_RUNNING && next != current_task) {
         next = list_container(next->tasks.next, struct task, tasks);
+    }
 
-    if (next == current_task && next->pid != 0)
+    if (next == current_task)
     {
         /* Nothing to run... run the idle() task */
         ktask.state = TASK_RUNNING;
