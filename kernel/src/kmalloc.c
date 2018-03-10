@@ -81,10 +81,10 @@ void kmalloc_init(void)
     int i;
     size_t size;
 
-    for (i = 0, size = (1 << KMALLOC_MIN_W);
-         i < KMALLOC_MAX_W - KMALLOC_MIN_W + 1;
-         i++, size <<= 1) {
+    size = (1 << KMALLOC_MIN_W);
+    for (i = 0; i < KMALLOC_MAX_W - KMALLOC_MIN_W + 1; i++) {
         kmalloc_caches[i] = slab_cache_create(names[i], size, 0, 0, NULL, NULL);
+        size <<= 1;
     }
     kmalloc_initialized = 1;
 }

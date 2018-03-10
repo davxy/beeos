@@ -87,8 +87,10 @@ int random_read(unsigned char *buf, size_t siz)
     if ((iter = (siz & 0x03)) != 0) {
         r = rand_get();
         buf = (unsigned char *)buf32;
-        for (i = 0; i < iter; i++, r >>= 8)
+        for (i = 0; i < iter; i++) {
             *buf++ = (unsigned char)r;
+            r >>= 8;
+        }
     }
     return siz;
 }

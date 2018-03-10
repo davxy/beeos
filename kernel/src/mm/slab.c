@@ -173,8 +173,8 @@ static void slab_space_free(struct slabctl* slab, size_t size)
     void *obj;
     unsigned int order;
 
-    for (i = 0, obj = data; i < cache->slab_objs;
-         i++, obj = (char *)obj+cache->objsize)
+    obj = data;
+    for (i = 0; i < cache->slab_objs; i++)
     {
         if (cache->dtor != NULL)
             cache->dtor(obj);
@@ -184,6 +184,7 @@ static void slab_space_free(struct slabctl* slab, size_t size)
             struct bufctl *bctl = bufctl_list_get(slab);
             slab_cache_free(slab_bufctl_cache, bctl);
         }
+        obj = (char *)obj + cache->objsize;
     }
 
     if ((cache->flags & SLAB_EMBED_SLABCTL) == 0)
@@ -230,8 +231,8 @@ static struct slabctl *slab_space_alloc(struct slab_cache *cache, int flags)
     slab->bctls = NULL;
     list_init(&slab->link);
 
-    for (i = 0, obj = data; i < cache->slab_objs;
-         i++, obj = (char *)obj+cache->objsize)
+    obj = data;
+    for (i = 0; i < cache->slab_objs; i++)
     {
         if ((cache->flags & SLAB_EMBED_BUFCTL) != 0)
         {
@@ -255,6 +256,8 @@ static struct slabctl *slab_space_alloc(struct slab_cache *cache, int flags)
         bufctl_list_put(slab, bctl);
         if (cache->ctor != NULL)
             cache->ctor(obj);
+
+        obj = (char *)obj + cache->objsize;
     }
     return slab;
 }
@@ -333,7 +336,6 @@ void slab_cache_free(struct slab_cache *cache, void *obj)
     }
 }
 
-///////////////////////////////////////////////////////////////////////////////
 
 void slab_cache_init(struct slab_cache *cache, const char *name,
         size_t objsize, unsigned int align, unsigned int flags,

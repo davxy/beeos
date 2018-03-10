@@ -96,6 +96,44 @@ static void stack_init(uintptr_t *base, const char * const argv[],
     base[2] = (uintptr_t)&base[4+base[0]] + delta;
 }
 
+static int segment_init(const struct elf_prog_hdr *ph, struct inode *inod)
+{
+    int ret = 0;
+    uint32_t vaddr;
+
+    if (ph->memsz < ph->filesz || KVBASE <= ph->vaddr + ph->memsz) {
+        return -ENOEXEC;
+    }
+
+    /* Look for program brk (temporary... not very elegant) */
+    if ((ph->flags & ELF_PROG_FLAG_READ) != 0 &&
+        (ph->flags & ELF_PROG_FLAG_WRITE) != 0 &&
+        current_task->brk < ph->vaddr + ph->memsz) {
+        current_task->brk = ph->vaddr + ph->memsz;
+    }
+
+    for (vaddr = ALIGN_DOWN(ph->vaddr, PAGE_SIZE);
+         vaddr < ph->vaddr + ph->memsz;
+         vaddr += PAGE_SIZE) {
+        if ((ret = (int)page_map((char *)vaddr, -1)) < 0)
+            return ret;
+    }
+
+    if (ph->filesz != 0) {
+        ret = vfs_read(inod, (void *)ph->vaddr, ph->filesz, ph->offset);
+        if (ret != ph->filesz) {
+            if (ret >= 0)
+                ret = -EIO;
+            return ret;
+        }
+    }
+
+    if (ph->memsz - ph->filesz > 0)
+        memset((void *)(ph->vaddr + ph->filesz), 0, ph->memsz - ph->filesz);
+
+    return ret;
+}
+
 
 int sys_execve(const char *path, const char *const argv[],
                const char *const envp[])
@@ -106,7 +144,7 @@ int sys_execve(const char *path, const char *const argv[],
     struct dentry *dent;
     struct inode *inod;
     unsigned int i, off;
-    uint32_t pgdir, vaddr;
+    uint32_t pgdir;
     void *ustack;
 
     if (current_task->arch.ifr == NULL || argv == NULL)
@@ -152,43 +190,24 @@ int sys_execve(const char *path, const char *const argv[],
     /* Start with an unknown program break */
     current_task->brk = 0;
 
-    for (i = 0, off = eh.phoff; i < eh.phnum; i++, off += sizeof(ph)) {
+    off = eh.phoff;
+    for (i = 0, off = eh.phoff; i < eh.phnum; i++) {
 
-        if (vfs_read(inod, &ph, sizeof(ph), off) != sizeof(ph)) {
-            ret = -ENOEXEC;
+        ret = vfs_read(inod, &ph, sizeof(ph), off);
+
+        if (ret != sizeof(ph)) {
+            if (ret >= 0)
+                ret = -EIO;
             goto bad;
         }
 
-        if (ph.type != ELF_PROG_TYPE_LOAD)
-            continue;
-
-        if (ph.memsz < ph.filesz ||
-            KVBASE <= ph.vaddr + ph.memsz) {
-            ret = -ENOEXEC;
-            goto bad;
-        }
-
-        /* Look for program brk (temporary... not very elegant) */
-        if ((ph.flags & ELF_PROG_FLAG_READ) &&
-            (ph.flags & ELF_PROG_FLAG_WRITE) &&
-            current_task->brk < ph.vaddr+ph.memsz) {
-            current_task->brk = ph.vaddr+ph.memsz;
-        }
-
-        for (vaddr = ALIGN_DOWN(ph.vaddr, PAGE_SIZE);
-             vaddr < ph.vaddr + ph.memsz;
-             vaddr += PAGE_SIZE) {
-            if ((ret = (int)page_map((char *)vaddr, -1)) < 0)
+        if (ph.type == ELF_PROG_TYPE_LOAD) {
+            ret = segment_init(&ph, inod);
+            if (ret < 0)
                 goto bad;
         }
 
-        if (ph.filesz != 0) {
-            if ((ret = vfs_read(inod, (void *)ph.vaddr, ph.filesz, ph.offset))
-                    != ph.filesz)
-                goto bad;
-        }
-        if (ph.memsz - ph.filesz > 0)
-            memset((void *)(ph.vaddr + ph.filesz), 0, ph.memsz - ph.filesz);
+        off += sizeof(struct elf_prog_hdr);
     }
 
     /*** FIXME ARCH specific code ***/
