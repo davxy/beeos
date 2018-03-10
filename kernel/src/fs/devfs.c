@@ -234,7 +234,7 @@ static const struct super_ops devfs_sb_ops = {
 
 static struct inode *dev_to_inode(dev_t dev)
 {
-    struct devfs_inode *inode;
+    struct devfs_inode *inode = NULL;
     struct list_link *curr = devfs_nodes.next;
 
     while (curr != &devfs_nodes)
