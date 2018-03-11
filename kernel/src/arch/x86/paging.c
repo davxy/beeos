@@ -85,6 +85,7 @@ uint32_t page_map(void *virt, uint32_t phys)
     int di = DIR_INDEX(virt);
     int ti = TAB_INDEX(virt);
     uint32_t tab_phys;
+    uint32_t pag_phys = phys;
     uint32_t *dir = (uint32_t *)PAGE_DIR_MAP;
     uint32_t *tab = (uint32_t *)(PAGE_TAB_MAP + (di * 0x1000));
     int flags = PTE_P | PTE_W;
@@ -115,20 +116,20 @@ uint32_t page_map(void *virt, uint32_t phys)
      */
     if (!(tab[ti] & PTE_P)) {
         /* page not present */
-        if ((int32_t)phys == -1) {
+        if ((int32_t)pag_phys == -1) {
             /* By default we map to high mem */
-            phys = (uint32_t)frame_alloc(0, ZONE_HIGH);
-            if (phys == 0)
+            pag_phys = (uint32_t)frame_alloc(0, ZONE_HIGH);
+            if (pag_phys == 0)
                 return (uint32_t)-ENOMEM;
         }
-        tab[ti] = phys | flags;
+        tab[ti] = pag_phys | flags;
     } else if (!(tab[ti] & PTE_W)) /* read only page (cow) */
         panic("COW not implemented yet");
     else
         panic("already mapped");
 
     flush_tlb(); /* Is this really required? */
-    return phys;
+    return pag_phys;
 }
 
 /*
@@ -258,7 +259,7 @@ uint32_t page_dir_dup(int dup_user)
                     continue;
 
                 /* TODO: copy on write (in the page fault handler) */
-                /* 
+                /*
                  * tab_src[j] &= ~PTE_W; // NON SEMBRA FUNZIONARE...
                  * tab_dst[j] = tab_src[j];
                  */

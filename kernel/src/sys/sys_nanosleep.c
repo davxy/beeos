@@ -32,9 +32,9 @@ static void sleep_timer_handler(void *data)
 
 int sys_nanosleep(const struct timespec *req, struct timespec *rem)
 {
-    long ms;
-    unsigned long when;
-    unsigned long now;
+    time_t ms;
+    time_t when;
+    time_t now;
     struct timer_event tm;
 
     if (req->tv_sec < 0 || req->tv_nsec < 0 || req->tv_nsec > 999999999)
@@ -43,7 +43,7 @@ int sys_nanosleep(const struct timespec *req, struct timespec *rem)
     current_task->state = TASK_SLEEPING;
 
     ms = req->tv_sec * 1000 + req->tv_nsec / 1000000;
-    when = timer_ticks + msecs_to_ticks(ms);
+    when = (time_t)timer_ticks + msecs_to_ticks(ms);
     timer_event_init(&tm, sleep_timer_handler, current_task, when);
 
     /* Do this after the timer initialization but before queue insertion */
@@ -59,9 +59,9 @@ int sys_nanosleep(const struct timespec *req, struct timespec *rem)
     now = timer_ticks;
     if (now < when)
     {
-        ms = ticks_to_msecs(when - now);
+        ms = (time_t)ticks_to_msecs(when - now);
         rem->tv_sec = ms / 1000;
-        rem->tv_nsec = (ms % 1000) * 1000000;
+        rem->tv_nsec = (long)(ms % 1000) * 1000000;
         return -EINTR; /* Early wakeup */
     }
 

@@ -32,8 +32,10 @@
  * @param v     Value to align.
  * @return      Operation result.
  */
-static inline unsigned long next_pow2(unsigned long v)
+static inline unsigned long next_pow2(unsigned long val)
 {
+    unsigned long v = val;
+
     v--;
     v |= v >> 1;
     v |= v >> 2;
@@ -47,12 +49,13 @@ static inline unsigned long next_pow2(unsigned long v)
 /**
  * First non zero bit position starting from left.
  * @param v     Value under analysis.
- * @return      Zero based bit position. 
+ * @return      Zero based bit position.
  *              If the input value is zero then returns 0.
  */
-static inline unsigned int fnzb(unsigned long v)
+static inline unsigned int fnzb(unsigned long val)
 {
     unsigned int n = 0;
+    unsigned long v = val;
 
     if ((v >> 16) != 0) { v >>= 16; n += 16;}
     if ((v >> 8)  != 0) { v >>= 8;  n += 8;}
