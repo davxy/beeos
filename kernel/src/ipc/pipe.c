@@ -149,15 +149,17 @@ static int pipe_write(struct inode *inode, const void *buf,
                 return -EPIPE;
             }
 
-            //if (BLOCKING)
+            /* if (BLOCKING) */
             pnode->queued_writers++;
             if (pnode->queued_readers > 0)     /* there are pending writers */
                 cond_broadcast(&pnode->queue); /* wakeup all before (eventually) sleep */
             cond_wait(&pnode->queue);
             pnode->queued_writers--;
 
-            // else unlock first!!!
-            //    return goto spinlock unlock;
+            /*
+             * else unlock first!!!
+             *    return goto spinlock unlock;
+             */
         }
 
         if (pnode->nrp <= pnode->nwp)
