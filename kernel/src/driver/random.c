@@ -24,7 +24,7 @@
 
 
 static uint32_t z[4];
-static int init = 0;
+static int rand_initialized = 0;
 
 static uint32_t rand_get(void)
 {
@@ -63,7 +63,7 @@ int random_init(const unsigned char *seed, size_t seed_siz)
             j = 0;
     }
 
-    init = 1;
+    rand_initialized = 1;
     return 0;
 }
 
@@ -74,7 +74,7 @@ int random_read(unsigned char *buf, size_t siz)
     uint32_t *buf32 = (uint32_t *) buf;
     uint32_t r;
 
-    if (init == 0) {
+    if (rand_initialized == 0) {
         if (random_init((const unsigned char *)&timer_ticks,
                         sizeof(timer_ticks)) < 0) {
             return -1;

@@ -47,12 +47,12 @@ static int toggle_bit(const struct buddy_sys *ctx, int block_idx,
 /*
  * Deallocate a frame
  */
-void buddy_free(const struct buddy_sys *ctx, const struct frame *frame,
+void buddy_free(const struct buddy_sys *ctx, const struct frame *frm,
                 unsigned int order)
 {
     unsigned int block_idx, buddy_idx;
 
-    block_idx = frame - ctx->frames;
+    block_idx = frm - ctx->frames;
     while (order != ctx->order_max)
     {
         /* Check if there is any buddy in the list of the same order */

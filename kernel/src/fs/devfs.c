@@ -273,7 +273,7 @@ ssize_t devfs_write(dev_t dev, const void *buf, size_t size, off_t off)
 static int devfs_dentry_readdir(struct dentry *dir, unsigned int i,
                                 struct dirent *dent)
 {
-    static const struct list_link *curr_link;
+    static const struct list_link *rd_curr_link;
     int res = -1;
     const char *name = NULL;
     const struct dentry *curr;
@@ -285,11 +285,11 @@ static int devfs_dentry_readdir(struct dentry *dir, unsigned int i,
         name = "..";
     else {
         if (i == 2)
-            curr_link = dir->child.next;
-        if (curr_link != &dir->child) {
-            curr = list_container(curr_link, struct dentry, link);
+            rd_curr_link = dir->child.next;
+        if (rd_curr_link != &dir->child) {
+            curr = list_container(rd_curr_link, struct dentry, link);
             name = curr->name;
-            curr_link = curr_link->next;
+            rd_curr_link = rd_curr_link->next;
             dent->d_ino = curr->inod->ino;
         }
     }
