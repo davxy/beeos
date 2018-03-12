@@ -160,13 +160,13 @@ static dev_t name_to_dev(const char *name)
 
 static int devfs_mknod(struct inode *idir, mode_t mode, dev_t dev)
 {
-    struct inode *inode;
+    struct inode *inod;
     int res = -1;
 
-    inode = inode_create(idir->sb, ++devfs_ino, mode, idir->ops);
-    if (inode != NULL) {
+    inod = inode_create(idir->sb, ++devfs_ino, mode, idir->ops);
+    if (inod != NULL) {
         if (S_ISBLK(mode) || S_ISCHR(mode))
-            inode->rdev = dev;
+            inod->rdev = dev;
         res = 0;
     }
     return res;
@@ -175,7 +175,7 @@ static int devfs_mknod(struct inode *idir, mode_t mode, dev_t dev)
 static struct inode *devfs_lookup(struct inode *dir, const char *name)
 {
     struct devfs_inode *curr;
-    struct inode *inode = NULL;
+    struct inode *inod = NULL;
     struct list_link *curr_link = devfs_nodes.next;
     dev_t dev;
 
@@ -189,12 +189,12 @@ static struct inode *devfs_lookup(struct inode *dir, const char *name)
     {
         curr = list_container(curr_link, struct devfs_inode, link);
         if (curr->base.rdev == dev) {
-            inode = &curr->base;
+            inod = &curr->base;
             break;
         }
         curr_link = curr_link->next;
     }
-    return inode;
+    return inod;
 }
 
 
@@ -209,14 +209,14 @@ static const struct inode_ops devfs_inode_ops = {
 
 static struct devfs_inode *devfs_sb_inode_alloc(struct super_block *sb)
 {
-    struct devfs_inode *inode;
+    struct devfs_inode *inod;
 
-    inode = kmalloc(sizeof(struct devfs_inode), 0);
-    if (inode == NULL)
+    inod = kmalloc(sizeof(struct devfs_inode), 0);
+    if (inod == NULL)
         return NULL;
 
-    list_insert_before(&devfs_nodes, &inode->link);
-    return inode;
+    list_insert_before(&devfs_nodes, &inod->link);
+    return inod;
 }
 
 static void devfs_sb_inode_free(struct devfs_inode *inode)
@@ -234,38 +234,38 @@ static const struct super_ops devfs_sb_ops = {
 
 static struct inode *dev_to_inode(dev_t dev)
 {
-    struct devfs_inode *inode = NULL;
+    struct devfs_inode *inod = NULL;
     struct list_link *curr = devfs_nodes.next;
 
     while (curr != &devfs_nodes)
     {
-        inode = list_container(curr, struct devfs_inode, link);
-        if (inode->base.rdev == dev)
+        inod = list_container(curr, struct devfs_inode, link);
+        if (inod->base.rdev == dev)
             break;
         curr = curr->next;
     }
-    return (struct inode *)inode;
+    return (struct inode *)inod;
 }
 
 ssize_t devfs_read(dev_t dev, void *buf, size_t size, off_t off)
 {
     ssize_t n = -1;
-    struct inode *inode;
+    struct inode *inod;
 
-    inode = dev_to_inode(dev);
-    if (inode != NULL)
-        n = devfs_inode_read(inode, buf, size, off);
+    inod = dev_to_inode(dev);
+    if (inod != NULL)
+        n = devfs_inode_read(inod, buf, size, off);
     return n;
 }
 
 ssize_t devfs_write(dev_t dev, const void *buf, size_t size, off_t off)
 {
     ssize_t n = -1;
-    struct inode *inode;
+    struct inode *inod;
 
-    inode = dev_to_inode(dev);
-    if (inode != NULL)
-        n = devfs_inode_write(inode, buf, size, off);
+    inod = dev_to_inode(dev);
+    if (inod != NULL)
+        n = devfs_inode_write(inod, buf, size, off);
     return n;
 }
 

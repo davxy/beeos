@@ -24,32 +24,32 @@
 
 void *zone_alloc(const struct zone_st *ctx, int order)
 {
-    struct frame *frame;
+    struct frame *frm;
 
-    frame = buddy_alloc(&ctx->buddy, order);
-    if (!frame)
+    frm = buddy_alloc(&ctx->buddy, order);
+    if (!frm)
         return NULL;
-    frame->refs++;
-    return (ctx->addr + ctx->frame_size*(frame-ctx->buddy.frames));
+    frm->refs++;
+    return (ctx->addr + ctx->frame_size*(frm-ctx->buddy.frames));
 }
 
 void zone_free(const struct zone_st *ctx, const void *ptr, int order)
 {
     int i;
-    struct frame *frame;
-    
+    struct frame *frm;
+
     i = ((const char *) ptr - ctx->addr) / ctx->frame_size;
-    frame = &ctx->buddy.frames[i];
-    if (frame->refs > 0)
+    frm = &ctx->buddy.frames[i];
+    if (frm->refs > 0)
     {
-        frame->refs--;
-        if (frame->refs == 0)
-            buddy_free(&ctx->buddy, frame, order);
+        frm->refs--;
+        if (frm->refs == 0)
+            buddy_free(&ctx->buddy, frm, order);
     }
 }
 
 int zone_init(struct zone_st *ctx, void *addr, size_t size,
-        size_t frame_size, int flags)
+              size_t frame_size, int flags)
 {
     ctx->addr = addr;
     ctx->size = size;

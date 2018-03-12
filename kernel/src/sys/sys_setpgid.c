@@ -37,7 +37,7 @@
  */
 int sys_setpgid(pid_t pid, pid_t pgid)
 {
-    struct task *task = NULL;
+    struct task *t = NULL;
 
     if (pgid < 0)
         return -EINVAL;
@@ -57,17 +57,17 @@ int sys_setpgid(pid_t pid, pid_t pgid)
         sib = child;
         do {
             if (sib->pid == pid) {
-                task = sib;
+                t = sib;
                 break;
             }
             sib = list_container(sib->sibling.next, struct task, sibling);
         } while (sib != child);
-        if (task == NULL)
+        if (t == NULL)
             return -ESRCH;
     } else {
-        task = current_task;
+        t = current_task;
     }
-    task->pgid = pgid;
+    t->pgid = pgid;
     return 0;
 }
 

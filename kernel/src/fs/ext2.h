@@ -90,7 +90,7 @@ struct ext2_disk_inode
 
 struct ext2_disk_dirent
 {
-    uint32_t inode;
+    uint32_t ino;
     uint16_t rec_len;
     uint8_t  name_len;
     uint8_t  file_type;

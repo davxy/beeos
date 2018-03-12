@@ -26,8 +26,9 @@
 
 static void sleep_timer_handler(void *data)
 {
-    struct task *task = (struct task *)data;
-    task->state = TASK_RUNNING;
+    struct task *t = (struct task *)data;
+
+    t->state = TASK_RUNNING;
 }
 
 int sys_nanosleep(const struct timespec *req, struct timespec *rem)

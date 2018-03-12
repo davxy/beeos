@@ -40,13 +40,13 @@ void cond_wait(struct cond *cond)
 
 void cond_signal(struct cond *cond)
 {
-    struct task *task;
+    struct task *t;
 
     if (list_empty(&cond->queue))
         return;
-    task = struct_ptr(cond->queue.next, struct task, condw);
-    list_delete(&task->condw);
-    task->state = TASK_RUNNING;
+    t = struct_ptr(cond->queue.next, struct task, condw);
+    list_delete(&t->condw);
+    t->state = TASK_RUNNING;
 }
 
 void cond_broadcast(struct cond *cond)

@@ -26,9 +26,9 @@
 #include <string.h>
 #include <stdio.h>
 
-/* 
- * We use a bit for each couple of buddies. 
- * This function toggles the bit corresponding to the couple 
+/*
+ * We use a bit for each couple of buddies.
+ * This function toggles the bit corresponding to the couple
  * and returns the modified bit value.
  */
 static int toggle_bit(const struct buddy_sys *ctx, int block_idx,
@@ -73,7 +73,7 @@ void buddy_free(const struct buddy_sys *ctx, const struct frame *frame,
         if (buddy_idx < block_idx)
             block_idx = buddy_idx;
     }
-    
+
     /* Insert the block at the end of the proper list */
     list_insert_before(&ctx->free_area[order].list,
             &ctx->frames[block_idx].link);
@@ -84,7 +84,7 @@ void buddy_free(const struct buddy_sys *ctx, const struct frame *frame,
  */
 struct frame *buddy_alloc(const struct buddy_sys *ctx, unsigned int order)
 {
-    struct frame *frame = NULL;
+    struct frame *frm = NULL;
     int left_idx, right_idx;
     unsigned int i;
 
@@ -92,10 +92,10 @@ struct frame *buddy_alloc(const struct buddy_sys *ctx, unsigned int order)
     {
         if (!list_empty(&ctx->free_area[i].list))
         {
-            frame = list_container(ctx->free_area[i].list.next, 
-                    struct frame, link); 
-            list_delete(&frame->link);
-            left_idx = frame - ctx->frames;
+            frm = list_container(ctx->free_area[i].list.next,
+                    struct frame, link);
+            list_delete(&frm->link);
+            left_idx = frm - ctx->frames;
             break;
         }
     }
@@ -114,13 +114,13 @@ struct frame *buddy_alloc(const struct buddy_sys *ctx, unsigned int order)
                 &ctx->frames[right_idx].link);
         (void)toggle_bit(ctx, right_idx, i);
     }
-    return frame;
+    return frm;
 }
 
 /*
  * Initialize a buddy allocator
  */
-int buddy_init(struct buddy_sys *ctx, unsigned int frames_num, 
+int buddy_init(struct buddy_sys *ctx, unsigned int frames_num,
         unsigned int frame_size)
 {
     unsigned int i;
@@ -193,7 +193,7 @@ void buddy_dump(const struct buddy_sys *ctx, char *base)
     unsigned int i;
     size_t freemem = 0;
     const struct list_link *frame_link;
-    const struct frame *frame;
+    const struct frame *frm;
     unsigned int frame_idx;
     char *frame_ptr;
 
@@ -206,12 +206,12 @@ void buddy_dump(const struct buddy_sys *ctx, char *base)
             kprintf("   [ empty ]\n");
         } else {
             kprintf("\n");
-            for (frame_link = ctx->free_area[i].list.next; 
-                 frame_link != &ctx->free_area[i].list; 
+            for (frame_link = ctx->free_area[i].list.next;
+                 frame_link != &ctx->free_area[i].list;
                  frame_link = frame_link->next)
             {
-                frame = list_container_const(frame_link, struct frame, link);
-                frame_idx = frame - ctx->frames;
+                frm = list_container_const(frame_link, struct frame, link);
+                frame_idx = frm - ctx->frames;
                 frame_ptr = base + (frame_idx << ctx->order_bit);
                 kprintf("    [0x%p : 0x%p)\n", frame_ptr, frame_ptr +
                         (1 << (ctx->order_bit+i)));

@@ -30,8 +30,8 @@
 int sys_open(const char *pathname, int flags, mode_t mode)
 {
     int fdn;
-    struct file *file;
-    struct dentry *dentry;
+    struct file *fil;
+    struct dentry *dent;
     char buf[16];
 
     if (pathname == NULL)
@@ -45,8 +45,8 @@ int sys_open(const char *pathname, int flags, mode_t mode)
         pathname = buf;
     }
 
-    dentry = named(pathname);
-    if (dentry == NULL)
+    dent = named(pathname);
+    if (dent == NULL)
         return -ENOENT;
 
     for (fdn = 0; fdn < OPEN_MAX; fdn++)
@@ -55,17 +55,17 @@ int sys_open(const char *pathname, int flags, mode_t mode)
     if (fdn == OPEN_MAX)
         return -EMFILE; /* Too many open files. */
 
-    file = fs_file_alloc();
-    if (!file)
+    fil = fs_file_alloc();
+    if (!fil)
         return -ENOMEM;
 
-    file->ref = 1;
-    file->off = 0;
-    file->mode = mode;
-    file->flags = flags & ~O_CLOEXEC;
-    file->dent = dentry;
+    fil->ref = 1;
+    fil->off = 0;
+    fil->mode = mode;
+    fil->flags = flags & ~O_CLOEXEC;
+    fil->dent = dent;
 
-    current_task->fds[fdn].fil = file;
+    current_task->fds[fdn].fil = fil;
     current_task->fds[fdn].flags = flags & O_CLOEXEC;
 
     return fdn;

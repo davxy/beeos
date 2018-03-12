@@ -24,26 +24,26 @@
 
 int sys_fstat(int fd, struct stat *buf)
 {
-    const struct inode *inode;
+    const struct inode *inod;
 
     if (current_task->fds[fd].fil == NULL)
         return -EBADF;  /* Bad file descriptor */
 
-    inode = current_task->fds[fd].fil->dent->inod;
-    if (inode == NULL)
+    inod = current_task->fds[fd].fil->dent->inod;
+    if (inod == NULL)
         return -ENOENT;
 
-    buf->st_dev = inode->sb->dev;
-    buf->st_ino = inode->ino;
-    buf->st_mode = inode->mode;
+    buf->st_dev = inod->sb->dev;
+    buf->st_ino = inod->ino;
+    buf->st_mode = inod->mode;
     buf->st_nlink = 0; /* TODO */
-    buf->st_uid = inode->uid;
-    buf->st_gid = inode->gid;
-    buf->st_rdev = inode->rdev;
-    buf->st_size = inode->size;
-    buf->st_atime = inode->atime;
-    buf->st_mtime = inode->mtime;
-    buf->st_ctime = inode->ctime;
+    buf->st_uid = inod->uid;
+    buf->st_gid = inod->gid;
+    buf->st_rdev = inod->rdev;
+    buf->st_size = inod->size;
+    buf->st_atime = inod->atime;
+    buf->st_mtime = inod->mtime;
+    buf->st_ctime = inod->ctime;
     buf->st_blksize = 0;
     buf->st_blocks = 0;
 
