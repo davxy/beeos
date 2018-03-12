@@ -244,23 +244,23 @@ struct dentry *dentry_create(const char *name, struct dentry *parent,
     return de;
 }
 
-void dentry_delete(struct dentry *de)
+void dentry_delete(struct dentry *dent)
 {
     struct list_link *curr;
     struct dentry *curr_de;
 
     /* Eventually remove the reference in the children */
-    curr = de->child.next;
-    while (curr != &de->child) {
+    curr = dent->child.next;
+    while (curr != &dent->child) {
         curr_de = list_container(curr, struct dentry, link);
         curr_de->parent = NULL;
         curr = curr->next;
     }
 
     /* Delete from siblings list */
-    list_delete(&de->link);
+    list_delete(&dent->link);
 
-    kfree(de, sizeof(*de));
+    kfree(dent, sizeof(struct dentry));
 }
 
 static struct dentry *dentry_lookup(const struct dentry *dir, const char *name)

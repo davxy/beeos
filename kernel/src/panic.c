@@ -21,11 +21,11 @@
 #include "kprintf.h"
 #include <stdarg.h>
 
+void freeze(void);
 
 void panic(const char *fmt, ...)
 {
     va_list va;
-    extern void freeze(void);
 
     kprintf("*** kernel panic: ");
     va_start(va, fmt);

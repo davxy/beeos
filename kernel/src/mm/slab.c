@@ -329,7 +329,7 @@ void slab_cache_free(struct slab_cache *cache, void *obj)
         list_delete(&slab->link);
         slab_space_free(slab, size);
     }
-    else if (slab->inuse == cache->slab_objs-1)
+    else if (slab->inuse == cache->slab_objs - 1)
     {
         list_delete(&slab->link);
         list_insert_after(&cache->slabs_part, &slab->link);

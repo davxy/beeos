@@ -97,13 +97,12 @@ struct inode {
 };
 
 typedef int (* inode_read_t)(struct inode *inode, void *buf,
-            size_t count, off_t off);
+                             size_t count, off_t off);
 
 typedef int (* inode_write_t)(struct inode *inode, const void *buf,
-            size_t count, off_t off);
+                              size_t count, off_t off);
 
-typedef int (* inode_mknod_t)(struct inode *idir, mode_t mode,
-            dev_t dev);
+typedef int (* inode_mknod_t)(struct inode *idir, mode_t mode, dev_t dev);
 
 typedef struct inode *(* inode_lookup_t)(struct inode *udir, const char *name);
 
@@ -131,7 +130,7 @@ struct dentry {
 };
 
 typedef int (* dentry_readdir_t)(struct dentry *dir, unsigned int i,
-            struct dirent *dent);
+                                 struct dirent *dent);
 
 struct dentry_ops {
     dentry_readdir_t readdir; /**< Read directory */
@@ -224,7 +223,7 @@ static inline int vfs_readdir(struct dentry *dir, int i, struct dirent *dent)
 struct inode *inode_create(struct super_block *sb, ino_t ino, mode_t mode,
                            const struct inode_ops *ops);
 
-void inode_delete(struct inode *inode);
+void inode_delete(struct inode *inod);
 
 
 struct inode *namei(const char *path);
@@ -246,23 +245,23 @@ static inline struct inode *idup(struct inode *inod)
 struct dentry *dentry_create(const char *name, struct dentry *parent,
                              const struct dentry_ops *ops);
 
-void dentry_delete(struct dentry *de);
+void dentry_delete(struct dentry *dent);
 
 
 struct dentry *named(const char *path);
 
 struct dentry *dget(struct dentry *dir, const char *name);
 
-void dput(struct dentry *de);
+void dput(struct dentry *dent);
 
-static inline struct dentry *ddup(struct dentry *de)
+static inline struct dentry *ddup(struct dentry *dent)
 {
-    de->ref++;
+    dent->ref++;
 #ifdef DEBUG_VFS
     kprintf("ddup: (%s) ino=%d, iref=%d, dref=%d\n",
-            de->name, de->inod->ino, de->inod->ref, de->ref);
+            dent->name, dent->inod->ino, dent->inod->ref, dent->ref);
 #endif
-    return de;
+    return dent;
 }
 
 int dentry_path(struct dentry *dent, char *buf, size_t size);
