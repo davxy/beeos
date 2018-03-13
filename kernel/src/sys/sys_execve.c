@@ -223,13 +223,12 @@ int sys_execve(const char *path, const char *const argv[],
     /*
      * Eventually close files with O_CLOEXEC flag enabled
      */
-    for (i = 0; i < OPEN_MAX; i++)
-    {
-        if (current_task->fds[i].fil == NULL ||
-           (current_task->fds[i].flags & O_CLOEXEC) == 0)
-            continue;
-        if (sys_close(i) < 0)
-            kprintf("[warn] error closing an open file\n");
+    for (i = 0; i < OPEN_MAX; i++) {
+        if (current_task->fds[i].fil != NULL &&
+           (current_task->fds[i].flags & O_CLOEXEC) != 0) {
+            if (sys_close(i) < 0)
+                kprintf("[warn] error closing an open file\n");
+        }
     }
 
 

@@ -68,10 +68,10 @@ int task_init(struct task *task, task_entry_t entry)
     memset(task->fds, 0, sizeof(task->fds));
     for (i = 0; i < OPEN_MAX; i++)
     {
-        if (!current_task->fds[i].fil)
-            continue;
-        task->fds[i] = current_task->fds[i];
-        task->fds[i].fil->ref++;
+        if (current_task->fds[i].fil != NULL) {
+            task->fds[i] = current_task->fds[i];
+            task->fds[i].fil->ref++;
+        }
     }
 
     /* memory */

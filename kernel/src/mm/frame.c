@@ -30,13 +30,13 @@ void *frame_alloc(unsigned int order, int flags)
 {
     void *ptr = NULL;
     const struct zone_st *zone;
-    
+
     for (zone = zone_list; zone != NULL; zone = zone->next) {
-        if ((zone->flags & flags) != flags)
-            continue;
-        ptr = zone_alloc(zone, order);
-        if (ptr != NULL)
-            break;
+        if ((zone->flags & flags) == flags) {
+            ptr = zone_alloc(zone, order);
+            if (ptr != NULL)
+                break;
+        }
     }
     return ptr;
 }
@@ -60,7 +60,7 @@ int frame_zone_add(void *addr, size_t size, size_t frame_size, int flags)
 {
     int res;
     struct zone_st *zone;
-    
+
     zone = kmalloc(sizeof(struct zone_st), 0);
     if (zone != NULL) {
         res = zone_init(zone, addr, size, frame_size, flags);
@@ -73,7 +73,7 @@ int frame_zone_add(void *addr, size_t size, size_t frame_size, int flags)
     } else {
         res = -1;
     }
-    return res; 
+    return res;
 }
 
 
