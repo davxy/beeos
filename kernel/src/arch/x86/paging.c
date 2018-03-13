@@ -329,7 +329,7 @@ static void page_fault_handler(void)
 
     fault_addr_get(virt);
 
-#if DEBUG
+#ifdef DEBUG_PAGING
     kprintf("pid: %d\n", current_task->pid);
     kprintf("page fault at 0x%x\n", current_task->arch.ifr->eip);
     kprintf("faulting address 0x%x\n", virt);
