@@ -24,7 +24,6 @@
 #include "panic.h"
 #include <stddef.h>
 #include <string.h>
-#include <stdio.h>
 
 /*
  * We use a bit for each couple of buddies.
