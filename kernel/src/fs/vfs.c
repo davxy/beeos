@@ -244,35 +244,36 @@ struct dentry *dentry_create(const char *name, struct dentry *parent,
     return de;
 }
 
-void dentry_delete(struct dentry *de)
+void dentry_delete(struct dentry *dent)
 {
     struct list_link *curr;
     struct dentry *curr_de;
 
     /* Eventually remove the reference in the children */
-    curr = de->child.next;
-    while (curr != &de->child) {
+    curr = dent->child.next;
+    while (curr != &dent->child) {
         curr_de = list_container(curr, struct dentry, link);
         curr_de->parent = NULL;
         curr = curr->next;
     }
 
     /* Delete from siblings list */
-    list_delete(&de->link);
+    list_delete(&dent->link);
 
-    kfree(de, sizeof(*de));
+    kfree(dent, sizeof(struct dentry));
 }
 
 static struct dentry *dentry_lookup(const struct dentry *dir, const char *name)
 {
     struct list_link *curr;
-    struct dentry *curr_de, *res = NULL;
+    struct dentry *curr_dent;
+    struct dentry *res = NULL;
 
     curr = dir->child.next;
     while (curr != &dir->child) {
-        curr_de = list_container(curr, struct dentry, link);
-        if (strcmp(curr_de->name, name) == 0) {
-            res = curr_de;
+        curr_dent = list_container(curr, struct dentry, link);
+        if (strcmp(curr_dent->name, name) == 0) {
+            res = curr_dent;
             break;
         }
         curr = curr->next;
@@ -283,26 +284,26 @@ static struct dentry *dentry_lookup(const struct dentry *dir, const char *name)
 
 struct dentry *dget(struct dentry *dir, const char *name)
 {
-    struct dentry *de;
-    struct inode  *inode;
+    struct dentry *dent;
+    struct inode  *inod;
 
-    de = dentry_lookup(dir, name);
-    if (de == NULL) {
-        inode = vfs_lookup(dir->inod, name);
-        if (inode == NULL)
+    dent = dentry_lookup(dir, name);
+    if (dent == NULL) {
+        inod = vfs_lookup(dir->inod, name);
+        if (inod == NULL)
             return NULL;
-        de = dentry_create(name, dir, dir->ops);
-        if (de == NULL)
+        dent = dentry_create(name, dir, dir->ops);
+        if (dent == NULL)
             return NULL;
-        de->inod = idup(inode);
+        dent->inod = idup(inod);
     }
 
-    de->ref++;
+    dent->ref++;
 #ifdef DEBUG_VFS
     kprintf("dget: (%s) ino=%d, iref=%d, dref=%d\n",
-            de->name, de->inod->ino, de->inod->ref, de->ref);
+            dent->name, dent->inod->ino, dent->inod->ref, dent->ref);
 #endif
-    return de;
+    return dent;
 }
 
 #if 0
@@ -331,22 +332,22 @@ static int dentry_can_delete(const struct dentry *dent)
 }
 #endif
 
-void dput(struct dentry *de)
+void dput(struct dentry *dent)
 {
-    de->ref--;
+    dent->ref--;
 
 #ifdef DEBUG_VFS
     kprintf("dput: (%s) ino=%d, iref=%d, dref=%d\n",
-            de->name, de->inod->ino, de->inod->ref, de->ref);
-    if (de->ref < 0)
+            dent->name, dent->inod->ino, dent->inod->ref, dent->ref);
+    if (dent->ref < 0)
         kprintf("WARNING dref < 0\n");
 #endif
 
 #if 0
-    if (de->ref == 0 && dentry_can_delete(de) != 0) {
-        if (de->inod != NULL)
-            iput(de->inod);
-        dentry_delete(de);
+    if (dent->ref == 0 && dentry_can_delete(dent) != 0) {
+        if (dent->inod != NULL)
+            iput(dent->inod);
+        dentry_delete(dent);
     }
 #endif
 }
@@ -421,39 +422,39 @@ static struct dentry *follow_down(struct dentry *mntpt)
 struct dentry *named(const char *path)
 {
     char name[NAME_MAX];
-    struct dentry *de;
+    struct dentry *dent;
     struct dentry *tmp;
 
     if (path == NULL || *path == '\0')
         return NULL;
 
-    de = (*path == '/') ? current_task->root : current_task->cwd;
-    ddup(de);
+    dent = (*path == '/') ? current_task->root : current_task->cwd;
+    ddup(dent);
 
     while ((path = skipelem(path, name)) != NULL)
     {
-        if (!S_ISDIR(de->inod->mode))
+        if (!S_ISDIR(dent->inod->mode))
             return NULL;
 
         if (strcmp(name, ".") == 0) {
             continue;
         } else if (strcmp(name, "..") == 0) {
-            if (strcmp(de->name, "/") == 0)
-                de = follow_up(de);
-            tmp = ddup(de->parent);
+            if (strcmp(dent->name, "/") == 0)
+                dent = follow_up(dent);
+            tmp = ddup(dent->parent);
         } else {
-            if (de->mounted != 0)
-                de = follow_down(de);
-            tmp = dget(de, name);
+            if (dent->mounted != 0)
+                dent = follow_down(dent);
+            tmp = dget(dent, name);
         }
-        dput(de);
+        dput(dent);
         if (tmp == NULL)
             return NULL;
-        de = tmp;
+        dent = tmp;
     }
-    if (S_ISDIR(de->inod->mode) && de->mounted != 0)
-        de = follow_down(de);
-    return de;
+    if (S_ISDIR(dent->inod->mode) && dent->mounted != 0)
+        dent = follow_down(dent);
+    return dent;
 }
 
 

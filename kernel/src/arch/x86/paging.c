@@ -205,18 +205,50 @@ void page_dir_del(uint32_t phys)
     flush_tlb();
 }
 
+
+
+static void page_tab_dup(uint32_t *dir_dst, int i, int flags)
+{
+    const uint32_t *tab_src;
+    uint32_t *tab_dst;
+    const void *mem_src;
+    void *mem_dst;
+    uint32_t phys;
+    int j;
+
+    tab_src = (uint32_t *)(PAGE_TAB_MAP + (i * PAGE_SIZE));
+    tab_dst = (uint32_t *)(PAGE_TAB_MAP2 + (i * PAGE_SIZE));
+    phys = page_map(tab_dst, -1);
+    memset(tab_dst, 0, PAGE_SIZE);
+    dir_dst[i] = phys | flags;
+
+    for (j = 0; j < 1024; j++) {
+        if (tab_src[j] != 0) {
+            /* TODO: copy on write (in the page fault handler) */
+            /*
+             * tab_src[j] &= ~PTE_W; // NON SEMBRA FUNZIONARE...
+             * tab_dst[j] = tab_src[j];
+             */
+            mem_src = (void *)((i * 0x400000) + (j * 0x1000));
+            mem_dst = (void *)PAGE_WILD;
+            phys = page_map(mem_dst, -1);
+            memcpy(mem_dst, mem_src, PAGE_SIZE);
+            if ((int)page_unmap(mem_dst, 1) < 0)
+                panic("Unmapping a mapped page");
+            tab_dst[j] = phys | flags;
+        }
+    }
+}
+
+
 /*
  * Duplicates the current process page directory.
  */
 uint32_t page_dir_dup(int dup_user)
 {
-    int i, j;
+    int i;
     uint32_t *dir_src;
     uint32_t *dir_dst;
-    const uint32_t *tab_src;
-    uint32_t *tab_dst;
-    const void *mem_src;
-    void *mem_dst;
     uint32_t phys;
     int flags = PTE_W | PTE_P;
 
@@ -226,51 +258,18 @@ uint32_t page_dir_dup(int dup_user)
     dir_src[1022] = (phys | flags); /* Temporary map the dst page table */
     memset(dir_dst, 0, PAGE_SIZE);
 
-    /*
-     * Kernel code and data
-     */
-
+    /* Kernel code and data is shared */
     memcpy(&dir_dst[768], &dir_src[768], 254*4);
     dir_dst[1023] = phys | flags;
     dir_dst[1022] = 0;
     flush_tlb();
 
-    if (dup_user != 0)
-    {
-        /*
-         * User space
-         */
-
+    if (dup_user != 0) {
+        /* User space is deep copied */
         flags |= PTE_U;
-        for (i = 0; i < 768; i++)
-        {
-            if (dir_src[i] == 0)
-                continue;
-
-            tab_src = (uint32_t *)(PAGE_TAB_MAP + (i * PAGE_SIZE));
-            tab_dst = (uint32_t *)(PAGE_TAB_MAP2 + (i * PAGE_SIZE));
-            phys = page_map(tab_dst, -1);
-            memset(tab_dst, 0, PAGE_SIZE);
-            dir_dst[i] = phys | flags;
-
-            for (j = 0; j < 1024; j++)
-            {
-                if (tab_src[j] == 0)
-                    continue;
-
-                /* TODO: copy on write (in the page fault handler) */
-                /*
-                 * tab_src[j] &= ~PTE_W; // NON SEMBRA FUNZIONARE...
-                 * tab_dst[j] = tab_src[j];
-                 */
-                mem_src = (void *)((i * 0x400000) + (j * 0x1000));
-                mem_dst = (void *)PAGE_WILD;
-                phys = page_map(mem_dst, -1);
-                memcpy(mem_dst, mem_src, PAGE_SIZE);
-                if ((int)page_unmap(mem_dst, 1) < 0)
-                    panic("Unmapping a mapped page");
-                tab_dst[j] = phys | flags;
-            }
+        for (i = 0; i < 768; i++) {
+            if (dir_src[i] != 0)
+                page_tab_dup(dir_dst, i, flags);
         }
     }
 
@@ -329,7 +328,7 @@ static void page_fault_handler(void)
 
     fault_addr_get(virt);
 
-#if DEBUG
+#ifdef DEBUG_PAGING
     kprintf("pid: %d\n", current_task->pid);
     kprintf("page fault at 0x%x\n", current_task->arch.ifr->eip);
     kprintf("faulting address 0x%x\n", virt);

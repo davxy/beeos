@@ -83,7 +83,7 @@ int do_signal(void)
 
     /* Adjust user stack to return in the signal handler */
     esp = (uint32_t *)ifr->usr_esp;
-    *(--esp) = sig;   // signum
+    *(--esp) = sig;
     *(--esp) = (uint32_t)act->sa_restorer;
     ifr->usr_esp = (uint32_t)esp;
     ifr->eip = (uint32_t)act->sa_handler;

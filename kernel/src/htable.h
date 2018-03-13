@@ -42,11 +42,11 @@ static inline int hash_64(uint64_t val, int bits)
 {
     uint64_t v = val;
 
-    v = (~v) + (v << 21); // v = (v << 21) - v - 1;
+    v = (~v) + (v << 21);   /* v = (v << 21) - v - 1; */
     v = v ^ (v >> 24);
-    v = (v + (v << 3)) + (v << 8); // v * 265
+    v = (v + (v << 3)) + (v << 8);  /* v * 265 */
     v = v ^ (v >> 14);
-    v = (v + (v << 2)) + (v << 4); // v * 21
+    v = (v + (v << 2)) + (v << 4);  /* v * 21 */
     v = v ^ (v >> 28);
     v = v + (v << 31);
     return (int)(v >> (64 - bits));

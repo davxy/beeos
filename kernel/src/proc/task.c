@@ -68,10 +68,10 @@ int task_init(struct task *task, task_entry_t entry)
     memset(task->fds, 0, sizeof(task->fds));
     for (i = 0; i < OPEN_MAX; i++)
     {
-        if (!current_task->fds[i].fil)
-            continue;
-        task->fds[i] = current_task->fds[i];
-        task->fds[i].fil->ref++;
+        if (current_task->fds[i].fil != NULL) {
+            task->fds[i] = current_task->fds[i];
+            task->fds[i].fil->ref++;
+        }
     }
 
     /* memory */
@@ -122,17 +122,17 @@ void task_deinit(struct task *task)
 
 struct task *task_create(task_entry_t entry)
 {
-    struct task *task;
-    
-    task = kmalloc(sizeof(struct task), 0);
-    if (task != NULL) {
-        memset(task, 0, sizeof(*task));
-        if (task_init(task, entry) < 0) {
-            kfree(task, sizeof(struct task));
-            task = NULL;
+    struct task *t;
+
+    t = kmalloc(sizeof(struct task), 0);
+    if (t != NULL) {
+        memset(t, 0, sizeof(*t));
+        if (task_init(t, entry) < 0) {
+            kfree(t, sizeof(struct task));
+            t = NULL;
         }
     }
-    return task;
+    return t;
 }
 
 

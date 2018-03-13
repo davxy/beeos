@@ -57,7 +57,7 @@ static void children_split(struct task *node)
     }
     if (head == NULL)
         panic("corrupted children hierarchy");
-    
+
     /* second half */
     node->children.next->prev = head->children.prev;
     head->children.prev->next = node->children.next;
@@ -69,30 +69,32 @@ static void children_split(struct task *node)
 
 static void children_give(struct task *child)
 {
-    struct task *init, *init_child, *t;
+    struct task *init_task;
+    struct task *init_child;
+    struct task *curr_task;
 
-    init = find_init();
-    init_child = list_container(init->children.next,
+    init_task = find_init();
+    init_child = list_container(init_task->children.next,
                                 struct task, children);
     if (init_child->pid == 0)
         panic("init has not childs");
 
     /* node is in the middle of the children chain */
     children_split(current_task);
-    t = child;
+    curr_task = child;
     do {
-        if (t->pptr != current_task)
+        if (curr_task->pptr != current_task)
             panic("corrupted sibling list");
-        t->pptr = init; /* give in adoption */
+        curr_task->pptr = init_task; /* give in adoption */
         /*
          * Wake-up to eventually give the oppurtunity to terminate.
          * This may happen if the process is waiting on a pipe that has
          * been closed on the other side.
          */
-        t = list_container(t->sibling.next, struct task, sibling);
-    } while (t != child);
+        curr_task = list_container(curr_task->sibling.next, struct task, sibling);
+    } while (curr_task != child);
 
-    list_merge(&init_child->sibling, &child->sibling); 
+    list_merge(&init_child->sibling, &child->sibling);
 }
 
 /*
@@ -114,7 +116,7 @@ void sys_exit(int status)
     {
         lnk = current_task->timers.next;
         list_delete(lnk);    /* Remove from current process timers */
-        tm = list_container(lnk, struct timer_event, plink); 
+        tm = list_container(lnk, struct timer_event, plink);
         timer_event_del(tm); /* Remove from the global queue */
     }
 

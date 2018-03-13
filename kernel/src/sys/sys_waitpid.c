@@ -20,7 +20,6 @@
 #include "sys.h"
 #include "proc.h"
 #include "util.h"
-#include "kprintf.h"    // TODO : remove
 #include "kmalloc.h"
 #include <sys/wait.h>
 

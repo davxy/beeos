@@ -32,7 +32,7 @@
 #define ALIGN_VALUE         sizeof(void *)
 
 #define SLAB_UNIT_BITS      12
-#define SLAB_UNIT_SIZE      4096    // MUST be a multiple of page size
+#define SLAB_UNIT_SIZE      4096    /* MUST be a multiple of page size */
 
 /* Small slabs size limit */
 #define SLAB_SMALL_MAX      (SLAB_UNIT_SIZE >> 3)
@@ -49,8 +49,8 @@
     ((char *)(bctl) + sizeof(struct bufctl *) - (objsz))
 
 /* Flags */
-#define SLAB_EMBED_BUFCTL       (1 << 0)    // bufctl is at buf end
-#define SLAB_EMBED_SLABCTL      (1 << 1)    // slabctl is at slab end
+#define SLAB_EMBED_BUFCTL       (1 << 0)    /* bufctl is at buf end */
+#define SLAB_EMBED_SLABCTL      (1 << 1)    /* slabctl is at slab end */
 #define SLAB_OPTIMIZE           (1 << 2)
 
 /*
@@ -93,7 +93,7 @@ static void *bufctl_hash_put(struct slab_cache *cache, struct bufctl *bctl)
 {
     if (cache->hload == 0)
     {
-        cache->hsize = 32;  // FIXME TODO
+        cache->hsize = 32;
         cache->htable = kmalloc(cache->hsize *
                                 sizeof(struct htable_link *), 0);
         if (cache->htable == NULL)
@@ -329,7 +329,7 @@ void slab_cache_free(struct slab_cache *cache, void *obj)
         list_delete(&slab->link);
         slab_space_free(slab, size);
     }
-    else if (slab->inuse == cache->slab_objs-1)
+    else if (slab->inuse == cache->slab_objs - 1)
     {
         list_delete(&slab->link);
         list_insert_after(&cache->slabs_part, &slab->link);
@@ -368,7 +368,8 @@ void slab_cache_init(struct slab_cache *cache, const char *name,
         }
         else
         {
-            cache->objsize += sizeof(struct bufctl *);  // Add the space for bufctl link
+            /* Add the space for bufctl link */
+            cache->objsize += sizeof(struct bufctl *);
             if (cache->objsize <= SLAB_SMALL_MAX)
                 cache->flags |= (SLAB_EMBED_BUFCTL | SLAB_EMBED_SLABCTL);
             else

@@ -61,12 +61,12 @@ struct pipe_inode
  * descriptor so that multiple processes have the pipe open for writing.
  * Normally, however, there is a single reader and a single writer for a pipe.
  */
-static int pipe_read(struct inode *inode, void *buf,
+static int pipe_read(struct inode *inod, void *buf,
         size_t count, off_t offset)
 {
     int n, left;
     char *ptr = (char *)buf;
-    struct pipe_inode *pnode = (struct pipe_inode *)inode;
+    struct pipe_inode *pnode = (struct pipe_inode *)inod;
 
     left = count;
     spinlock_lock(&pnode->queue.lock);
@@ -120,12 +120,12 @@ done:
  * is generated. If we either ignore the signal or catch it and return from
  * the signal handler, write returns -1 with errno set to EPIPE.
  */
-static int pipe_write(struct inode *inode, const void *buf,
-        size_t count, off_t offset)
+static int pipe_write(struct inode *inod, const void *buf,
+                      size_t count, off_t offset)
 {
     size_t n, left;
     const char *ptr = (const char *)buf;
-    struct pipe_inode *pnode = (struct pipe_inode *)inode;
+    struct pipe_inode *pnode = (struct pipe_inode *)inod;
 
     left = count;
     spinlock_lock(&pnode->queue.lock);
@@ -149,15 +149,14 @@ static int pipe_write(struct inode *inode, const void *buf,
                 return -EPIPE;
             }
 
-            //if (BLOCKING)
+            /* if is BLOCKING */
             pnode->queued_writers++;
             if (pnode->queued_readers > 0)     /* there are pending writers */
                 cond_broadcast(&pnode->queue); /* wakeup all before (eventually) sleep */
             cond_wait(&pnode->queue);
             pnode->queued_writers--;
+            /* else unlock first!!! And then go to spinlock unlock */
 
-            // else unlock first!!!
-            //    return goto spinlock unlock;
         }
 
         if (pnode->nrp <= pnode->nwp)
@@ -211,8 +210,8 @@ static struct inode *pipe_inode_create(void)
 int pipe_create(int pipefd[2])
 {
     int fd0, fd1;
-    struct inode *inode;
-    struct dentry *dentry;
+    struct inode *inod;
+    struct dentry *dent;
     struct file *file0, *file1;
 
     for (fd0 = 0; fd0 < OPEN_MAX; fd0++)
@@ -224,8 +223,8 @@ int pipe_create(int pipefd[2])
     if (fd1 >= OPEN_MAX)
         return -EMFILE; /* Too many open files */
 
-    inode = pipe_inode_create();
-    if (!inode)
+    inod = pipe_inode_create();
+    if (!inod)
         return -1;
 
     /* Inode allocated */
@@ -234,16 +233,16 @@ int pipe_create(int pipefd[2])
     if (!file0 || !file1)
         return -1;
 
-    dentry = dentry_create("", NULL, NULL);
-    if (dentry == NULL)
+    dent = dentry_create("", NULL, NULL);
+    if (dent == NULL)
         return -1;
-    dentry->inod = idup(inode);
+    dent->inod = idup(inod);
 
     file0->flags = O_RDONLY;
     file0->ref = 1;
     file0->off = 0;
-    file0->dent = dentry;
-    dentry->ref = 2;  /* Held by two files */
+    file0->dent = dent;
+    dent->ref = 2;  /* Held by two files */
     *file1 = *file0;
     file1->flags = O_WRONLY;
 

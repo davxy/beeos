@@ -27,10 +27,10 @@
 /** Circularly double linked list data structure. */
 struct list_link
 {
-	/** Previous element. */
-	struct list_link	*prev;
-	/** Next element. */
-	struct list_link	*next;
+    /** Previous element. */
+    struct list_link    *prev;
+    /** Next element. */
+    struct list_link    *next;
 };
 
 /**
@@ -41,11 +41,11 @@ struct list_link
  */
 static inline void list_init(struct list_link *list)
 {
-	list->next = list;
-	list->prev = list;
+    list->next = list;
+    list->prev = list;
 }
 
-static inline void list_insert_after(struct list_link *list, 
+static inline void list_insert_after(struct list_link *list,
         struct list_link *node)
 {
     node->next = list->next;
@@ -71,10 +71,10 @@ static inline void list_insert_before(struct list_link *list,
  */
 static inline void list_delete(struct list_link *link)
 {
-	link->next->prev = link->prev;
+    link->next->prev = link->prev;
     link->prev->next = link->next;
     link->next = link;
-	link->prev = link;
+    link->prev = link;
 }
 
 /**
@@ -103,9 +103,9 @@ static inline void list_merge(struct list_link *list1, struct list_link *list2)
 /**
  * Get a pointer to the struct start for this list element.
  *
- * @elem:	the struct list_link pointer.
- * @type:	the type of the struct the element is embedded in.
- * @member:	the name of the list_link within the struct.
+ * @elem:   the struct list_link pointer.
+ * @type:   the type of the struct the element is embedded in.
+ * @member: the name of the list_link within the struct.
  */
 #define list_container(link, type, member) \
     ((type *) ((char *)(link) - offsetof(type, member)))

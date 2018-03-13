@@ -27,6 +27,7 @@
 #include <sys/stat.h>
 #include <sys/mount.h>
 #include <fcntl.h>
+#include <errno.h>
 
 #define NTTY    4
 
@@ -34,34 +35,41 @@
 #define SHELL               "/bin/sh"
 #define PATH                "/bin:/sbin"
 
+struct dev_desc {
+    const char *name;
+    mode_t      type;
+    dev_t       dev;
+};
 
+static const struct dev_desc devs[] = {
+    { "/dev/zero",    S_IFCHR, makedev(0x01, 0x05) },
+    { "/dev/tty",     S_IFCHR, makedev(0x05, 0x00) },
+    { "/dev/console", S_IFCHR, makedev(0x05, 0x01) },
+    { "/dev/tty1",    S_IFCHR, makedev(0x04, 0x01) },
+    { "/dev/tty2",    S_IFCHR, makedev(0x04, 0x02) },
+    { "/dev/tty3",    S_IFCHR, makedev(0x04, 0x03) },
+    { "/dev/tty4",    S_IFCHR, makedev(0x04, 0x04) },
+    { "/dev/mem",     S_IFBLK, makedev(0x01, 0x01) },
+    { "/dev/kmem",    S_IFCHR, makedev(0x01, 0x02) },
+    { "/dev/random",  S_IFCHR, makedev(0x01, 0x08) },
+    { "/dev/urandom", S_IFCHR, makedev(0x01, 0x09) },
+    { "/dev/initrd",  S_IFBLK, makedev(0x01, 0xFA) },
+};
+#define NDEVS (sizeof(devs)/sizeof(*devs))
 
 void dev_init(void)
 {
+    int i;
+
     if (mount("dev", "/dev", "dev", 0, NULL) < 0) {
         perror("mount of dev fs failure");
         return;
     }
-    if (mknod("/dev/zero", S_IFCHR, makedev(0x01, 0x05)) < 0)
-        perror("mknod /dev/zero");
-    if (mknod("/dev/tty1", S_IFCHR, makedev(0x05, 0x01)) < 0)
-        perror("mknod /dev/tty1");
-    if (mknod("/dev/tty2", S_IFCHR, makedev(0x05, 0x02)) < 0)
-        perror("mknod /dev/tty2");
-    if (mknod("/dev/tty3", S_IFCHR, makedev(0x05, 0x03)) < 0)
-        perror("mknod /dev/tty3");
-    if (mknod("/dev/tty4", S_IFCHR, makedev(0x05, 0x04)) < 0)
-        perror("mknod /dev/tty4");
-    if (mknod("/dev/mem", S_IFBLK, makedev(0x01, 0x01)) < 0)
-        perror("mknod /dev/mem");
-    if (mknod("/dev/kmem", S_IFCHR, makedev(0x01, 0x02)) < 0)
-        perror("mknod /dev/kmem");
-    if (mknod("/dev/random", S_IFCHR, makedev(0x01, 0x08)) < 0)
-        perror("mknod /dev/random");
-    if (mknod("/dev/urandom", S_IFCHR, makedev(0x01, 0x09)) < 0)
-        perror("mknod /dev/urandom");
-    if (mknod("/dev/initrd", S_IFBLK, makedev(0x01, 0xFA)) < 0)
-        perror("mknod /dev/initrd");
+
+    for (i = 0; i < NDEVS; i++) {
+        if (mknod(devs[i].name, devs[i].type, devs[i].dev) < 0)
+            printf("mknod %s error: %s", devs[i].name, strerror(errno));
+    }
 }
 
 

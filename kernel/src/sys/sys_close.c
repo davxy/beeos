@@ -27,25 +27,25 @@
 
 int sys_close(int fd)
 {
-    struct file *file;
+    struct file *fil;
 
     /* Validate file descriptor */
     if (fd < 0 || OPEN_MAX <= fd || !current_task->fds[fd].fil)
         return -EBADF;
 
-    file = current_task->fds[fd].fil;
+    fil = current_task->fds[fd].fil;
     current_task->fds[fd].fil = NULL;
     current_task->fds[fd].flags = 0;
 
-    file->ref--;
-    if (file->ref == 0)
+    fil->ref--;
+    if (fil->ref == 0)
     {
         /* Wake up the other end, to allow EOF recv in user space */
-        if (S_ISFIFO(file->dent->inod->mode))
-            (void)vfs_write(file->dent->inod, NULL, 0, 0);
-        dput(file->dent);
+        if (S_ISFIFO(fil->dent->inod->mode))
+            (void)vfs_write(fil->dent->inod, NULL, 0, 0);
+        dput(fil->dent);
 
-        fs_file_free(file);
+        fs_file_free(fil);
     }
     return 0;
 }

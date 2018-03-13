@@ -25,10 +25,10 @@
 
 static void alarm_handler(void *data)
 {
-    struct task *task = (struct task *)data;
+    struct task *t = (struct task *)data;
 
-    list_delete(&task->alarm.plink);
-    task_signal(task, SIGALRM);
+    list_delete(&t->alarm.plink);
+    task_signal(t, SIGALRM);
 }
 
 unsigned int sys_alarm(unsigned int seconds)

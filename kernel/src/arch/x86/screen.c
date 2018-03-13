@@ -27,8 +27,8 @@
 #define BLACK           0
 #define LIGHT_GREY      7
 
-#define MAKE_COLOR(bg, fg)      ((bg << 4) | fg)
-#define MAKE_ENTRY(bg, fg, c)   ((MAKE_COLOR(bg, fg) << 8) | c)
+#define MAKE_COLOR(bg, fg)      (((bg) << 4) | (fg))
+#define MAKE_ENTRY(bg, fg, c)   ((MAKE_COLOR((bg), (fg)) << 8) | (c))
 
 /*
  * Copy the backbuffer and update the hardware cursor.

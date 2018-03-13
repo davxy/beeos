@@ -29,25 +29,31 @@
 
 /** Character devices @{ */
 /** Physical memory */
-#define DEV_MEM                 0x0101
+#define DEV_MEM                 makedev(0x01, 0x01)
 /** Kernel virtual memory */
-#define DEV_KMEM                0x0102
+#define DEV_KMEM                makedev(0x01, 0x02)
 /** Null device */
-#define DEV_NULL                0x0103
+#define DEV_NULL                makedev(0x01, 0x03)
 /** Null byte source */
-#define DEV_ZERO                0x0105
+#define DEV_ZERO                makedev(0x01, 0x05)
 /** Non deterministic random number generator */
-#define DEV_RANDOM              0x0108
+#define DEV_RANDOM              makedev(0x01, 0x08)
 /** Faster, less secure random number generator */
-#define DEV_URANDOM             0x0109
-/** First pseudo-tty */
-#define DEV_TTY                 0x0200
-/** Current tty device */
-#define DEV_CONSOLE             0x0500
-#define DEV_CONSOLE1            0x0501
-#define DEV_CONSOLE2            0x0502
-#define DEV_CONSOLE3            0x0503
-#define DEV_CONSOLE4            0x0504
+#define DEV_URANDOM             makedev(0x01, 0x09)
+/** Current TTY console */
+#define DEV_TTY0                makedev(0x04, 0x00)
+/** First TTY console */
+#define DEV_TTY1                makedev(0x04, 0x01)
+/** Second TTY console */
+#define DEV_TTY2                makedev(0x04, 0x02)
+/** Third TTY console */
+#define DEV_TTY3                makedev(0x04, 0x03)
+/** Fourth TTY console */
+#define DEV_TTY4                makedev(0x04, 0x04)
+/** Current TTY */
+#define DEV_TTY                 makedev(0x05, 0x00)
+/** System console */
+#define DEV_CONSOLE             makedev(0x05, 0x01)
 /** @} */
 
 /** Block devices @{ */
