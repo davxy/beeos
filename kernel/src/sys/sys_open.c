@@ -32,22 +32,18 @@ int sys_open(const char *pathname, int flags, mode_t mode)
     int fdn;
     struct file *fil;
     struct dentry *dent;
-    char buf[16];
 
     if (pathname == NULL)
         return -EINVAL;
 
-    if (strcmp(pathname, "/dev/tty") == 0)
-    {
-        dev_t dev = tty_get();
-        if (snprintf(buf, sizeof(buf), "/dev/tty%d", minor(dev)) < 0)
-            return -EINVAL;
-        pathname = buf;
-    }
-
     dent = named(pathname);
     if (dent == NULL)
         return -ENOENT;
+
+    if (strcmp(pathname, "/dev/tty") == 0) {
+        if (tty_get() < 0)
+            return -EBUSY;
+    }
 
     for (fdn = 0; fdn < OPEN_MAX; fdn++)
         if (current_task->fds[fdn].fil == NULL)

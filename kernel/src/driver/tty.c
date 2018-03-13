@@ -56,6 +56,26 @@ void tty_change(int n)
     }
 }
 
+struct tty_st *tty_lookup(dev_t dev)
+{
+    struct tty_st *tty = NULL;
+    int i;
+
+    if (dev == DEV_TTY) {
+        for (i = 0; i < TTYS_TOTAL; i++) {
+            if (current_task->pgid == tty_table[i].pgrp) {
+                tty = &tty_table[i];
+                break;
+            }
+        }
+    } else {
+        i = (minor(dev) == 0 || dev == DEV_CONSOLE) ? tty_curr : (minor(dev) - 1);
+        if (i < TTYS_TOTAL)
+            tty = &tty_table[i];
+    }
+    return tty;
+}
+
 
 dev_t tty_get(void)
 {
@@ -77,16 +97,15 @@ dev_t tty_get(void)
 
 void tty_put(dev_t dev)
 {
-    int i = minor(dev) - 1;
-    
-    if (i == 0)
-        return;
-    if (major(dev) != major(DEV_CONSOLE) || i >= TTYS_TOTAL)
-        return;
-    if (tty_table[i].refs > 0) {
-        tty_table[i].refs--;
-        if (tty_table[i].refs == 0)
-            tty_table[i].pgrp = 0;
+    struct tty_st *tty;
+
+    tty = tty_lookup(dev);
+    if (tty) {
+        if (tty->refs > 0) {
+            tty->refs--;
+            if (tty->refs == 0)
+                tty->pgrp = 0;
+        }
     }
 }
 
@@ -95,12 +114,10 @@ static int tty_read_wait(dev_t dev, int couldblock)
 {
     struct tty_st *tty;
     int c = -1;
-    int i = minor(dev) - 1;
-    
-    if (major(dev) != major(DEV_CONSOLE) || i >= TTYS_TOTAL)
-        return -1;
 
-    tty = &tty_table[i];
+    tty = tty_lookup(dev);
+    if (tty == NULL)
+        return -EINVAL;
 
     spinlock_lock(&tty->rcond.lock);
 
@@ -130,14 +147,16 @@ ssize_t tty_read(dev_t dev, void *buf, size_t size)
         key = tty_read_wait(dev, (n == 0));
         if (key == 0 && n == 0)
         {
-            /* A single line contains zero: this is made by a VEOF
-             * character (^D), that is, the input is closed. */
+            /*
+             * A single line contains zero: this is made by a VEOF
+             * character (^D), that is, the input is closed.
+             */
             break;
         }
-        else if (key == -1 && n == 0)
+        else if (key < 0 && n == 0)
             /* At the moment, there is just nothing to read. */
             return -EAGAIN;
-        else if (key == -1 && n > 0)
+        else if (key < -0 && n > 0)
             /* Finished to read */
             break;
         else
@@ -148,20 +167,23 @@ ssize_t tty_read(dev_t dev, void *buf, size_t size)
 }
 
 
-static void tty_putchar(dev_t dev, int c)
+static int tty_putchar(dev_t dev, int c)
 {
     int i;
     struct screen *scr;
+    struct tty_st *tty;
 
-    i = minor(dev) - 1;
-    if (major(dev) != major(DEV_CONSOLE) || i >= TTYS_TOTAL)
-        return;
+    tty = tty_lookup(dev);
+    if (tty == NULL)
+        return -EINVAL;
+    i = minor(tty->dev) - 1; /* Here is "safe" to do so */
     scr = &scr_table[i];
 
     screen_putchar(scr, c);
 
     /* Useful for debug */
     uart_putchar(c);
+    return 0;
 }
 
 
@@ -169,9 +191,11 @@ ssize_t tty_write(dev_t dev, const void *buf, size_t n)
 {
     size_t i;
 
-    for (i = 0; i < n; i++)
-        tty_putchar(dev, ((const unsigned char *)buf)[i]);
-    return (ssize_t)n;
+    for (i = 0; i < n; i++) {
+        if (tty_putchar(dev, ((const unsigned char *)buf)[i]) < 0)
+            break;
+    }
+    return (ssize_t)i;
 }
 
 
@@ -270,7 +294,7 @@ void tty_init(void)
     int i;
 
     for (i = 0; i < TTYS_CONSOLE; i++) {
-        tty_struct_init(&tty_table[i], DEV_CONSOLE + i + 1);
+        tty_struct_init(&tty_table[i], DEV_TTY1 + i);
         screen_init(&scr_table[i]);
     }
     tty_curr = 0;

@@ -50,11 +50,12 @@ static ssize_t devfs_inode_read(struct inode *inode, void *buf,
     switch (rdev)
     {
         case DEV_TTY:
+        case DEV_TTY0:
+        case DEV_TTY1:
+        case DEV_TTY2:
+        case DEV_TTY3:
+        case DEV_TTY4 :
         case DEV_CONSOLE:
-        case DEV_CONSOLE1:
-        case DEV_CONSOLE2:
-        case DEV_CONSOLE3:
-        case DEV_CONSOLE4 :
             n = tty_read(rdev, buf, count);
             break;
         case DEV_ZERO:
@@ -94,11 +95,12 @@ static ssize_t devfs_inode_write(struct inode *inode, const void *buf,
     switch (rdev)
     {
         case DEV_TTY:
+        case DEV_TTY0:
+        case DEV_TTY1:
+        case DEV_TTY2:
+        case DEV_TTY3:
+        case DEV_TTY4 :
         case DEV_CONSOLE:
-        case DEV_CONSOLE1:
-        case DEV_CONSOLE2:
-        case DEV_CONSOLE3:
-        case DEV_CONSOLE4 :
             n = tty_write(rdev, buf, count);
             break;
         case DEV_ZERO:
@@ -128,17 +130,20 @@ static ssize_t devfs_inode_write(struct inode *inode, const void *buf,
 
 static struct {
     const char *name;
-    dev_t    dev;
+    dev_t       dev;
 } dev_name_map[] = {
-    { "zero", DEV_ZERO },
-    { "tty1", DEV_CONSOLE1 },
-    { "tty2", DEV_CONSOLE2 },
-    { "tty3", DEV_CONSOLE3 },
-    { "tty4", DEV_CONSOLE4 },
-    { "initrd", DEV_INITRD },
-    { "mem", DEV_MEM },
-    { "kmem", DEV_KMEM },
-    { "random", DEV_RANDOM },
+    { "zero",    DEV_ZERO },
+    { "tty0",    DEV_TTY0 },
+    { "tty1",    DEV_TTY1 },
+    { "tty2",    DEV_TTY2 },
+    { "tty3",    DEV_TTY3 },
+    { "tty4",    DEV_TTY4 },
+    { "tty",     DEV_TTY  },
+    { "console", DEV_CONSOLE },
+    { "initrd",  DEV_INITRD },
+    { "mem",     DEV_MEM },
+    { "kmem",    DEV_KMEM },
+    { "random",  DEV_RANDOM },
     { "urandom", DEV_URANDOM },
 };
 
