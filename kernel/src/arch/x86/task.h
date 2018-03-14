@@ -93,7 +93,7 @@ struct context
 
 struct task_arch
 {
-    volatile uint32_t   pgdir;  /**< Page directory physical address */
+    uint32_t            pgdir;  /**< Page directory physical address */
     struct context      *ctx;   /**< Task state context */
     struct isr_frame    *ifr;   /**< Interrupt frame */
     struct isr_frame    *sfr;   /**< Interrupt saved frame (used by signals) */
