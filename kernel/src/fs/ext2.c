@@ -151,7 +151,7 @@ static struct inode *ext2_lookup(struct inode *dir, const char *name)
     while(count > 0)
     {
         /* dirent->name is not null terminated */
-        if(strlen(name) == dirent->name_len &&
+        if(strlen(name) == (size_t)dirent->name_len &&
            memcmp(name, dirent->name, dirent->name_len) == 0)
         {
             inod = iget(dir->sb, dirent->ino);
