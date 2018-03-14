@@ -26,7 +26,6 @@
 #include "vmem.h"
 #include "isr.h"
 #include "kprintf.h"
-#include "kmalloc.h"
 #include "mm/frame.h"
 #include "panic.h"
 #include "proc.h"

@@ -124,7 +124,7 @@ struct task *task_create(task_entry_t entry)
 {
     struct task *t;
 
-    t = kmalloc(sizeof(struct task), 0);
+    t = (struct task *)kmalloc(sizeof(struct task), 0);
     if (t != NULL) {
         memset(t, 0, sizeof(*t));
         if (task_init(t, entry) < 0) {

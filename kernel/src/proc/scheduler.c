@@ -72,7 +72,7 @@ int do_signal(void)
 
     if (!current_task->arch.sfr)
     {
-        current_task->arch.sfr = kmalloc(sizeof(*ifr), 0);
+        current_task->arch.sfr = (struct isr_frame *)kmalloc(sizeof(*ifr), 0);
         if (!current_task->arch.sfr)
         {
             kprintf("[warn] no memory to handle signal (%d)\n", sig);

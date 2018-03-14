@@ -78,7 +78,7 @@ static struct htable_link *inode_htable[1 << INODE_HTABLE_BITS];
 
 struct file *fs_file_alloc(void)
 {
-    return slab_cache_alloc(&file_cache, 0);
+    return (struct file *)slab_cache_alloc(&file_cache, 0);
 }
 
 void fs_file_free(struct file *file)
@@ -230,7 +230,7 @@ struct dentry *dentry_create(const char *name, struct dentry *parent,
 {
     struct dentry *de;
 
-    de = kmalloc(sizeof(*de), 0);
+    de = (struct dentry *)kmalloc(sizeof(*de), 0);
     if (!de)
         return NULL;
     strcpy(de->name, name);
@@ -360,7 +360,7 @@ int do_mount(struct dentry *mntpt, struct dentry *root)
 {
     struct vfsmount *mnt;
 
-    mnt = kmalloc(sizeof(*mnt), 0);
+    mnt = (struct vfsmount *)kmalloc(sizeof(*mnt), 0);
     if (mnt == NULL)
         return -1;
     mnt->mntpt = ddup(mntpt);

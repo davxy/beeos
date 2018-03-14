@@ -194,7 +194,7 @@ static struct inode *pipe_inode_create(void)
     struct pipe_inode *pnode;
 
     /* TODO... set a pipe sb here to allow correct inode release */
-    pnode = kmalloc(sizeof(struct pipe_inode), 0);
+    pnode = (struct pipe_inode *)kmalloc(sizeof(struct pipe_inode), 0);
     if (!pnode)
         return NULL;
     memset(pnode, 0, sizeof(*pnode));

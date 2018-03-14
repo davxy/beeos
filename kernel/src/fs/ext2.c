@@ -66,7 +66,7 @@ static int offset_to_block(off_t offset, const struct ext2_inode *inod,
     if (offset < EXT2_NDIR_BLOCKS*sb->block_size)
         return inod->blocks[offset >> shift];
 
-    buf = kmalloc(sb->block_size, 0);
+    buf = (uint32_t *)kmalloc(sb->block_size, 0);
 
     indirect_block = inod->blocks[EXT2_BLK_IND];
     double_block = inod->blocks[EXT2_BLK_DBL];
@@ -139,7 +139,8 @@ static struct inode *ext2_lookup(struct inode *dir, const char *name)
     int count;
     struct inode *inod = NULL;
 
-    if ((dirbuf = kmalloc(dir->size, 0)) == NULL)
+    dirbuf = (struct ext2_disk_dirent *)kmalloc(dir->size, 0);
+    if (dirbuf == NULL)
         return NULL;
 
     if (devfs_read(dir->sb->dev, dirbuf, dir->size,
@@ -188,7 +189,8 @@ static int ext2_readdir(struct inode *dir, unsigned int i,
     int count, n;
     int ret = -1;
 
-    if ((dirbuf = kmalloc(dir->size, 0)) == NULL)
+    dirbuf = (struct ext2_disk_dirent *)kmalloc(dir->size, 0);
+    if (dirbuf == NULL)
         return -ENOMEM;
 
     if (devfs_read(dir->sb->dev, dirbuf, dir->size,
@@ -243,7 +245,7 @@ static struct inode *ext2_super_inode_alloc(struct super_block *sb)
 {
     struct inode *inod;
 
-    inod = kmalloc(sizeof(struct ext2_inode), 0);
+    inod = (struct inode *)kmalloc(sizeof(struct ext2_inode), 0);
     if (inod != NULL)
         memset(inod, 0, sizeof(*inod));
     return inod;
@@ -307,7 +309,7 @@ static const struct super_ops ext2_sb_ops =
 
 
 /*
- * TODO: rollback on error
+ * FIXME / TODO : rollback on error
  */
 struct super_block *ext2_super_create(dev_t dev)
 {
@@ -322,7 +324,7 @@ struct super_block *ext2_super_create(dev_t dev)
     if (dsb.magic != EXT2_MAGIC)
         return NULL;
 
-    sb = kmalloc(sizeof(struct ext2_super_block), 0);
+    sb = (struct ext2_super_block *)kmalloc(sizeof(struct ext2_super_block), 0);
     if (sb == NULL)
         return NULL;
 
@@ -334,8 +336,8 @@ struct super_block *ext2_super_create(dev_t dev)
     int num_groups = (dsb.blocks_count - 1) / dsb.blocks_per_group + 1;
 
     n = sizeof(struct ext2_group_desc) * num_groups;
-    sb->gd_table = kmalloc(n, 0);
-    if (!sb->gd_table)
+    sb->gd_table = (struct ext2_group_desc *)kmalloc(n, 0);
+    if (sb->gd_table == NULL)
         return NULL;
 
     if (devfs_read(dev, sb->gd_table, n, sb->block_size*(gd_block-1)) != n)

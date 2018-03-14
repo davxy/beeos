@@ -170,7 +170,7 @@ int sys_execve(const char *path, const char *const argv[],
         dput(dent);
         return -ENOMEM;
     }
-    stack_init(ustack, argv, envp);
+    stack_init((uintptr_t *)ustack, argv, envp);
 
     pgdir = page_dir_dup(0);
     page_dir_switch(pgdir);

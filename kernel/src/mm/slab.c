@@ -94,7 +94,7 @@ static void *bufctl_hash_put(struct slab_cache *cache, struct bufctl *bctl)
     if (cache->hload == 0)
     {
         cache->hsize = 32;
-        cache->htable = kmalloc(cache->hsize *
+        cache->htable = (struct htable_link  **)kmalloc(cache->hsize *
                                 sizeof(struct htable_link *), 0);
         if (cache->htable == NULL)
             return NULL;
@@ -217,7 +217,7 @@ static struct slabctl *slab_space_alloc(struct slab_cache *cache, int flags)
     }
     else
     {
-        slab = slab_cache_alloc(slab_slabctl_cache, flags);
+        slab = (struct slabctl *)slab_cache_alloc(slab_slabctl_cache, flags);
         if (slab == NULL)
         {
             frame_free(virt_to_phys(data), order);
@@ -240,7 +240,7 @@ static struct slabctl *slab_space_alloc(struct slab_cache *cache, int flags)
         }
         else
         {
-            bctl = slab_cache_alloc(slab_bufctl_cache, flags);
+            bctl = (struct bufctl *)slab_cache_alloc(slab_bufctl_cache, flags);
             if (bctl == NULL)
             {
                 /* temporary set to the allocated objects and undo */
@@ -440,7 +440,7 @@ struct slab_cache *slab_cache_create(const char *name,
 {
     struct slab_cache *cache;
 
-    cache = slab_cache_alloc(&slab_cache_cache, 0);
+    cache = (struct slab_cache *)slab_cache_alloc(&slab_cache_cache, 0);
     if (cache != NULL)
         slab_cache_init(cache, name, size, align, flags, ctor, dtor);
     return cache;

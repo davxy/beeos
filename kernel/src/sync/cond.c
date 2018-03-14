@@ -19,7 +19,6 @@
 
 #include "cond.h"
 #include "proc.h"
-#include "kmalloc.h"
 
 
 void cond_init(struct cond *cond)
@@ -54,4 +53,3 @@ void cond_broadcast(struct cond *cond)
     while (!list_empty(&cond->queue))
         cond_signal(cond);
 }
-

@@ -216,7 +216,7 @@ static struct devfs_inode *devfs_sb_inode_alloc(struct super_block *sb)
 {
     struct devfs_inode *inod;
 
-    inod = kmalloc(sizeof(struct devfs_inode), 0);
+    inod = (struct devfs_inode *)kmalloc(sizeof(struct devfs_inode), 0);
     if (inod == NULL)
         return NULL;
 

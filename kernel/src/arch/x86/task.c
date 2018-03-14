@@ -29,6 +29,7 @@ struct tss_struct tss;
 void swtch(struct context **old, struct context *new);
 
 
+
 /*
  * TODO : implement as clone syscall
  */
@@ -52,17 +53,18 @@ int task_arch_init(struct task_arch *task, task_entry_t entry)
         return (int)task->pgdir; /* Fail */
 
     /* Stack creation */
-    ti = kmalloc(KSTACK_SIZE, 0);
+    ti = (char *)kmalloc(KSTACK_SIZE, 0);
     if (ti == NULL)
         return -1;
-    sp = (uint32_t *)(ti + KSTACK_SIZE);
+
+    sp = (uint32_t *)ALIGN_DOWN((uintptr_t)ti + KSTACK_SIZE, sizeof(uint32_t));
 
     if (current_task->arch.ifr != NULL)
     {
         struct isr_frame *ifr2 = ((struct isr_frame *)sp) - 1;
 
-        sp = (uint32_t *)ifr2;
-        /* child ifr is equal to the parent but fork returns 0 in the child */
+        sp = (uint32_t *)ifr2; /* Safe... ifr2 should be aligned to uint32_t */
+        /* Child ifr is equal to the parent but fork returns 0 in the child */
         *ifr2 = *current_task->arch.ifr;
         ifr2->eax = 0;
     }
