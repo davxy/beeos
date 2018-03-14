@@ -31,7 +31,7 @@ ssize_t sys_read(int fd, void *buf, size_t count)
     ssize_t n;
     struct file *fil;
 
-    if (OPEN_MAX <= fd || current_task->fds[fd].fil == NULL)
+    if (fd < 0 || fd >= OPEN_MAX || current_task->fds[fd].fil == NULL)
         return -EBADF;
 
     fil = current_task->fds[fd].fil;

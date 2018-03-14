@@ -26,8 +26,10 @@ int sys_dup2(int oldfd, int newfd)
 {
     int status;
 
-    if (oldfd < 0 || oldfd >= OPEN_MAX || !current_task->fds[oldfd].fil)
+    if (oldfd < 0 || oldfd >= OPEN_MAX || newfd < 0 || newfd >= OPEN_MAX ||
+            current_task->fds[oldfd].fil == NULL) {
         return -EBADF; /* Invalid file descriptor */
+    }
 
     if (oldfd == newfd)
         return oldfd;
