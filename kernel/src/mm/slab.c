@@ -339,7 +339,7 @@ void slab_cache_free(struct slab_cache *cache, void *obj)
 
 void slab_cache_init(struct slab_cache *cache, const char *name,
         size_t objsize, unsigned int align, unsigned int flags,
-        void (*ctor)(void *), void (*dtor)(void *))
+        slab_obj_ctor_t ctor, slab_obj_dtor_t dtor)
 {
     size_t slabsize, wasted, orgsiz;
 
@@ -436,7 +436,7 @@ void slab_cache_deinit(struct slab_cache *cache)
 
 struct slab_cache *slab_cache_create(const char *name,
         size_t size, unsigned int align, unsigned int flags,
-        void (*ctor)(void *), void (*dtor)(void *))
+        slab_obj_ctor_t ctor, slab_obj_dtor_t dtor)
 {
     struct slab_cache *cache;
 
