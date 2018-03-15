@@ -41,11 +41,11 @@ static struct super_block devfs_sb;
 static int devfs_ino = 0;
 
 
-static ssize_t devfs_inode_read(struct inode *inode, void *buf,
-                                size_t count, off_t offset)
+static ssize_t devfs_inode_read(struct inode *inod, void *buf,
+                                size_t count, off_t off)
 {
     ssize_t n;
-    dev_t rdev = inode->rdev;
+    dev_t rdev = inod->rdev;
 
     switch (rdev)
     {
@@ -66,7 +66,7 @@ static ssize_t devfs_inode_read(struct inode *inode, void *buf,
             n = count;
             break;
         case DEV_INITRD:
-            n = ramdisk_read(buf, count, offset);
+            n = ramdisk_read(buf, count, off);
             break;
         case DEV_MEM:
             n = -1;
@@ -86,11 +86,11 @@ static ssize_t devfs_inode_read(struct inode *inode, void *buf,
 }
 
 
-static ssize_t devfs_inode_write(struct inode *inode, const void *buf,
-                                 size_t count, off_t offset)
+static ssize_t devfs_inode_write(struct inode *inod, const void *buf,
+                                 size_t count, off_t off)
 {
     ssize_t n;
-    dev_t rdev = inode->rdev;
+    dev_t rdev = inod->rdev;
 
     switch (rdev)
     {
@@ -108,7 +108,7 @@ static ssize_t devfs_inode_write(struct inode *inode, const void *buf,
             n = count;
             break;
         case DEV_INITRD:
-            n = ramdisk_write(buf, count, offset);
+            n = ramdisk_write(buf, count, off);
             break;
         case DEV_MEM:
             n = -1;
@@ -224,10 +224,10 @@ static struct devfs_inode *devfs_sb_inode_alloc(struct super_block *sb)
     return inod;
 }
 
-static void devfs_sb_inode_free(struct devfs_inode *inode)
+static void devfs_sb_inode_free(struct devfs_inode *inod)
 {
-    list_delete(&inode->link);
-    kfree(inode, sizeof(struct devfs_inode));
+    list_delete(&inod->link);
+    kfree(inod, sizeof(struct devfs_inode));
 }
 
 static const struct super_ops devfs_sb_ops = {

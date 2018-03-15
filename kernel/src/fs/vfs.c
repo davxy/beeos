@@ -81,9 +81,9 @@ struct file *fs_file_alloc(void)
     return (struct file *)slab_cache_alloc(&file_cache, 0);
 }
 
-void fs_file_free(struct file *file)
+void fs_file_free(struct file *fil)
 {
-    slab_cache_free(&file_cache, file);
+    slab_cache_free(&file_cache, fil);
 }
 
 static struct inode *inode_lookup(dev_t dev, ino_t ino)
@@ -105,25 +105,25 @@ static struct inode *inode_lookup(dev_t dev, ino_t ino)
 }
 
 
-void inode_init(struct inode *inode, struct super_block *sb,
-                ino_t ino, mode_t mode, const struct inode_ops *ops)
+static void inode_init(struct inode *inod, struct super_block *sb,
+                       ino_t ino, mode_t mode, const struct inode_ops *ops)
 {
-    memset(inode, 0, sizeof(*inode));
+    memset(inod, 0, sizeof(*inod));
 
-    inode->ops = ops;
-    inode->ino = ino;
-    inode->mode = mode;
-    inode->sb  = sb;
+    inod->ops = ops;
+    inod->ino = ino;
+    inod->mode = mode;
+    inod->sb  = sb;
 
     /*
      * TODO: consider the inode read return value.
      * This is just a quick and dirty solution for MISRA compliance
      */
     if (sb->ops->inode_read != NULL)
-        (void)sb->ops->inode_read(inode);
+        (void)sb->ops->inode_read(inod);
 
-    htable_insert(inode_htable, &inode->hlink,
-                  KEY(inode->sb->dev, inode->ino), INODE_HTABLE_BITS);
+    htable_insert(inode_htable, &inod->hlink,
+                  KEY(inod->sb->dev, inod->ino), INODE_HTABLE_BITS);
 }
 
 

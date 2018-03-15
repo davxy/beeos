@@ -134,7 +134,7 @@ static ssize_t ext2_read(struct ext2_inode *inod, void *buf,
 
 static struct inode *ext2_lookup(struct inode *dir, const char *name)
 {
-    struct ext2_disk_dirent *dirent;
+    struct ext2_disk_dirent *curr;
     struct ext2_disk_dirent *dirbuf;
     int count;
     struct inode *inod = NULL;
@@ -148,22 +148,22 @@ static struct inode *ext2_lookup(struct inode *dir, const char *name)
         goto end;
 
     count = dir->size;
-    dirent = dirbuf;
-    while(count > 0)
+    curr = dirbuf;
+    while(count >= sizeof(struct ext2_disk_dirent))
     {
         /* dirent->name is not null terminated */
-        if(strlen(name) == (size_t)dirent->name_len &&
-           memcmp(name, dirent->name, dirent->name_len) == 0)
+        if(strlen(name) == (size_t)curr->name_len &&
+           memcmp(name, curr->name, curr->name_len) == 0)
         {
-            inod = iget(dir->sb, dirent->ino);
+            inod = iget(dir->sb, curr->ino);
             if (inod != NULL)
                 inod->ref--; /* iget incremented the counter... release it */
             break;
         }
-        if((dirent->rec_len) == 0)
+        if((curr->rec_len) == 0)
             break;
-        count -= dirent->rec_len;
-        dirent = (struct ext2_disk_dirent *)((char *)dirent + dirent->rec_len);
+        count -= curr->rec_len;
+        curr = (struct ext2_disk_dirent *)((char *)curr + curr->rec_len);
     }
 
 end:
@@ -184,7 +184,7 @@ static const struct inode_ops ext2_inode_ops =
 static int ext2_readdir(struct inode *dir, unsigned int i,
         struct dirent *dent)
 {
-    struct ext2_disk_dirent *dirent;
+    struct ext2_disk_dirent *curr;
     struct ext2_disk_dirent *dirbuf;
     int count, n;
     int ret = -1;
@@ -198,23 +198,23 @@ static int ext2_readdir(struct inode *dir, unsigned int i,
         goto end;
 
     count = dir->size;
-    dirent = dirbuf;
+    curr = dirbuf;
     n = 0;
-    while(count > 0)
+    while(count >= sizeof(struct ext2_disk_dirent))
     {
         if (n++ == i)
         {
-            n = MIN(dirent->name_len, NAME_MAX);
-            memcpy(&dent->d_name, dirent->name, n);
+            n = MIN(curr->name_len, NAME_MAX);
+            memcpy(&dent->d_name, curr->name, n);
             dent->d_name[n] = '\0';
-            dent->d_ino = dirent->ino;
+            dent->d_ino = curr->ino;
             ret = 0;
             break;
         }
-        if((dirent->rec_len) == 0)
+        if((curr->rec_len) == 0)
             break;
-        count -= dirent->rec_len;
-        dirent = (struct ext2_disk_dirent *)((char *)dirent + dirent->rec_len);
+        count -= curr->rec_len;
+        curr = (struct ext2_disk_dirent *)((char *)curr + curr->rec_len);
     }
 
 end:
@@ -251,24 +251,24 @@ static struct inode *ext2_super_inode_alloc(struct super_block *sb)
     return inod;
 }
 
-static void ext2_super_inode_free(struct inode *inode)
+static void ext2_super_inode_free(struct inode *inod)
 {
-    kfree(inode, sizeof(struct ext2_inode));
+    kfree(inod, sizeof(struct ext2_inode));
 }
 
 /*
  * Fetch inode information from the device.
  */
-static int ext2_super_inode_read(struct inode *inode)
+static int ext2_super_inode_read(struct inode *inod)
 {
     int n;
     struct ext2_disk_inode disk_inod;
-    const struct ext2_super_block *sb = (struct ext2_super_block *) inode->sb;
+    const struct ext2_super_block *sb = (struct ext2_super_block *) inod->sb;
 
-    int group = ((inode->ino - 1) / sb->inodes_per_group);
+    int group = ((inod->ino - 1) / sb->inodes_per_group);
     const struct ext2_group_desc *gd = &sb->gd_table[group];
 
-    int table_index = (inode->ino - 1 ) % sb->inodes_per_group;
+    int table_index = (inod->ino - 1 ) % sb->inodes_per_group;
     int blockno = ((table_index * 128) / 1024 ) + gd->inode_table;
     int ind = table_index % (1024 /128);
 
@@ -277,23 +277,23 @@ static int ext2_super_inode_read(struct inode *inode)
     if (n != sizeof(disk_inod))
         return -1;
 
-    inode->ops = &ext2_inode_ops;
-    inode->mode = disk_inod.mode;
-    inode->uid = disk_inod.uid;
-    inode->gid = disk_inod.gid;
-    if (S_ISCHR(inode->mode) || S_ISBLK(inode->mode))
-        inode->rdev  = disk_inod.block[0];
-    inode->size = disk_inod.size;
-    inode->atime = disk_inod.atime;
-    inode->mtime = disk_inod.mtime;
-    inode->ctime = disk_inod.ctime;
+    inod->ops = &ext2_inode_ops;
+    inod->mode = disk_inod.mode;
+    inod->uid = disk_inod.uid;
+    inod->gid = disk_inod.gid;
+    if (S_ISCHR(inod->mode) || S_ISBLK(inod->mode))
+        inod->rdev  = disk_inod.block[0];
+    inod->size = disk_inod.size;
+    inod->atime = disk_inod.atime;
+    inod->mtime = disk_inod.mtime;
+    inod->ctime = disk_inod.ctime;
 
 #if 0
-    inode->blksize = 512; /* sure ??? */
-    inode->blocks = (disk_inod.size-1)/inode->blksize+1;
+    inod->blksize = 512; /* sure ??? */
+    inod->blocks = (disk_inod.size-1)/inod->blksize+1;
 #endif
 
-    memcpy(((struct ext2_inode *)inode)->blocks, disk_inod.block,
+    memcpy(((struct ext2_inode *)inod)->blocks, disk_inod.block,
             sizeof(disk_inod.block));
 
     return 0;
