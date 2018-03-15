@@ -51,6 +51,8 @@ void zone_free(const struct zone_st *ctx, const void *ptr, int order)
 int zone_init(struct zone_st *ctx, void *addr, size_t size,
               size_t frame_size, int flags)
 {
+    if (frame_size == 0)
+        return -1;
     ctx->addr = addr;
     ctx->size = size;
     ctx->frame_size = frame_size;
