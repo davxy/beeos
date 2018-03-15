@@ -128,10 +128,12 @@ static ssize_t devfs_inode_write(struct inode *inod, const void *buf,
 }
 
 
+#define NDEVS 13
+
 static struct {
     const char *name;
     dev_t       dev;
-} dev_name_map[] = {
+} dev_name_map[NDEVS] = {
     { "zero",    DEV_ZERO },
     { "tty0",    DEV_TTY0 },
     { "tty1",    DEV_TTY1 },
@@ -146,8 +148,6 @@ static struct {
     { "random",  DEV_RANDOM },
     { "urandom", DEV_URANDOM },
 };
-
-#define NDEVS (sizeof(dev_name_map)/sizeof(dev_name_map[0]))
 
 static dev_t name_to_dev(const char *name)
 {

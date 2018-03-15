@@ -21,13 +21,38 @@
 #include "mm/slab.h"
 #include "util.h"
 
-#define KMALLOC_MIN_W   4
-#define KMALLOC_MAX_W   22
+//#define KMALLOC_MIN_W   4
+//#define KMALLOC_MAX_W   22
 
+
+#define KMALLOCS_SLABS_NUM  19
+
+static struct slab_cache *kmalloc_caches[KMALLOCS_SLABS_NUM];
+
+static const char *names[KMALLOCS_SLABS_NUM] = {
+    "kmalloc-16",
+    "kmalloc-32",
+    "kmalloc-64",
+    "kmalloc-128",
+    "kmalloc-256",
+    "kmalloc-512",
+    "kmalloc-1K",
+    "kmalloc-2K",
+    "kmalloc-4K",
+    "kmalloc-8K",
+    "kmalloc-16K",
+    "kmalloc-32K",
+    "kmalloc-64K",
+    "kmalloc-128K",
+    "kmalloc-256K",
+    "kmalloc-512K",
+    "kmalloc-1M",
+    "kmalloc-2M",
+    "kmalloc-4M"
+};
 
 static int kmalloc_initialized = 0;
 
-static struct slab_cache *kmalloc_caches[KMALLOC_MAX_W - KMALLOC_MIN_W + 1];
 
 /*
  * Very primitive memory allocation form.
@@ -70,21 +95,15 @@ void kfree(void *ptr, size_t size)
     slab_cache_free(kmalloc_caches[i], ptr);
 }
 
+
 /* Initialize generic kernel memory allocator. */
 void kmalloc_init(void)
 {
-    static const char *names[] = {
-        "kmalloc-16", "kmalloc-32", "kmalloc-64", "kmalloc-128",
-        "kmalloc-256", "kmalloc-512", "kmalloc-1K", "kmalloc-2K",
-        "kmalloc-4K", "kmalloc-8K", "kmalloc-16K", "kmalloc-32K",
-        "kmalloc-64K", "kmalloc-128K", "kmalloc-256K", "kmalloc-512K",
-        "kmalloc-1M", "kmalloc-2M", "kmalloc-4M"
-    };
     int i;
     size_t size;
 
-    size = (1 << KMALLOC_MIN_W);
-    for (i = 0; i < KMALLOC_MAX_W - KMALLOC_MIN_W + 1; i++) {
+    size = 16; /* Min slab size */
+    for (i = 0; i < KMALLOCS_SLABS_NUM; i++) {
         kmalloc_caches[i] = slab_cache_create(names[i], size, 0, 0, NULL, NULL);
         size <<= 1;
     }

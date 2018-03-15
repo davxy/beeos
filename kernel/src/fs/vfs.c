@@ -31,14 +31,12 @@
 #include "kprintf.h"
 #endif
 
+#define FS_LIST_LEN 2
 
-static struct vfs_type fs_list[] = {
+static struct vfs_type fs_list[FS_LIST_LEN] = {
     { "ext2", ext2_super_create },
     { "dev",  devfs_super_create }
 };
-
-#define FS_LIST_LEN (sizeof(fs_list)/sizeof(fs_list[0]))
-
 
 
 void super_init(struct super_block *sb, dev_t dev, struct dentry *root,
