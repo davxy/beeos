@@ -119,7 +119,7 @@ static inline void list_merge(struct list_link *list1, struct list_link *list2)
  * @member: the name of the list_link within the struct.
  */
 #define list_container_const(link, type, member) \
-    ((const type *) ((const char *)(link) - offsetof(type, member)))
+    ((const type *) ((const char *)(link) - offsetof(const type, member)))
 
 
 #endif /* BEEOS_LIST_H_ */

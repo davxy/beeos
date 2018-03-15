@@ -49,7 +49,7 @@ void page_dir_del(uint32_t phys);
  *              physical frame is allocated for us by the function.
  * @return      Page physical memory address.
  */
-uint32_t page_map(const void *virt, uint32_t phys);
+uint32_t page_map(void *virt, uint32_t phys);
 
 /**
  * Unmaps a virtual memory address.
@@ -59,7 +59,7 @@ uint32_t page_map(const void *virt, uint32_t phys);
  *                  is retained and returned to the user.
  * @return          Page physical address, valid only if retained.
  */
-uint32_t page_unmap(const void *virt, int retain);
+uint32_t page_unmap(void *virt, int retain);
 
 /**
  * Switch current page directory.
