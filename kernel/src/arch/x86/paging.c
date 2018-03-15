@@ -79,7 +79,7 @@
 /*
  * Maps a page virtual memory address to a physical memory address.
  */
-uint32_t page_map(void *virt, uint32_t phys)
+uint32_t page_map(const void *virt, uint32_t phys)
 {
     int di = DIR_INDEX(virt);
     int ti = TAB_INDEX(virt);
@@ -134,7 +134,7 @@ uint32_t page_map(void *virt, uint32_t phys)
 /*
  * Unmap a virtual memory address.
  */
-uint32_t page_unmap(void *virt, int retain)
+uint32_t page_unmap(const void *virt, int retain)
 {
     int i;
     int di = DIR_INDEX(virt);
