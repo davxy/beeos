@@ -45,7 +45,7 @@ int sys_open(const char *pathname, int flags, mode_t mode)
     }
 
     for (fdn = 0; fdn < OPEN_MAX; fdn++)
-        if (current_task->fds[fdn].fil == NULL)
+        if (current->fds[fdn].fil == NULL)
             break;
     if (fdn == OPEN_MAX)
         return -EMFILE; /* Too many open files. */
@@ -60,8 +60,8 @@ int sys_open(const char *pathname, int flags, mode_t mode)
     fil->flags = flags & ~O_CLOEXEC;
     fil->dent = dent;
 
-    current_task->fds[fdn].fil = fil;
-    current_task->fds[fdn].flags = flags & O_CLOEXEC;
+    current->fds[fdn].fil = fil;
+    current->fds[fdn].flags = flags & O_CLOEXEC;
 
     return fdn;
 }

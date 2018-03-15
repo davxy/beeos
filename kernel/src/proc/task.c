@@ -49,33 +49,33 @@ int task_init(struct task *tsk, task_entry_t entry)
 
     /* pids */
     tsk->pid = next_pid++;
-    tsk->pgid = current_task->pgid;
-    tsk->pptr = current_task;
+    tsk->pgid = current->pgid;
+    tsk->pptr = current;
 
     /* user and group */
-    tsk->uid = current_task->uid;
-    tsk->euid = current_task->euid;
-    tsk->suid = current_task->suid;
-    tsk->gid = current_task->gid;
-    tsk->egid = current_task->egid;
-    tsk->sgid = current_task->sgid;
+    tsk->uid = current->uid;
+    tsk->euid = current->euid;
+    tsk->suid = current->suid;
+    tsk->gid = current->gid;
+    tsk->egid = current->egid;
+    tsk->sgid = current->sgid;
 
     /* file system */
-    tsk->cwd = ddup(current_task->cwd);
-    tsk->root = ddup(current_task->root);
+    tsk->cwd = ddup(current->cwd);
+    tsk->root = ddup(current->root);
 
     /* duplicate valid file descriptors */
     memset(tsk->fds, 0, sizeof(tsk->fds));
     for (i = 0; i < OPEN_MAX; i++)
     {
-        if (current_task->fds[i].fil != NULL) {
-            tsk->fds[i] = current_task->fds[i];
+        if (current->fds[i].fil != NULL) {
+            tsk->fds[i] = current->fds[i];
             tsk->fds[i].fil->ref++;
         }
     }
 
     /* memory */
-    tsk->brk = current_task->brk;
+    tsk->brk = current->brk;
 
     /* sheduler */
     tsk->state = TASK_RUNNING;
@@ -87,11 +87,11 @@ int task_init(struct task *tsk, task_entry_t entry)
     list_init(&tsk->sibling);
 
     /* Add to the global tasks list */
-    list_insert_before(&current_task->tasks, &tsk->tasks);
+    list_insert_before(&current->tasks, &tsk->tasks);
 
-    sib = list_container(current_task->children.next, struct task, children);
-    if (list_empty(&current_task->children) || sib->pptr != current_task)
-        list_insert_after(&current_task->children, &tsk->children);
+    sib = list_container(current->children.next, struct task, children);
+    if (list_empty(&current->children) || sib->pptr != current)
+        list_insert_after(&current->children, &tsk->children);
     else
         list_insert_before(&sib->sibling, &tsk->sibling);
 
@@ -100,7 +100,7 @@ int task_init(struct task *tsk, task_entry_t entry)
     /* signals */
     (void)sigemptyset(&tsk->sigpend);
     (void)sigemptyset(&tsk->sigmask);
-    memcpy(tsk->signals, current_task->signals, sizeof(tsk->signals));
+    memcpy(tsk->signals, current->signals, sizeof(tsk->signals));
 
     /* Timers events */
     list_init(&tsk->timers);

@@ -31,7 +31,7 @@ char *sys_getcwd(char *buf, size_t size)
     if (buf == NULL)
         return (char *)-EINVAL;
 
-    if ((res = dentry_path(current_task->cwd, buf, size)) < 0)
+    if ((res = dentry_path(current->cwd, buf, size)) < 0)
         return (char *)res;
 
     return buf;

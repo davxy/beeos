@@ -25,7 +25,7 @@
 /* Default process timeslice (milliseconds) */
 #define SCHED_TIMESLICE     100
 
-extern struct task *current_task;
+extern struct task *current;
 extern struct task ktask;
 
 extern int need_resched;

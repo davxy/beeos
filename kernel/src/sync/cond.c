@@ -29,8 +29,8 @@ void cond_init(struct cond *cv)
 
 void cond_wait(struct cond *cv)
 {
-    list_insert_before(&cv->queue, &current_task->condw);
-    current_task->state = TASK_SLEEPING;
+    list_insert_before(&cv->queue, &current->condw);
+    current->state = TASK_SLEEPING;
 
     spinlock_unlock(&cv->lock);
     scheduler();

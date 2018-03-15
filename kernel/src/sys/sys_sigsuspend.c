@@ -30,13 +30,13 @@ int sys_sigsuspend(const sigset_t *mask)
 
     (void)sys_sigprocmask(SIG_SETMASK, mask, &omask);
 
-    current_task->arch.ifr->eax = -EINTR;
+    current->arch.ifr->eax = -EINTR;
     /*
      * Before re-establish the old mask we must first eventually process
      * pending signals using the current mask
      */
     while (do_signal() < 0) {
-        current_task->state = TASK_SLEEPING;
+        current->state = TASK_SLEEPING;
         scheduler(); /* Release the CPU */
     }
     (void)sys_sigprocmask(SIG_SETMASK, &omask, NULL);

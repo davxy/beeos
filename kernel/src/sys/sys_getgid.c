@@ -23,5 +23,5 @@
 
 gid_t sys_getgid(void)
 {
-    return current_task->gid;
+    return current->gid;
 }

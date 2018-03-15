@@ -23,7 +23,7 @@
 
 int sys_sigprocmask(int how, const sigset_t *set, sigset_t *oset)
 {
-    struct task *cur = current_task;
+    struct task *cur = current;
 
     if (oset != NULL)
         memcpy(oset, &cur->sigmask, sizeof(sigset_t));

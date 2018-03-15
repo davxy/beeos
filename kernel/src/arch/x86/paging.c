@@ -288,14 +288,14 @@ static void map_propagate(int idx)
     uint32_t *dir_src, *dir_dst;
     const struct task *other;
 
-    other = list_container(current_task->tasks.next, struct task, tasks);
+    other = list_container(current->tasks.next, struct task, tasks);
     /*
      * The non-current process page dir is mapped just below the
      * current process page directory.
      */
     dir_src = (uint32_t *)PAGE_DIR_MAP;
     dir_dst = (uint32_t *)(PAGE_TAB_MAP + (1022 * 4096));
-    while (other != current_task) {
+    while (other != current) {
         dir_src[1022] = other->arch.pgdir | PTE_W | PTE_P;
         dir_dst[idx] = dir_src[idx];
         flush_tlb();
@@ -328,10 +328,10 @@ static void page_fault_handler(void)
     fault_addr_get(virt);
 
 #ifdef DEBUG_PAGING
-    kprintf("pid: %d\n", current_task->pid);
-    kprintf("page fault at 0x%x\n", current_task->arch.ifr->eip);
+    kprintf("pid: %d\n", current->pid);
+    kprintf("page fault at 0x%x\n", current->arch.ifr->eip);
     kprintf("faulting address 0x%x\n", virt);
-    kprintf("error code: %x\n", current_task->arch.ifr->err_no);
+    kprintf("error code: %x\n", current->arch.ifr->err_no);
 #endif
 
     if (virt < KVBASE) {

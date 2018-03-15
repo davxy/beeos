@@ -26,7 +26,7 @@
 void *sys_sbrk(intptr_t incr)
 {
     uintptr_t addr;
-    addr = current_task->brk;
-    current_task->brk += incr;
+    addr = current->brk;
+    current->brk += incr;
     return (void *)addr;
 }

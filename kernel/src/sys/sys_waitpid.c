@@ -32,16 +32,16 @@ pid_t sys_waitpid(pid_t pid, int *wstatus, int options)
     int havekids;
     int retry;
 
-    spinlock_lock(&current_task->chld_exit.lock);
+    spinlock_lock(&current->chld_exit.lock);
 
     do {
         retry = 0;
         havekids = 0;
 
-        t = struct_ptr(current_task->tasks.next, struct task, tasks);
-        while (t != current_task)
+        t = struct_ptr(current->tasks.next, struct task, tasks);
+        while (t != current)
         {
-            if (t->pptr == current_task
+            if (t->pptr == current
                 && (pid == t->pid || pid == -1))
             {
                 havekids = 1;
@@ -62,7 +62,7 @@ pid_t sys_waitpid(pid_t pid, int *wstatus, int options)
             t = struct_ptr(t->tasks.next, struct task, tasks);
         }
 
-        if (t == current_task)
+        if (t == current)
         {
             /* We've not found any terminated children */
             if (havekids != 0)
@@ -71,7 +71,7 @@ pid_t sys_waitpid(pid_t pid, int *wstatus, int options)
                 if ((options & WNOHANG) == 0)
                 {
                     /* WNOHANG flag not specified, wait for a child */
-                    cond_wait(&current_task->chld_exit);
+                    cond_wait(&current->chld_exit);
                     retry = 1;
                 }
                 else
@@ -86,7 +86,7 @@ pid_t sys_waitpid(pid_t pid, int *wstatus, int options)
         }
     } while (retry != 0);
 
-    spinlock_unlock(&current_task->chld_exit.lock);
+    spinlock_unlock(&current->chld_exit.lock);
 
     return pid;
 }

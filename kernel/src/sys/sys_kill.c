@@ -40,7 +40,7 @@ int sys_kill(pid_t pid, int sig)
     if (sig <= 0 || sig > SIGUNUSED)
         return -EINVAL;
 
-    t = current_task;
+    t = current;
     do {
         if (t->pid == pid) {
             /* TODO: check for permissions */
@@ -51,7 +51,7 @@ int sys_kill(pid_t pid, int sig)
             break;
         }
         t = struct_ptr(t->tasks.next, struct task, tasks);
-    } while (t != current_task);
+    } while (t != current);
 
     return 0;
 }

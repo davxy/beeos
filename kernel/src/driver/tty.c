@@ -63,7 +63,7 @@ struct tty_st *tty_lookup(dev_t dev)
 
     if (dev == DEV_TTY) {
         for (i = 0; i < TTYS_TOTAL; i++) {
-            if (current_task->pgid == tty_table[i].pgrp) {
+            if (current->pgid == tty_table[i].pgrp) {
                 tty = &tty_table[i];
                 break;
             }
@@ -80,7 +80,7 @@ struct tty_st *tty_lookup(dev_t dev)
 dev_t tty_get(void)
 {
     int i;
-    pid_t curr_pgid = current_task->pgid;
+    pid_t curr_pgid = current->pgid;
     dev_t dev = (dev_t)-1;
 
     for (i = 0; i < TTYS_TOTAL; i++) {

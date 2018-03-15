@@ -44,8 +44,8 @@ void isr_handler(struct isr_frame *ifr)
      * Thus if, after isr handling, we return back to the kernel
      * we have the correct 'ifr' value within the current_task struct.
      */
-    previfr = current_task->arch.ifr;
-    current_task->arch.ifr = ifr;
+    previfr = current->arch.ifr;
+    current->arch.ifr = ifr;
     
     num = ifr->int_no;
     if (num == ISR_SYSCALL)
@@ -71,12 +71,12 @@ void isr_handler(struct isr_frame *ifr)
      * Do not handle nested signals (sfr should be null) and
      * handle signals only before return to user code (CS check).
      */
-    if (!sigisemptyset(&current_task->sigpend) &&
-            current_task->arch.sfr == NULL && (ifr->cs & 0x3) == 0x3)
+    if (!sigisemptyset(&current->sigpend) &&
+            current->arch.sfr == NULL && (ifr->cs & 0x3) == 0x3)
         (void)do_signal();
 
     /* Eventually restore the previous ifr */
-    current_task->arch.ifr = previfr;
+    current->arch.ifr = previfr;
 }
 
 /*
@@ -100,12 +100,12 @@ void isr_register_handler(unsigned int num, isr_handler_t func)
 
 static void divide_error(void)
 {
-    task_signal(current_task, SIGFPE);
+    task_signal(current, SIGFPE);
 }
 
 static void invalid_opcode(void)
 {
-    task_signal(current_task, SIGILL);
+    task_signal(current, SIGILL);
 }
 
 void isr_init(void)

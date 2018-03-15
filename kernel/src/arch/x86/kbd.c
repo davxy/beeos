@@ -257,7 +257,7 @@ static int scan_key(void)
 
 static void kill_tty_group(void)
 {
-    struct task *t = current_task;
+    struct task *t = current;
     pid_t pgid;
 
     pgid = sys_tcgetpgrp(0);
@@ -265,7 +265,7 @@ static void kill_tty_group(void)
         if (t->pgid == pgid)
             task_signal(t, SIGINT);
         t = list_container(t->tasks.next, struct task, tasks);
-    } while (t != current_task);
+    } while (t != current);
 }
 
 /*

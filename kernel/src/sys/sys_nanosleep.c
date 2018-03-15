@@ -41,14 +41,14 @@ int sys_nanosleep(const struct timespec *req, struct timespec *rem)
     if (req->tv_sec < 0 || req->tv_nsec < 0 || req->tv_nsec > 999999999)
         return -EINVAL;
 
-    current_task->state = TASK_SLEEPING;
+    current->state = TASK_SLEEPING;
 
     ms = req->tv_sec * 1000 + req->tv_nsec / 1000000;
     when = (time_t)timer_ticks + msecs_to_ticks(ms);
-    timer_event_init(&tm, sleep_timer_handler, current_task, when);
+    timer_event_init(&tm, sleep_timer_handler, current, when);
 
     /* Do this after the timer initialization but before queue insertion */
-    list_insert_before(&current_task->timers, &tm.plink);
+    list_insert_before(&current->timers, &tm.plink);
 
     timer_event_add(&tm);
 

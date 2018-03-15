@@ -319,7 +319,7 @@ struct dentry *dget(struct dentry *dir, const char *name)
 static int dentry_can_delete(const struct dentry *dent)
 {
     int res = 1;
-    struct dentry *curr = current_task->cwd;
+    struct dentry *curr = current->cwd;
 
     while (curr->parent != curr) {
         if (curr == dent) {
@@ -428,7 +428,7 @@ struct dentry *named(const char *path)
     if (path == NULL || *path == '\0')
         return NULL;
 
-    dent = (*path == '/') ? current_task->root : current_task->cwd;
+    dent = (*path == '/') ? current->root : current->cwd;
     ddup(dent);
 
     while ((path = skipelem(path, name)) != NULL)

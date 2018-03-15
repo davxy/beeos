@@ -23,5 +23,5 @@
 
 pid_t sys_getpid(void)
 {
-    return current_task->pid;
+    return current->pid;
 }

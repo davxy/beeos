@@ -42,16 +42,16 @@ int sys_setpgid(pid_t pid, pid_t pgid)
     if (pgid < 0)
         return -EINVAL;
     if (pid == 0)
-        pid = current_task->pid;
+        pid = current->pid;
     if (pgid == 0)
         pgid = pid;
 
-    if (pid != current_task->pid) {
+    if (pid != current->pid) {
         struct task *child, *sib;
 
-        child = list_container(current_task->children.next, struct task,
+        child = list_container(current->children.next, struct task,
                                children);
-        if (child->pptr != current_task)
+        if (child->pptr != current)
             return -ESRCH; /* Wrap around... */
 
         sib = child;
@@ -65,7 +65,7 @@ int sys_setpgid(pid_t pid, pid_t pgid)
         if (t == NULL)
             return -ESRCH;
     } else {
-        t = current_task;
+        t = current;
     }
     t->pgid = pgid;
     return 0;

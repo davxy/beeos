@@ -26,10 +26,10 @@ int sys_fstat(int fd, struct stat *buf)
 {
     const struct inode *inod;
 
-    if (current_task->fds[fd].fil == NULL)
+    if (current->fds[fd].fil == NULL)
         return -EBADF;  /* Bad file descriptor */
 
-    inod = current_task->fds[fd].fil->dent->inod;
+    inod = current->fds[fd].fil->dent->inod;
     if (inod == NULL)
         return -ENOENT;
 
