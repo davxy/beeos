@@ -426,8 +426,7 @@ struct dentry *named(const char *path)
     if (path == NULL || *path == '\0')
         return NULL;
 
-    dent = (*path == '/') ? current->root : current->cwd;
-    ddup(dent);
+    dent = ddup((*path == '/') ? current->root : current->cwd);
 
     while ((path = skipelem(path, name)) != NULL)
     {
