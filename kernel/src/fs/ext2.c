@@ -52,7 +52,7 @@ static struct ext2_disk_super_block dsb;
 static uint32_t gd_block;
 
 
-static int offset_to_block(off_t offset, const struct ext2_inode *inod,
+static int offset_to_block(size_t offset, const struct ext2_inode *inod,
                            const struct ext2_super_block *sb)
 {
     uint32_t triple_block, double_block, indirect_block, block;
@@ -96,12 +96,12 @@ static int offset_to_block(off_t offset, const struct ext2_inode *inod,
 }
 
 static ssize_t ext2_read(struct ext2_inode *inod, void *buf,
-                         size_t count, off_t off)
+                         size_t count, size_t off)
 {
     const struct ext2_super_block *sb;
     int left;
     int block;
-    off_t ext2_off, block_off, file_off;
+    size_t ext2_off, block_off, file_off;
     ssize_t n;
 
     sb = (struct ext2_super_block *)inod->base.sb;

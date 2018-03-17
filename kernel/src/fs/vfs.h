@@ -97,10 +97,10 @@ struct inode {
 };
 
 typedef int (* inode_read_t)(struct inode *inode, void *buf,
-                             size_t count, off_t off);
+                             size_t count, size_t off);
 
 typedef int (* inode_write_t)(struct inode *inode, const void *buf,
-                              size_t count, off_t off);
+                              size_t count, size_t off);
 
 typedef int (* inode_mknod_t)(struct inode *idir, mode_t mode, dev_t dev);
 
@@ -142,7 +142,7 @@ struct file {
     int            flags;   /**< File status flags and access modes. */
     int            ref;     /**< Reference counter. */
     mode_t         mode;    /**< File mode when a new file is created */
-    off_t          off;     /**< File position. */
+    size_t         off;     /**< File position. */
     struct dentry *dent;    /**< Dentry reference. */
 };
 
@@ -189,7 +189,7 @@ static inline int vfs_mknod(struct inode *idir, mode_t mode, dev_t dev)
 }
 
 static inline ssize_t vfs_read(struct inode *node, void *buf,
-        size_t count, off_t offset)
+        size_t count, size_t offset)
 {
     int ret = -1;
 
@@ -199,7 +199,7 @@ static inline ssize_t vfs_read(struct inode *node, void *buf,
 }
 
 static inline ssize_t vfs_write(struct inode *node, const void *buf,
-        size_t count, off_t offset)
+        size_t count, size_t offset)
 {
     int ret = -1;
 

@@ -62,7 +62,7 @@ struct pipe_inode
  * Normally, however, there is a single reader and a single writer for a pipe.
  */
 static int pipe_read(struct inode *inod, void *buf,
-        size_t count, off_t offset)
+        size_t count, size_t off)
 {
     int n, left;
     char *ptr = (char *)buf;
@@ -121,7 +121,7 @@ done:
  * the signal handler, write returns -1 with errno set to EPIPE.
  */
 static int pipe_write(struct inode *inod, const void *buf,
-                      size_t count, off_t offset)
+                      size_t count, size_t off)
 {
     size_t n, left;
     const char *ptr = (const char *)buf;

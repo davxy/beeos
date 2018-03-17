@@ -25,9 +25,9 @@
 
 void ramdisk_init(void *addr, size_t size);
 
-ssize_t ramdisk_read(void *buf, size_t size, off_t off);
+ssize_t ramdisk_read(void *buf, size_t size, size_t off);
 
-ssize_t ramdisk_write(const void *buf, size_t size, off_t off);
+ssize_t ramdisk_write(const void *buf, size_t size, size_t off);
 
 
 #endif /* BEEOS_DRIVER_RAMDISK_H_ */

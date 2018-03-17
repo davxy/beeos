@@ -42,7 +42,7 @@ static int devfs_ino = 0;
 
 
 static ssize_t devfs_inode_read(struct inode *inod, void *buf,
-                                size_t count, off_t off)
+                                size_t count, size_t off)
 {
     ssize_t n;
     dev_t rdev = inod->rdev;
@@ -87,7 +87,7 @@ static ssize_t devfs_inode_read(struct inode *inod, void *buf,
 
 
 static ssize_t devfs_inode_write(struct inode *inod, const void *buf,
-                                 size_t count, off_t off)
+                                 size_t count, size_t off)
 {
     ssize_t n;
     dev_t rdev = inod->rdev;
@@ -252,7 +252,7 @@ static struct inode *dev_to_inode(dev_t dev)
     return (struct inode *)inod;
 }
 
-ssize_t devfs_read(dev_t dev, void *buf, size_t size, off_t off)
+ssize_t devfs_read(dev_t dev, void *buf, size_t size, size_t off)
 {
     ssize_t n = -1;
     struct inode *inod;
@@ -263,7 +263,7 @@ ssize_t devfs_read(dev_t dev, void *buf, size_t size, off_t off)
     return n;
 }
 
-ssize_t devfs_write(dev_t dev, const void *buf, size_t size, off_t off)
+ssize_t devfs_write(dev_t dev, const void *buf, size_t size, size_t off)
 {
     ssize_t n = -1;
     struct inode *inod;
