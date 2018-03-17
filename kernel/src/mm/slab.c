@@ -27,12 +27,14 @@
 #include <stdint.h>
 #include <string.h>
 #include "arch/x86/vmem.h"
+#include "arch/x86/paging_bits.h"
+
 
 /* Memory alignment */
 #define ALIGN_VALUE         sizeof(void *)
 
 #define SLAB_UNIT_BITS      12
-#define SLAB_UNIT_SIZE      4096    /* MUST be a multiple of page size */
+#define SLAB_UNIT_SIZE      PAGE_SIZE   /* MUST be a multiple of page size */
 
 /* Small slabs size limit */
 #define SLAB_SMALL_MAX      (SLAB_UNIT_SIZE >> 3)
@@ -190,7 +192,7 @@ static void slab_space_free(struct slabctl* slab, size_t size)
     if ((cache->flags & SLAB_EMBED_SLABCTL) == 0)
         slab_cache_free(slab_slabctl_cache, slab);
 
-    order = size >> (1+SLAB_UNIT_BITS);
+    order = size >> (1 + SLAB_UNIT_BITS);
     frame_free(virt_to_phys(data), order);
 }
 

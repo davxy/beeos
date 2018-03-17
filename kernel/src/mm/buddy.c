@@ -30,7 +30,7 @@
  * This function toggles the bit corresponding to the couple
  * and returns the modified bit value.
  */
-static int toggle_bit(const struct buddy_sys *ctx, int block_idx,
+static int toggle_bit(const struct buddy_sys *ctx, unsigned int block_idx,
                       unsigned int order)
 {
     unsigned int i;
