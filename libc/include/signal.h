@@ -57,6 +57,8 @@
 #define SIGSYS    31
 #define SIGUNUSED SIGSYS
 
+#define NSIG      (SIGUNUSED + 1)
+
 typedef int sig_atomic_t;
 
 typedef void (*sighandler_t)(int);
@@ -65,18 +67,23 @@ typedef void (*sighandler_t)(int);
 #define SIG_DFL ((sighandler_t) 0)
 #define SIG_IGN ((sighandler_t) 1)
 
-typedef long sigset_t;
+typedef unsigned long sigset_t;
 
 #define sigemptyset(set) \
-    (*(set) = 0, 0)
+    (*(set) = 0)
+
 #define sigfillset(set) \
-    ((*(set) = ~0), 0)
+    ((*(set) = ~(sigset_t)0), 0)
+
 #define sigaddset(set, n) \
-    ((0 < (n) && (n) < SIGUNUSED) ? ((*(set) |= (1 << (n))), 0) : -1)
+    ((0 < (n) && (n) < NSIG) ? ((*(set) |= (1 << (n))), 0) : -1)
+
 #define sigdelset(set, n) \
-    ((0 < (n) && (n) < SIGUNUSED) ? ((*(set) &= ~(1 << (n))), 0) : -1)
+    ((0 < (n) && (n) < NSIG) ? ((*(set) &= ~(1 << (n))), 0) : -1)
+
 #define sigismember(set, n) \
-    ((0 < (n) && (n) < SIGUNUSED) ? ((*(set) & (1 << (n))) ? 1 : 0) : -1)
+    ((0 < (n) && (n) < NSIG) ? ((*(set) & (1 << (n))) ? 1 : 0) : -1)
+
 #define sigisemptyset(set) \
     (*(set) == 0)
 

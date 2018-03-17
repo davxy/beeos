@@ -25,10 +25,12 @@ int sys_sigsuspend(const sigset_t *mask)
 {
     sigset_t omask;
 
-    if (!mask)
+    if (mask == NULL)
         return -EFAULT;
 
-    (void)sys_sigprocmask(SIG_SETMASK, mask, &omask);
+    /* Set the new mask saving the old one */
+    memcpy(&omask, &current->sigmask, sizeof(sigset_t));
+    memcpy(&current->sigmask, mask, sizeof(sigset_t));
 
     current->arch.ifr->eax = -EINTR;
     /*
@@ -39,8 +41,9 @@ int sys_sigsuspend(const sigset_t *mask)
         current->state = TASK_SLEEPING;
         scheduler(); /* Release the CPU */
     }
-    (void)sys_sigprocmask(SIG_SETMASK, &omask, NULL);
 
+    /* Restore old mask */
+    memcpy(&current->sigmask, &omask, sizeof(sigset_t));
     return 0;
 }
 

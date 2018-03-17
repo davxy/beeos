@@ -98,8 +98,8 @@ int task_init(struct task *tsk, task_entry_t entry)
     cond_init(&tsk->chld_exit);
 
     /* signals */
-    (void)sigemptyset(&tsk->sigpend);
-    (void)sigemptyset(&tsk->sigmask);
+    sigemptyset(&tsk->sigpend);
+    sigemptyset(&tsk->sigmask);
     memcpy(tsk->signals, current->signals, sizeof(tsk->signals));
 
     /* Timers events */

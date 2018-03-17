@@ -140,8 +140,8 @@ void scheduler_init(void)
     if (task_arch_init(&ktask.arch, NULL) < 0)
         panic("Task 0 init failure");
 
-    (void)sigemptyset(&ktask.sigmask);
-    (void)sigemptyset(&ktask.sigpend);
+    sigemptyset(&ktask.sigmask);
+    sigemptyset(&ktask.sigpend);
     for (i = 0; i < SIGNALS_NUM; i++)
     {
         memset(&ktask.signals[i], 0, sizeof(struct sigaction));
