@@ -26,7 +26,7 @@
 /* List of all the registered zones */
 static struct zone_st *zone_list;
 
-void *frame_alloc(unsigned int order, int flags)
+void *frame_alloc(unsigned int order, unsigned int flags)
 {
     void *ptr = NULL;
     const struct zone_st *zone;

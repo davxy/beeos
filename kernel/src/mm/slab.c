@@ -51,9 +51,9 @@
     ((char *)(bctl) + sizeof(struct bufctl *) - (objsz))
 
 /* Flags */
-#define SLAB_EMBED_BUFCTL       (1 << 0)    /* bufctl is at buf end */
-#define SLAB_EMBED_SLABCTL      (1 << 1)    /* slabctl is at slab end */
-#define SLAB_OPTIMIZE           (1 << 2)
+#define SLAB_EMBED_BUFCTL       0x01    /* bufctl is at buf end */
+#define SLAB_EMBED_SLABCTL      0x02    /* slabctl is at slab end */
+#define SLAB_OPTIMIZE           0x04    /* Optimize slab allocation */
 
 /*
  * The bufctl (buffer control) structure keeps some minimal information
@@ -206,7 +206,7 @@ static struct slabctl *slab_space_alloc(struct slab_cache *cache, int flags)
     void *data;
     unsigned int order;
 
-    size = ALIGN_UP(cache->slab_objs*cache->objsize, SLAB_UNIT_SIZE);
+    size = ALIGN_UP(cache->slab_objs * cache->objsize, SLAB_UNIT_SIZE);
     order = size >> (1+SLAB_UNIT_BITS);
     data = frame_alloc(order, ZONE_LOW);
     if (data == NULL)

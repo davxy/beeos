@@ -120,12 +120,12 @@ struct inode_ops {
 
 struct dentry {
     char              name[NAME_MAX];  /**< Name */
-    int               ref;             /**< Reference counter */
-    struct inode     *inod;          /**< Inode */
+    unsigned int      ref;             /**< Reference counter */
+    struct inode     *inod;            /**< Inode */
     struct dentry    *parent;          /**< Parent directory */
     struct list_link  child;           /**< Children list (if is a dir) */
     struct list_link  link;            /**< Siblings link */
-    int               mounted;         /**< Set to 1 if is a mount point */
+    unsigned char     mounted;         /**< Set to 1 if is a mount point */
     const struct dentry_ops *ops;      /**< Dentry vfs operations */
 };
 
@@ -139,16 +139,16 @@ struct dentry_ops {
 
 
 struct file {
-    int            flags;   /**< File status flags and access modes. */
-    int            ref;     /**< Reference counter. */
+    unsigned int   flags;   /**< File status flags and access modes. */
+    unsigned int   ref;     /**< Reference counter. */
     mode_t         mode;    /**< File mode when a new file is created */
     size_t         off;     /**< File position. */
     struct dentry *dent;    /**< Dentry reference. */
 };
 
 struct filedesc {
-    int          flags;  /**< File descriptor flags, currently FD_CLOEXEC. */
-    struct file *fil;    /**< Pointer to the file table. */
+    unsigned int    flags; /**< File descriptor flags, currently FD_CLOEXEC. */
+    struct file     *fil;  /**< Pointer to the file table. */
 };
 
 struct vfsmount {

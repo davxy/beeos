@@ -57,11 +57,11 @@ int sys_open(const char *pathname, int flags, mode_t mode)
     fil->ref = 1;
     fil->off = 0;
     fil->mode = mode;
-    fil->flags = flags & ~O_CLOEXEC;
+    fil->flags = (unsigned int)flags & ~O_CLOEXEC;
     fil->dent = dent;
 
     current->fds[fdn].fil = fil;
-    current->fds[fdn].flags = flags & O_CLOEXEC;
+    current->fds[fdn].flags = (unsigned int)flags & O_CLOEXEC;
 
     return fdn;
 }
