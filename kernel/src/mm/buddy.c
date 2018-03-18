@@ -124,6 +124,13 @@ int buddy_init(struct buddy_sys *ctx, unsigned int frames_num,
 {
     unsigned int i;
     unsigned int count;
+    unsigned int order_max;
+    unsigned int order_bit;
+
+    order_bit = fnzb(frame_size);
+    order_max = fnzb(frames_num);
+    if (order_bit + order_max >= 8 * sizeof(size_t))
+        return -1;  /* Impossible value... */
 
     /*
      * Create the frames list
@@ -142,8 +149,8 @@ int buddy_init(struct buddy_sys *ctx, unsigned int frames_num,
      * Initialize the free frames table
      */
 
-    ctx->order_bit = fnzb(frame_size);
-    ctx->order_max = fnzb(frames_num);
+    ctx->order_bit = order_bit;
+    ctx->order_max = order_max;
     ctx->free_area = (struct free_list *)kmalloc(sizeof(struct free_list) *
                                                 (ctx->order_max+1), 0);
     if (ctx->free_area == NULL)

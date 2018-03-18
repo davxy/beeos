@@ -61,10 +61,16 @@ static int offset_to_block(size_t offset, const struct ext2_inode *inod,
     uint32_t shift;
 
     shift = 10 + sb->log_block_size;
+    if (shift >= 8 * sizeof(size_t))
+        return -1;
 
     /* Is direct? */
-    if (offset < EXT2_NDIR_BLOCKS*sb->block_size)
-        return inod->blocks[offset >> shift];
+    if (offset < EXT2_NDIR_BLOCKS * sb->block_size) {
+        ind = offset >> shift;
+        if (ind >= sizeof(inod->blocks)/sizeof(inod->blocks[0]))
+            return -1;
+        return inod->blocks[ind];
+    }
 
     buf = (uint32_t *)kmalloc(sb->block_size, 0);
 

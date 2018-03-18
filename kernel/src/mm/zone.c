@@ -58,7 +58,7 @@ int zone_init(struct zone_st *ctx, void *addr, size_t size,
     ctx->frame_size = frame_size;
     ctx->flags = flags;
     ctx->next = NULL;
-    return buddy_init(&ctx->buddy, size/frame_size, frame_size);
+    return buddy_init(&ctx->buddy, size / frame_size, frame_size);
 }
 
 void zone_dump(const struct zone_st *ctx)

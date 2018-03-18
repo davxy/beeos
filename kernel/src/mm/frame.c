@@ -41,15 +41,17 @@ void *frame_alloc(unsigned int order, unsigned int flags)
     return ptr;
 }
 
+
 void frame_free(void *ptr, unsigned int order)
 {
     const struct zone_st *zone;
 
-    if (!ptr)
+    if (ptr == NULL)
         return;
     for (zone = zone_list; zone != NULL; zone = zone->next) {
-        if (iswithin((uintptr_t)zone->addr, zone->size,
-                     (uintptr_t)ptr, 4096<<order) != 0) {
+        if (order <= zone->buddy.order_max &&
+            iswithin((uintptr_t)zone->addr, zone->size, (uintptr_t)ptr,
+                     (size_t)1 << (order + zone->buddy.order_bit)) != 0) {
             zone_free(zone, ptr, order);
             break;
         }
