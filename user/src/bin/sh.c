@@ -106,10 +106,10 @@ static int execute(int argc, char *argv[])
             printf("sh: cd: %s\n", strerror(errno));
     } else {
         /* Block SIGCHLD */
-        (void)sigemptyset(&zeromask);
-        (void)sigemptyset(&newmask);
-        (void)sigaddset(&newmask, SIGCHLD);
-        (void)sigprocmask(SIG_BLOCK, &newmask, &oldmask);
+        sigemptyset(&zeromask);
+        sigemptyset(&newmask);
+        sigaddset(&newmask, SIGCHLD);
+        sigprocmask(SIG_BLOCK, &newmask, &oldmask);
 
         if (argc > 1 && *argv[argc-1] == '&') {
             /* Background job */
@@ -119,6 +119,7 @@ static int execute(int argc, char *argv[])
 
         fgterm = 0;
 
+        /* Get the previous terminal process group */
         pgrp = tcgetpgrp(STDOUT_FILENO);
 
         fgpid = pid = fork();
@@ -137,6 +138,7 @@ static int execute(int argc, char *argv[])
                     }
                     exit(status);
                 } else if (!bg) {
+                    /* Set process group of controlling terminal */
                     tcsetpgrp(STDOUT_FILENO, pid);
                     while (!fgterm)
                         sigsuspend(&zeromask);
@@ -206,12 +208,11 @@ int main(int argc, char *argv[])
     sigset_t mask;
 
     setpgid(0, 0);
-    //tcsetpgrp(STDOUT_FILENO, getpid());
-    
+
     /* Be sure that SIGCHLD is unblocked */
-    (void)sigemptyset(&mask);
-    (void)sigaddset(&mask, SIGCHLD);
-    (void)sigprocmask(SIG_UNBLOCK, &mask, NULL);
+    sigemptyset(&mask);
+    sigaddset(&mask, SIGCHLD);
+    sigprocmask(SIG_UNBLOCK, &mask, NULL);
 
     if (signal(SIGCHLD, sigchld) < 0)
         perror("signal");

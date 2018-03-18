@@ -42,7 +42,7 @@ struct tty_st *tty_lookup(dev_t dev)
 
     if (dev == DEV_TTY) {
         for (i = 0; i < TTYS_TOTAL; i++) {
-            if (current->pgid == tty_table[i].pgrp) {
+            if (current->tty == tty_table[i].dev) {
                 tty = &tty_table[i];
                 break;
             }

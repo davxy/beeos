@@ -161,6 +161,9 @@ static void task_dump(const struct task *t)
     case TASK_SLEEPING:
         state = 'S';
         break;
+    case TASK_ZOMBIE:
+        state = 'Z';
+        break;
     default:
         state = 'U';
         break;
