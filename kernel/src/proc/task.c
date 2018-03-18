@@ -108,6 +108,9 @@ int task_init(struct task *tsk, task_entry_t entry)
     /* Conditional wait link */
     list_init(&tsk->condw);
 
+    /* Controlling terminal */
+    tsk->tty = current->tty;
+
     return task_arch_init(&tsk->arch, entry);
 }
 

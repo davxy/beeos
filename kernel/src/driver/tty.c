@@ -35,27 +35,6 @@ static struct screen scr_table[TTYS_TOTAL];
 static unsigned int tty_curr;
 
 
-pid_t tty_getpgrp(void)
-{
-    return tty_table[tty_curr].pgrp;
-}
-
-
-int tty_setpgrp(pid_t pgrp)
-{
-    tty_table[tty_curr].pgrp = pgrp;
-    return 0;
-}
-
-
-void tty_change(int n)
-{
-    if (n >= 0 && n < TTYS_CONSOLE) {
-        tty_curr = n;
-        scr_table[n].dirty = 1;
-    }
-}
-
 struct tty_st *tty_lookup(dev_t dev)
 {
     struct tty_st *tty = NULL;
@@ -74,6 +53,41 @@ struct tty_st *tty_lookup(dev_t dev)
             tty = &tty_table[i];
     }
     return tty;
+}
+
+
+pid_t tty_getpgrp(void)
+{
+    pid_t pgrp = -1;
+    struct tty_st *tty;
+
+    tty = tty_lookup(current->tty);
+    if (tty != NULL)
+        pgrp = tty->pgrp;
+    return pgrp;
+}
+
+
+int tty_setpgrp(pid_t pgrp)
+{
+    int res = -1;
+    struct tty_st *tty;
+
+    tty = tty_lookup(current->tty);
+    if (tty != NULL) {
+        res = 0;
+        tty->pgrp = pgrp;
+    }
+    return res;
+}
+
+
+void tty_change(int n)
+{
+    if (n >= 0 && n < TTYS_CONSOLE) {
+        tty_curr = n;
+        scr_table[n].dirty = 1;
+    }
 }
 
 

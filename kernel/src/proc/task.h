@@ -50,7 +50,7 @@ struct task
     gid_t               sgid;           /**< Saved group ID. */
     int                 state;          /**< Process state. */
     struct dentry       *cwd;           /**< Current working directory. */
-    struct dentry       *root;
+    struct dentry       *root;          /**< File system root. */
     struct filedesc     fds[OPEN_MAX];  /**< Open files. */
     struct list_link    tasks;          /**< Tasks list link. */
     struct cond         chld_exit;      /**< Child exit condition */
@@ -66,6 +66,7 @@ struct task
     struct list_link    timers;         /**< Process running timer events */
     struct timer_event  alarm;          /**< Alarm timer event (pre-allocated) */
     struct list_link    condw;          /**< Conditional wait */
+    dev_t               tty;            /**< Controlling terminal */
 };
 
 

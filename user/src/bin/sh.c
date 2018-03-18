@@ -119,6 +119,8 @@ static int execute(int argc, char *argv[])
 
         fgterm = 0;
 
+        pgrp = tcgetpgrp(STDOUT_FILENO);
+
         fgpid = pid = fork();
         if (pid >= 0) {
             /* Create process group */
@@ -135,7 +137,6 @@ static int execute(int argc, char *argv[])
                     }
                     exit(status);
                 } else if (!bg) {
-                    pgrp = tcgetpgrp(STDOUT_FILENO);
                     tcsetpgrp(STDOUT_FILENO, pid);
                     while (!fgterm)
                         sigsuspend(&zeromask);
@@ -172,14 +173,11 @@ static int interactive(void)
     if (signal(SIGCHLD, sigchld) < 0)
         perror("signal: SIGCHLD");
 
-    if (tcgetpgrp(0) != getpid()) /* Hack to check if already open by father...*/
-    {
-        fd = open("/dev/tty", O_RDWR, 0); /* stdin (fd=0) */
-        if (fd < 0)
-            return -1;
-        dup(0); /* stdout (fd=1) */
-        dup(0); /* stderr (fd=2) */
-    }
+    fd = open("/dev/tty", O_RDWR, 0); /* stdin (fd=0) */
+    if (fd < 0)
+        return -1;
+    dup(0); /* stdout (fd=1) */
+    dup(0); /* stderr (fd=2) */
 
     /* USER@HOST */
     set_prompt_values();

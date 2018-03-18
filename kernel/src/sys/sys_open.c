@@ -39,8 +39,11 @@ int sys_open(const char *pathname, int flags, mode_t mode)
     if (dent == NULL)
         return -ENOENT;
 
-    if (strcmp(pathname, "/dev/tty") == 0) {
-        if (tty_get() < 0)
+    if (current->pid == current->pgid &&
+        (flags & O_NOCTTY) == 0 &&
+        strcmp(pathname, "/dev/tty") == 0) {
+        current->tty = tty_get();
+        if (current->tty < 0)
             return -EBUSY;
     }
 
