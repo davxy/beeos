@@ -21,9 +21,6 @@
 #include "mm/slab.h"
 #include "util.h"
 
-//#define KMALLOC_MIN_W   4
-//#define KMALLOC_MAX_W   22
-
 
 #define KMALLOCS_SLABS_NUM  19
 

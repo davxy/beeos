@@ -209,7 +209,7 @@ static struct slabctl *slab_space_alloc(struct slab_cache *cache, int flags)
     unsigned int objs;
 
     size = ALIGN_UP(cache->slab_objs * cache->objsize, SLAB_UNIT_SIZE);
-    order = size >> (1+SLAB_UNIT_BITS);
+    order = size >> (1 + SLAB_UNIT_BITS);
     data = frame_alloc(order, ZONE_LOW);
     if (data == NULL)
         return NULL;
