@@ -28,6 +28,10 @@
 struct task ktask;
 struct task *current;
 
+/* arch dependent */
+void sigret_prepare(struct isr_frame *ifr,
+                    const struct sigaction *act, int sig);
+
 
 static int sigpop(sigset_t *sigpend, const sigset_t *sigmask)
 {
@@ -43,10 +47,10 @@ static int sigpop(sigset_t *sigpend, const sigset_t *sigmask)
     return sig;
 }
 
+
 int do_signal(void)
 {
     int sig;
-    uint32_t *esp;
     struct isr_frame *ifr;
     const struct sigaction *act;
 
@@ -81,12 +85,7 @@ int do_signal(void)
         memcpy(current->arch.sfr, ifr, sizeof(*ifr));
     }
 
-    /* Adjust user stack to return in the signal handler */
-    esp = (uint32_t *)ifr->usr_esp;
-    *(--esp) = sig;
-    *(--esp) = (uint32_t)act->sa_restorer;
-    ifr->usr_esp = (uint32_t)esp;
-    ifr->eip = (uint32_t)act->sa_handler;
+    sigret_prepare(ifr, act, sig);
 
     return 0;
 }
