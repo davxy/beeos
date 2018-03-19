@@ -45,9 +45,8 @@ static ssize_t devfs_inode_read(struct inode *inod, void *buf,
                                 size_t count, size_t off)
 {
     ssize_t n;
-    dev_t rdev = inod->rdev;
 
-    switch (rdev)
+    switch (inod->rdev)
     {
         case DEV_TTY:
         case DEV_TTY0:
@@ -56,7 +55,7 @@ static ssize_t devfs_inode_read(struct inode *inod, void *buf,
         case DEV_TTY3:
         case DEV_TTY4 :
         case DEV_CONSOLE:
-            n = tty_read(rdev, buf, count);
+            n = tty_read(inod->rdev, buf, count);
             break;
         case DEV_ZERO:
             memset(buf, 0, count);
@@ -90,9 +89,8 @@ static ssize_t devfs_inode_write(struct inode *inod, const void *buf,
                                  size_t count, size_t off)
 {
     ssize_t n;
-    dev_t rdev = inod->rdev;
 
-    switch (rdev)
+    switch (inod->rdev)
     {
         case DEV_TTY:
         case DEV_TTY0:
@@ -101,7 +99,7 @@ static ssize_t devfs_inode_write(struct inode *inod, const void *buf,
         case DEV_TTY3:
         case DEV_TTY4 :
         case DEV_CONSOLE:
-            n = tty_write(rdev, buf, count);
+            n = tty_write(inod->rdev, buf, count);
             break;
         case DEV_ZERO:
         case DEV_NULL:

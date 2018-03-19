@@ -52,8 +52,8 @@ static struct gdt_register  gdt_reg;
 /*
  * Initialize a single GDT entry
  */
-static void gdt_entry_init(int i, uint32_t base, uint32_t limit,
-        uint8_t flags, uint8_t access)
+static void gdt_entry_init(unsigned int i, uint32_t base, uint32_t limit,
+                           uint8_t flags, uint8_t access)
 {
    gdt_entries[i].base_lo = (base & 0xFFFF);
    gdt_entries[i].base_mi = (base >> 16) & 0xFF;

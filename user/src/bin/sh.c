@@ -108,7 +108,7 @@ static int execute(int argc, char *argv[])
         /* Block SIGCHLD */
         sigemptyset(&zeromask);
         sigemptyset(&newmask);
-        sigaddset(&newmask, SIGCHLD);
+        (void)sigaddset(&newmask, SIGCHLD);
         sigprocmask(SIG_BLOCK, &newmask, &oldmask);
 
         if (argc > 1 && *argv[argc-1] == '&') {
@@ -211,7 +211,7 @@ int main(int argc, char *argv[])
 
     /* Be sure that SIGCHLD is unblocked */
     sigemptyset(&mask);
-    sigaddset(&mask, SIGCHLD);
+    (void)sigaddset(&mask, SIGCHLD);
     sigprocmask(SIG_UNBLOCK, &mask, NULL);
 
     if (signal(SIGCHLD, sigchld) < 0)

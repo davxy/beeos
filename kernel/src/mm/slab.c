@@ -114,6 +114,7 @@ static struct bufctl *bufctl_hash_get(struct slab_cache *cache, void *obj)
 {
     struct htable_link *link;
     struct bufctl *bctl;
+    size_t size;
 
     if (cache->htable == NULL)
         return NULL;
@@ -135,7 +136,7 @@ static struct bufctl *bufctl_hash_get(struct slab_cache *cache, void *obj)
     htable_delete(link);
     if (cache->hload == 0)
     {
-        size_t size = cache->hsize * sizeof(struct htable_link *);
+        size = cache->hsize * sizeof(struct htable_link *);
         kfree(cache->htable, size);
         cache->htable = NULL;
         cache->hsize = 0;
@@ -205,6 +206,7 @@ static struct slabctl *slab_space_alloc(struct slab_cache *cache, int flags)
     size_t size;
     void *data;
     unsigned int order;
+    unsigned int objs;
 
     size = ALIGN_UP(cache->slab_objs * cache->objsize, SLAB_UNIT_SIZE);
     order = size >> (1+SLAB_UNIT_BITS);
@@ -246,7 +248,7 @@ static struct slabctl *slab_space_alloc(struct slab_cache *cache, int flags)
             if (bctl == NULL)
             {
                 /* temporary set to the allocated objects and undo */
-                unsigned int objs = slab->cache->slab_objs;
+                objs = slab->cache->slab_objs;
                 slab->cache->slab_objs = i;
                 slab_space_free(slab, size);
                 slab->cache->slab_objs = objs;
@@ -310,7 +312,9 @@ void slab_cache_free(struct slab_cache *cache, void *obj)
 {
     struct slabctl *slab;
     struct bufctl *bctl;
-    size_t size = ALIGN_UP(cache->slab_objs*cache->objsize, SLAB_UNIT_SIZE);
+    size_t size;
+
+    size = ALIGN_UP(cache->slab_objs * cache->objsize, SLAB_UNIT_SIZE);
 
     if ((cache->flags & SLAB_EMBED_BUFCTL) != 0)
     {

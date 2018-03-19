@@ -33,7 +33,9 @@
 
 static char *push(char *sp, const char *str)
 {
-    int n = strlen(str) + 1;
+    size_t n;
+
+    n = strlen(str) + 1;
     sp -= n;
     memcpy(sp, str, n);
     return sp;
@@ -230,7 +232,6 @@ int sys_execve(const char *path, const char *const argv[],
                 kprintf("[warn] error closing an open file\n");
         }
     }
-
 
     /*
      * POSIX1. All signals are set to their default action unless the process

@@ -247,12 +247,14 @@ static char kbd_map2[] =
  */
 static int scan_key(void)
 {
-    int code = inb(KEYB_PORT);
-    int val = inb(KEYB_ACK);
+    int cod;
+    int val;
 
+    cod = inb(KEYB_PORT);
+    val = inb(KEYB_ACK);
     outb(KEYB_ACK, val | 0x80);
     outb(KEYB_ACK, val);
-    return code;
+    return cod;
 }
 
 static void kill_tty_group(void)

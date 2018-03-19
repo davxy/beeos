@@ -36,8 +36,9 @@ static struct
 static ssize_t ramdisk_rw_block(void *buf, size_t blocknum, int doread)
 {
     ssize_t n = BLOCK_SIZE;
-    size_t off = blocknum * BLOCK_SIZE;
+    size_t off;
 
+    off = blocknum * BLOCK_SIZE;
     if (off > ramdisk.size)
         return -1;
     if (off + n > ramdisk.size)

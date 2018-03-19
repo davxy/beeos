@@ -279,7 +279,7 @@ static int ext2_super_inode_read(struct inode *inod)
     int ind = table_index % (1024 /128);
 
     n = devfs_read(sb->base.dev, &disk_inod, sizeof(disk_inod),
-                blockno*1024 + ind*sizeof(disk_inod));
+                   blockno * 1024 + ind*sizeof(disk_inod));
     if (n != sizeof(disk_inod))
         return -1;
 
@@ -323,6 +323,7 @@ struct super_block *ext2_super_create(dev_t dev)
     struct ext2_super_block *sb;
     struct inode *iroot;
     struct dentry *droot;
+    unsigned int num_groups;
 
     if ((n = devfs_read(dev, &dsb, sizeof(dsb), 1024)) != sizeof(dsb))
         return NULL;
@@ -339,7 +340,7 @@ struct super_block *ext2_super_create(dev_t dev)
     sb->log_block_size = dsb.log_block_size;
     sb->block_size = 1024 << dsb.log_block_size;
     gd_block = (dsb.log_block_size == 0) ? 3 : 2;
-    int num_groups = (dsb.blocks_count - 1) / dsb.blocks_per_group + 1;
+    num_groups = (dsb.blocks_count - 1) / dsb.blocks_per_group + 1;
 
     n = sizeof(struct ext2_group_desc) * num_groups;
     sb->gd_table = (struct ext2_group_desc *)kmalloc(n, 0);

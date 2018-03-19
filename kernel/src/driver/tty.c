@@ -94,12 +94,11 @@ void tty_change(int n)
 dev_t tty_get(void)
 {
     int i;
-    pid_t curr_pgid = current->pgid;
     dev_t dev = (dev_t)-1;
 
     for (i = 0; i < TTYS_TOTAL; i++) {
-        if (tty_table[i].pgrp == 0 || tty_table[i].pgrp == curr_pgid) {
-            tty_table[i].pgrp = curr_pgid;
+        if (tty_table[i].pgrp == 0 || tty_table[i].pgrp == current->pgid) {
+            tty_table[i].pgrp = current->pgid;
             dev = tty_table[i].dev;
             tty_table[i].refs++;
             break;
