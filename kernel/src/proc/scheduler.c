@@ -131,6 +131,7 @@ void scheduler_init(void)
     ktask.cwd = NULL;
     ktask.state = TASK_RUNNING;
     ktask.brk = 0;
+    ktask.pptr = &ktask;
     list_init(&ktask.tasks);
     list_init(&ktask.sibling);
     list_init(&ktask.children);
