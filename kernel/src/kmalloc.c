@@ -50,6 +50,22 @@ static const char *names[KMALLOCS_SLABS_NUM] = {
 
 static int kmalloc_initialized = 0;
 
+/*
+ * Align to the next power of two
+ */
+static unsigned long next_pow2(unsigned long val)
+{
+    unsigned long v = val;
+
+    v--;
+    v |= v >> 1;
+    v |= v >> 2;
+    v |= v >> 4;
+    v |= v >> 8;
+    v |= v >> 16;
+    v++;
+    return v;
+}
 
 /*
  * Very primitive memory allocation form.

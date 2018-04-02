@@ -27,24 +27,8 @@
 #define ALIGN_UP(val, a) (((val) + ((a) - 1)) & ~((a) - 1))
 #define ALIGN_DOWN(val, a) ((val) & ~((a) - 1))
 
-/**
- * Align up to the next power of two
- * @param v     Value to align.
- * @return      Operation result.
- */
-static inline unsigned long next_pow2(unsigned long val)
-{
-    unsigned long v = val;
-
-    v--;
-    v |= v >> 1;
-    v |= v >> 2;
-    v |= v >> 4;
-    v |= v >> 8;
-    v |= v >> 16;
-    v++;
-    return v;
-}
+#define MIN(a, b) (((a) < (b)) ? (a) : (b))
+#define MAX(a, b) (((a) > (b)) ? (a) : (b))
 
 /**
  * First non zero bit position starting from left.
@@ -64,35 +48,6 @@ static inline unsigned int fnzb(unsigned long val)
     if ((v >> 1)  != 0) { v >>= 1;  n += 1;}
     return n;
 }
-
-static inline int overlaps(uintptr_t b1, size_t sz1,
-                           uintptr_t b2, size_t sz2)
-{
-    uintptr_t e1 = b1 + sz1;
-    uintptr_t e2 = b2 + sz2;
-
-    return ((b1 < e2) & (b2 < e1));
-}
-
-static inline int iswithin(uintptr_t b1, size_t sz1,
-                           uintptr_t b2, size_t sz2)
-{
-    uintptr_t e1;
-    uintptr_t e2;
-
-    if (sz1 == 0)
-        return ((b1 == b2) && (sz2 == 0));
-    e1 = b1 + sz1 - 1;
-    if (sz2 == 0)
-        return ((b1 <= b2) && (b2 <= e1));
-    e2 = b2 + sz2 - 1;
-    /* e1 and e2 are end addresses, the sum is immune to overflow */
-    return ((b1 <= b2) && (e1 >= e2));
-}
-
-#define MIN(a, b) (((a) < (b)) ? (a) : (b))
-#define MAX(a, b) (((a) > (b)) ? (a) : (b))
-
 
 /**
  * Get a pointer to the struct start given a pointer to a member.

@@ -245,10 +245,10 @@ static char kbd_map2[] =
 /*
  * Get scan code and ack the controller.
  */
-static int scan_key(void)
+static unsigned int scan_key(void)
 {
-    int cod;
-    int val;
+    unsigned int cod;
+    unsigned int val;
 
     cod = inb(KEYB_PORT);
     val = inb(KEYB_ACK);
@@ -276,7 +276,7 @@ static void kill_tty_group(void)
 static void kbd_handler(void)
 {
     static unsigned int kbd_status = 0; /* keeps track of CTRL, ALT, SHIFT */
-    int c;
+    unsigned int c;
 
     c = scan_key();
     switch (c)
@@ -340,4 +340,3 @@ void kbd_init(void)
 {
     isr_register_handler(ISR_KEYBOARD, kbd_handler);
 }
-

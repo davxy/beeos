@@ -81,13 +81,13 @@
  */
 uint32_t page_map(void *virt, uint32_t phys)
 {
-    int di = DIR_INDEX(virt);
-    int ti = TAB_INDEX(virt);
+    unsigned int di = DIR_INDEX(virt);
+    unsigned int ti = TAB_INDEX(virt);
     uint32_t tab_phys;
     uint32_t pag_phys = phys;
     uint32_t *dir = (uint32_t *)PAGE_DIR_MAP;
     uint32_t *tab = (uint32_t *)(PAGE_TAB_MAP + (di * 0x1000));
-    int flags = PTE_P | PTE_W;
+    uint32_t flags = PTE_P | PTE_W;
 
     /* Check if is user space memory */
     if ((uint32_t)virt < KVBASE)
@@ -136,12 +136,13 @@ uint32_t page_map(void *virt, uint32_t phys)
  */
 uint32_t page_unmap(void *virt, int retain)
 {
-    int i;
-    int di = DIR_INDEX(virt);
-    int ti = TAB_INDEX(virt);
+    unsigned int i;
+    unsigned int di = DIR_INDEX(virt);
+    unsigned int ti = TAB_INDEX(virt);
     uint32_t *dir = (uint32_t *)PAGE_DIR_MAP;
     uint32_t *tab = (uint32_t *)(PAGE_TAB_MAP + (di * 0x1000));
-    uint32_t tab_phys, pag_phys = -1;
+    uint32_t tab_phys;
+    uint32_t pag_phys = -1;
 
     if((dir[di] & PTE_P) != 0) {
         if ((tab[ti] & PTE_P) != 0) {
@@ -174,7 +175,7 @@ uint32_t page_unmap(void *virt, int retain)
  */
 void page_dir_del(uint32_t phys)
 {
-    int di, ti;
+    unsigned int di, ti;
     const uint32_t *tab;
     const uint32_t *dir;
     uint32_t *dir_curr;
@@ -206,14 +207,14 @@ void page_dir_del(uint32_t phys)
 
 
 
-static void page_tab_dup(uint32_t *dir_dst, int i, int flags)
+static void page_tab_dup(uint32_t *dir_dst, unsigned int i, uint32_t flags)
 {
     const uint32_t *tab_src;
     uint32_t *tab_dst;
     const void *mem_src;
     void *mem_dst;
     uint32_t phys;
-    int j;
+    unsigned int j;
 
     tab_src = (uint32_t *)(PAGE_TAB_MAP + (i * PAGE_SIZE));
     tab_dst = (uint32_t *)(PAGE_TAB_MAP2 + (i * PAGE_SIZE));
@@ -245,11 +246,11 @@ static void page_tab_dup(uint32_t *dir_dst, int i, int flags)
  */
 uint32_t page_dir_dup(int dup_user)
 {
-    int i;
+    unsigned int i;
     uint32_t *dir_src;
     uint32_t *dir_dst;
     uint32_t phys;
-    int flags = PTE_W | PTE_P;
+    uint32_t flags = PTE_W | PTE_P;
 
     dir_src = (uint32_t *)PAGE_DIR_MAP;
     dir_dst = (uint32_t *)(PAGE_TAB_MAP + (1022 * 4096));
@@ -283,7 +284,7 @@ uint32_t page_dir_dup(int dup_user)
  * This happens for kmalloced virtual addresses that are after the initially
  * mapped kernel space (4MB).
  */
-static void map_propagate(int idx)
+static void map_propagate(unsigned int idx)
 {
     uint32_t *dir_src, *dir_dst;
     const struct task *other;
@@ -323,7 +324,7 @@ static void map_propagate(int idx)
 static void page_fault_handler(void)
 {
     uint32_t virt, phys;
-    int flags = ZONE_LOW;
+    unsigned int zone_flags = ZONE_LOW;
 
     fault_addr_get(virt);
 
@@ -340,10 +341,10 @@ static void page_fault_handler(void)
          * 1) Can expand stack
          * 2) Can expand heap
          */
-        flags = ZONE_HIGH;
+        zone_flags = ZONE_HIGH;
     }
 
-    phys = (uint32_t)frame_alloc(0, flags);
+    phys = (uint32_t)frame_alloc(0, zone_flags);
     if (phys == 0)
         panic("Out of mem in page fault handler");
     if ((int)page_map((char *)virt, (uint32_t)-1) < 0)
@@ -360,7 +361,7 @@ static void page_fault_handler(void)
  */
 void paging_init(void)
 {
-    int i;
+    unsigned int i;
     uint32_t *tab, phys;
 
     /*
@@ -392,4 +393,3 @@ void paging_init(void)
     /* Register the page fault handler */
     isr_register_handler(ISR_PAGE_FAULT, page_fault_handler);
 }
-

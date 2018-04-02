@@ -134,7 +134,7 @@ static int tty_read_wait(dev_t dev, int couldblock)
 
     spinlock_lock(&tty->rcond.lock);
 
-    while (tty->rpos >= tty->wpos && couldblock)
+    while (tty->rpos >= tty->wpos && couldblock != 0)
     {
         tty->rpos = tty->wpos = 0;
         /* TODO: If BLOCKING file */
