@@ -23,14 +23,14 @@
 
 int sys_sigreturn(void)
 {
-    if (!current_task->arch.sfr)
+    if (!current->arch.sfr)
         return -1;
 
-    memcpy(current_task->arch.ifr, current_task->arch.sfr,
+    memcpy(current->arch.ifr, current->arch.sfr,
             sizeof(struct isr_frame));
-    kfree(current_task->arch.sfr, sizeof(struct isr_frame));
-    current_task->arch.sfr = NULL;
+    kfree(current->arch.sfr, sizeof(struct isr_frame));
+    current->arch.sfr = NULL;
 
     /* Return the result of the old stackframe */
-    return current_task->arch.ifr->eax;
+    return current->arch.ifr->eax;
 }

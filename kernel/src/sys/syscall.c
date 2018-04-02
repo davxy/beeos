@@ -74,7 +74,7 @@ typedef uint32_t (* syscall_f)(uint32_t arg1, ...);
 
 static void syscall_handler(void)
 {
-    struct isr_frame *ifr = current_task->arch.ifr;
+    struct isr_frame *ifr = current->arch.ifr;
 
     if (ifr->eax < SYSCALLS_NUM && syscalls[ifr->eax] != NULL)
     {

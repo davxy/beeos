@@ -22,5 +22,5 @@
 
 pid_t sys_getppid(void)
 {
-    return current_task->pptr->pid;
+    return current->pptr->pid;
 }

@@ -28,11 +28,11 @@
 void idle(void)
 {
     do {
-        current_task->state = TASK_SLEEPING;
+        current->state = TASK_SLEEPING;
         scheduler();
         sti(); /* Enable interrupts */
         hlt(); /* ...before halt the processor */
         cli(); /* Disable interrupts in kernel code */
-    } while (current_task->state == TASK_RUNNING);
+    } while (current->state == TASK_RUNNING);
 }
 

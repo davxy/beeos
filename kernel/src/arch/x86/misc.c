@@ -17,27 +17,20 @@
  * License along with BeeOS; if not, see <http://www.gnu/licenses/>.
  */
 
-#include "sys.h"
-#include "proc.h"
-#include <errno.h>
-#include <fcntl.h>
 
-int sys_dup(int oldfd)
+#include "arch/x86/isr_arch.h"
+#include <signal.h>
+
+
+void sigret_prepare(struct isr_frame *ifr,
+                    const struct sigaction *act, int sig)
 {
-    int newfd;
+    uint32_t *esp;
 
-    if (oldfd < 0 || oldfd >= OPEN_MAX || current->fds[oldfd].fil == NULL)
-        return -EBADF; /* Invalid file descriptor */
-
-    for (newfd = 0; newfd < OPEN_MAX; newfd++) {
-        if (current->fds[newfd].fil == NULL) {
-            current->fds[newfd] = current->fds[oldfd];
-            current->fds[newfd].flags &= ~FD_CLOEXEC; /* Posix */
-            current->fds[newfd].fil->ref++;
-            break;
-        }
-    }
-    if (newfd == OPEN_MAX)
-        newfd = -EMFILE; /* Too many open files */
-    return newfd;
+    /* Adjust user stack to return in the signal handler */
+    esp = (uint32_t *)ifr->usr_esp;
+    *(--esp) = sig;
+    *(--esp) = (uint32_t)act->sa_restorer;
+    ifr->usr_esp = (uint32_t)esp;
+    ifr->eip = (uint32_t)act->sa_handler;
 }

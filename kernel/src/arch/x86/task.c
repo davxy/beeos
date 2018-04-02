@@ -29,58 +29,60 @@ struct tss_struct tss;
 void swtch(struct context **old, struct context *new);
 
 
+
 /*
  * TODO : implement as clone syscall
  */
-int task_arch_init(struct task_arch *task, task_entry_t entry)
+int task_arch_init(struct task_arch *tsk, task_entry_t entry)
 {
     char *ti;
     uint32_t *sp;
 
-    task->ifr = NULL;
-    task->sfr = NULL;
+    tsk->ifr = NULL;
+    tsk->sfr = NULL;
 
-    if (task == &ktask.arch)
+    if (tsk == &ktask.arch)
     {
         /* The task 0 does not need complete initialization */
-        task->pgdir = (uint32_t)virt_to_phys(kpage_dir);
-        task->ctx = NULL;
+        tsk->pgdir = (uint32_t)virt_to_phys(kpage_dir);
+        tsk->ctx = NULL;
     }
 
-    task->pgdir = page_dir_dup(1);
-    if ((int)task->pgdir < 0)
-        return (int)task->pgdir; /* Fail */
+    tsk->pgdir = page_dir_dup(1);
+    if ((int)tsk->pgdir < 0)
+        return (int)tsk->pgdir; /* Fail */
 
     /* Stack creation */
-    ti = kmalloc(KSTACK_SIZE, 0);
+    ti = (char *)kmalloc(KSTACK_SIZE, 0);
     if (ti == NULL)
         return -1;
-    sp = (uint32_t *)(ti + KSTACK_SIZE);
 
-    if (current_task->arch.ifr != NULL)
+    sp = (uint32_t *)ALIGN_DOWN((uintptr_t)ti + KSTACK_SIZE, sizeof(uint32_t));
+
+    if (current->arch.ifr != NULL)
     {
         struct isr_frame *ifr2 = ((struct isr_frame *)sp) - 1;
 
-        sp = (uint32_t *)ifr2;
-        /* child ifr is equal to the parent but fork returns 0 in the child */
-        *ifr2 = *current_task->arch.ifr;
+        sp = (uint32_t *)ifr2; /* Safe... ifr2 should be aligned to uint32_t */
+        /* Child ifr is equal to the parent but fork returns 0 in the child */
+        *ifr2 = *current->arch.ifr;
         ifr2->eax = 0;
     }
 
-    task->ctx = ((struct context *)sp) - 1;
-    task->ctx->ebp = (uint32_t)sp;
-    task->ctx->eip = (uint32_t)entry;
-    task->ctx->ebx = 0;
-    task->ctx->edi = 0;
-    task->ctx->esi = 0;
+    tsk->ctx = ((struct context *)sp) - 1;
+    tsk->ctx->ebp = (uint32_t)sp;
+    tsk->ctx->eip = (uint32_t)entry;
+    tsk->ctx->ebx = 0;
+    tsk->ctx->edi = 0;
+    tsk->ctx->esi = 0;
 
     return 0;
 }
 
-void task_arch_deinit(struct task_arch *task)
+void task_arch_deinit(struct task_arch *tsk)
 {
-    kfree((void *)ALIGN_DOWN((uint32_t)task->ctx, KSTACK_SIZE), KSTACK_SIZE);
-    page_dir_del(task->pgdir);
+    kfree((void *)ALIGN_DOWN((uint32_t)tsk->ctx, KSTACK_SIZE), KSTACK_SIZE);
+    page_dir_del(tsk->pgdir);
 }
 
 void task_arch_switch(struct task_arch *curr, const struct task_arch *next)

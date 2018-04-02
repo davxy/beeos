@@ -26,37 +26,37 @@
 #include "sys.h"
 
 /* Keyboard base address port. */
-#define KEYB_PORT           0x60
+#define KEYB_PORT               0x60
 /* Keyboard acknowledge register. */
-#define KEYB_ACK            0x61
+#define KEYB_ACK                0x61
 /* Keyboard status register. */
-#define KEYB_STATUS         0x64
+#define KEYB_STATUS             0x64
 /* Keyboard LED register. */
-#define KEYB_LED_CODE       0xED
+#define KEYB_LED_CODE           0xED
 
 /* The keyboard controller is busy. */
-#define KEYB_BUSY           0x02
+#define KEYB_BUSY               0x02
 /* Command to set the typematic delay and rate. */
-#define KEYB_SET_TYPEMATIC  0xF3
+#define KEYB_SET_TYPEMATIC      0xF3
 
 /* Special keycodes */
-#define KEY_NULL            0x00
-#define KEY_ESCAPE          0x1B
-#define KEY_HOME            0xE0
-#define KEY_END             0xE1
-#define KEY_UP              0xE2
-#define KEY_DOWN            0xE3
-#define KEY_LEFT            0xE4
-#define KEY_RIGHT           0xE5
-#define KEY_PAGE_UP         0xE6
-#define KEY_PAGE_DOWN       0xE7
-#define KEY_INSERT          0xE8
-#define KEY_DELETE          0xE9
+#define KEY_NULL                0x00
+#define KEY_ESCAPE              0x1B
+#define KEY_HOME                0xE0
+#define KEY_END                 0xE1
+#define KEY_UP                  0xE2
+#define KEY_DOWN                0xE3
+#define KEY_LEFT                0xE4
+#define KEY_RIGHT               0xE5
+#define KEY_PAGE_UP             0xE6
+#define KEY_PAGE_DOWN           0xE7
+#define KEY_INSERT              0xE8
+#define KEY_DELETE              0xE9
 
-#define KBD_STATUS_SHIFT    (1 << 0)
-#define KBD_STATUS_CTRL     (1 << 1)
-#define KBD_STATUS_ALT      (1 << 2)
-#define KBD_STATUS_CAPS_LCK (1 << 3)
+#define KBD_STATUS_SHIFT        0x01
+#define KBD_STATUS_CTRL         0x02
+#define KBD_STATUS_ALT          0x04
+#define KBD_STATUS_CAPS_LCK     0x08
 
 /*
  * Primary meaning of scancodes.
@@ -247,17 +247,19 @@ static char kbd_map2[] =
  */
 static int scan_key(void)
 {
-    int code = inb(KEYB_PORT);
-    int val = inb(KEYB_ACK);
+    int cod;
+    int val;
 
+    cod = inb(KEYB_PORT);
+    val = inb(KEYB_ACK);
     outb(KEYB_ACK, val | 0x80);
     outb(KEYB_ACK, val);
-    return code;
+    return cod;
 }
 
 static void kill_tty_group(void)
 {
-    struct task *t = current_task;
+    struct task *t = current;
     pid_t pgid;
 
     pgid = sys_tcgetpgrp(0);
@@ -265,7 +267,7 @@ static void kill_tty_group(void)
         if (t->pgid == pgid)
             task_signal(t, SIGINT);
         t = list_container(t->tasks.next, struct task, tasks);
-    } while (t != current_task);
+    } while (t != current);
 }
 
 /*
@@ -273,7 +275,7 @@ static void kill_tty_group(void)
  */
 static void kbd_handler(void)
 {
-    static int kbd_status = 0; /* keeps track of CTRL, ALT, SHIFT */
+    static unsigned int kbd_status = 0; /* keeps track of CTRL, ALT, SHIFT */
     int c;
 
     c = scan_key();

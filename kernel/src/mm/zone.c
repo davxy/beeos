@@ -51,12 +51,14 @@ void zone_free(const struct zone_st *ctx, const void *ptr, int order)
 int zone_init(struct zone_st *ctx, void *addr, size_t size,
               size_t frame_size, int flags)
 {
+    if (frame_size == 0)
+        return -1;
     ctx->addr = addr;
     ctx->size = size;
     ctx->frame_size = frame_size;
     ctx->flags = flags;
     ctx->next = NULL;
-    return buddy_init(&ctx->buddy, size/frame_size, frame_size);
+    return buddy_init(&ctx->buddy, size / frame_size, frame_size);
 }
 
 void zone_dump(const struct zone_st *ctx)

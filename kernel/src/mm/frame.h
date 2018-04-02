@@ -30,7 +30,7 @@
  * @param flags Allocation flags.
  * @return      Memory physical address.
  */
-void *frame_alloc(unsigned int order, int flags);
+void *frame_alloc(unsigned int order, unsigned int flags);
 
 /**
  * Free a physical memory page.

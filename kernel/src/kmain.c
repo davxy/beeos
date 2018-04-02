@@ -51,8 +51,8 @@ static void mount_root(void)
     if (sb == NULL)
         panic("Unable to create dev fs");
 
-    current_task->cwd = ddup(sb->root);
-    current_task->root = ddup(sb->root);
+    current->cwd = ddup(sb->root);
+    current->root = ddup(sb->root);
 
     /* Initrd node created to read data from ramdisk */
     if (sys_mknod("/initrd", S_IFBLK, DEV_INITRD) < 0)
@@ -66,10 +66,10 @@ static void mount_root(void)
     if (sb == NULL)
         panic("Unable to create root file system");
 
-    dput(current_task->root);
-    dput(current_task->cwd);
-    current_task->root = ddup(sb->root);
-    current_task->cwd  = ddup(sb->root);
+    dput(current->root);
+    dput(current->cwd);
+    current->root = ddup(sb->root);
+    current->cwd  = ddup(sb->root);
 }
 
 

@@ -13,5 +13,6 @@ local_sources := init.S \
 				 arch_init.c \
 				 paging.c \
 				 task.c \
+				 misc.c \
 				 timer.c \
 				 uart.c

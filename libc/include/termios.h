@@ -40,30 +40,30 @@
 /*
  * Input flags, for 'c_iflag' inside the termios structure.
  */
-#define BRKINT  (1 << 0)    /**< Signal interrupt or break */
-#define ICRNL   (1 << 1)    /**< Map CR to NL on input */
-#define IGNBRK  (1 << 2)    /**< Ignore break condition */
-#define IGNCR   (1 << 3)    /**< Ignore CR */
-#define IGNPAR  (1 << 4)    /**< Ignore characters with parity errors */
-#define INLCR   (1 << 5)    /**< Map NL to CR on input */
-#define INPCK   (1 << 6)    /**< Enable input parity check */
-#define ISTRIP  (1 << 7)    /**< Strip off eight bit */
-#define IXOFF   (1 << 8)    /**< Enable start/stop intpu control */
-#define IXON    (1 << 9)    /**< Enable start/stop output control */
-#define PARMRK  (1 << 10)   /**< Mark parity errors */
+#define BRKINT  0x0001      /**< Signal interrupt or break */
+#define ICRNL   0x0002      /**< Map CR to NL on input */
+#define IGNBRK  0x0004      /**< Ignore break condition */
+#define IGNCR   0x0008      /**< Ignore CR */
+#define IGNPAR  0x0010      /**< Ignore characters with parity errors */
+#define INLCR   0x0020      /**< Map NL to CR on input */
+#define INPCK   0x0040      /**< Enable input parity check */
+#define ISTRIP  0x0080      /**< Strip off eight bit */
+#define IXOFF   0x0100      /**< Enable start/stop intpu control */
+#define IXON    0x0200      /**< Enable start/stop output control */
+#define PARMRK  0x0400      /**< Mark parity errors */
 
 /*
  * Local flags, for 'c_lflag' inside the termios structure.
  */
-#define ECHO    (1 << 0)    /**< Enable echo */
-#define ECHOE   (1 << 1)    /**< Echo erase character as backspace */
-#define ECHOK   (1 << 2)    /**< Echo KILL */
-#define ECHONL  (1 << 3)    /**< Echo NL */
-#define ICANON  (1 << 4)    /**< Canonical input mode */
-#define IEXTEN  (1 << 5)    /**< Extended input mode */
-#define ISIG    (1 << 6)    /**< Enable signals */
-#define NOFLSH  (1 << 7)    /**< Disable flush after interrupt or quit */
-#define TOSTOP  (1 << 8)    /**< Send SIGTTOU for background output */
+#define ECHO    0x0001      /**< Enable echo */
+#define ECHOE   0x0002      /**< Echo erase character as backspace */
+#define ECHOK   0x0004      /**< Echo KILL */
+#define ECHONL  0x0008      /**< Echo NL */
+#define ICANON  0x0010      /**< Canonical input mode */
+#define IEXTEN  0x0020      /**< Extended input mode */
+#define ISIG    0x0040      /**< Enable signals */
+#define NOFLSH  0x0080      /**< Disable flush after interrupt or quit */
+#define TOSTOP  0x0100      /**< Send SIGTTOU for background output */
 
 
 typedef uint16_t tcflag_t;

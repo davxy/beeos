@@ -30,12 +30,12 @@ int sys_close(int fd)
     struct file *fil;
 
     /* Validate file descriptor */
-    if (fd < 0 || OPEN_MAX <= fd || !current_task->fds[fd].fil)
+    if (fd < 0 || OPEN_MAX <= fd || !current->fds[fd].fil)
         return -EBADF;
 
-    fil = current_task->fds[fd].fil;
-    current_task->fds[fd].fil = NULL;
-    current_task->fds[fd].flags = 0;
+    fil = current->fds[fd].fil;
+    current->fds[fd].fil = NULL;
+    current->fds[fd].flags = 0;
 
     fil->ref--;
     if (fil->ref == 0)

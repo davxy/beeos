@@ -81,8 +81,8 @@ static struct idt_register  idt_reg;
 /*
  * Initialize a single IDT entry
  */
-static void idt_entry_init(int i, uint32_t offset, uint16_t selector,
-        uint8_t flags)
+static void idt_entry_init(unsigned int i, uint32_t offset, uint16_t selector,
+                           uint8_t flags)
 {
     /* reserved entry */
     idt_entries[i].zero = 0;

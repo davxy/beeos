@@ -22,5 +22,5 @@
 
 uid_t sys_getuid(void)
 {
-    return current_task->uid;
+    return current->uid;
 }

@@ -23,30 +23,30 @@
 
 int sys_sigprocmask(int how, const sigset_t *set, sigset_t *oset)
 {
-    struct task *cur = current_task;
+    int sig;
+    int res = 0;
 
     if (oset != NULL)
-        memcpy(oset, &cur->sigmask, sizeof(sigset_t));
+        memcpy(oset, &current->sigmask, sizeof(sigset_t));
 
-    if (set != NULL)
-    {
+    if (set != NULL) {
         if (how == SIG_SETMASK)
-            memcpy(&cur->sigmask, set, sizeof(sigset_t));
-        else
-        {
-            int sig;
+            memcpy(&current->sigmask, set, sizeof(sigset_t));
+        else {
             for (sig = 0; sig < SIGNALS_NUM; sig++) {
                 if (sigismember(set, sig) > 0) {
-                    if (how == SIG_BLOCK)
-                        sigaddset(&cur->sigmask, sig);
-                    else if (how == SIG_UNBLOCK)
-                        sigdelset(&cur->sigmask, sig);
-                    else
-                        return -EINVAL;
+                    if (how == SIG_BLOCK) {
+                        sigaddset(&current->sigmask, sig);
+                    } else if (how == SIG_UNBLOCK) {
+                        sigdelset(&current->sigmask, sig);
+                    } else {
+                        res = -EINVAL;
+                        break;
+                    }
                 }
             }
         }
     }
-
-    return 0;
+    return res;
 }
+

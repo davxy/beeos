@@ -37,9 +37,9 @@ unsigned int sys_alarm(unsigned int seconds)
     unsigned long now, when;
     struct timer_event *tm;
 
-    tm = &current_task->alarm;
+    tm = &current->alarm;
     if (tm->func != alarm_handler)
-        timer_event_init(tm, alarm_handler, current_task, 0);
+        timer_event_init(tm, alarm_handler, current, 0);
 
     when = tm->expires;
     now = timer_ticks;
@@ -51,7 +51,7 @@ unsigned int sys_alarm(unsigned int seconds)
         timer_event_mod(tm, when);
         /* Also add to the process timers */
         if (list_empty(&tm->plink))
-            list_insert_before(&current_task->timers, &tm->plink);
+            list_insert_before(&current->timers, &tm->plink);
     } else {
         if (!list_empty(&tm->link))
             timer_event_del(tm);

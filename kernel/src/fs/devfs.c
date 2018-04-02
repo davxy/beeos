@@ -41,13 +41,12 @@ static struct super_block devfs_sb;
 static int devfs_ino = 0;
 
 
-static ssize_t devfs_inode_read(struct inode *inode, void *buf,
-                                size_t count, off_t offset)
+static ssize_t devfs_inode_read(struct inode *inod, void *buf,
+                                size_t count, size_t off)
 {
     ssize_t n;
-    dev_t rdev = inode->rdev;
 
-    switch (rdev)
+    switch (inod->rdev)
     {
         case DEV_TTY:
         case DEV_TTY0:
@@ -56,7 +55,7 @@ static ssize_t devfs_inode_read(struct inode *inode, void *buf,
         case DEV_TTY3:
         case DEV_TTY4 :
         case DEV_CONSOLE:
-            n = tty_read(rdev, buf, count);
+            n = tty_read(inod->rdev, buf, count);
             break;
         case DEV_ZERO:
             memset(buf, 0, count);
@@ -66,7 +65,7 @@ static ssize_t devfs_inode_read(struct inode *inode, void *buf,
             n = count;
             break;
         case DEV_INITRD:
-            n = ramdisk_read(buf, count, offset);
+            n = ramdisk_read(buf, count, off);
             break;
         case DEV_MEM:
             n = -1;
@@ -86,13 +85,12 @@ static ssize_t devfs_inode_read(struct inode *inode, void *buf,
 }
 
 
-static ssize_t devfs_inode_write(struct inode *inode, const void *buf,
-                                 size_t count, off_t offset)
+static ssize_t devfs_inode_write(struct inode *inod, const void *buf,
+                                 size_t count, size_t off)
 {
     ssize_t n;
-    dev_t rdev = inode->rdev;
 
-    switch (rdev)
+    switch (inod->rdev)
     {
         case DEV_TTY:
         case DEV_TTY0:
@@ -101,14 +99,14 @@ static ssize_t devfs_inode_write(struct inode *inode, const void *buf,
         case DEV_TTY3:
         case DEV_TTY4 :
         case DEV_CONSOLE:
-            n = tty_write(rdev, buf, count);
+            n = tty_write(inod->rdev, buf, count);
             break;
         case DEV_ZERO:
         case DEV_NULL:
             n = count;
             break;
         case DEV_INITRD:
-            n = ramdisk_write(buf, count, offset);
+            n = ramdisk_write(buf, count, off);
             break;
         case DEV_MEM:
             n = -1;
@@ -128,10 +126,12 @@ static ssize_t devfs_inode_write(struct inode *inode, const void *buf,
 }
 
 
+#define NDEVS 13
+
 static struct {
     const char *name;
     dev_t       dev;
-} dev_name_map[] = {
+} dev_name_map[NDEVS] = {
     { "zero",    DEV_ZERO },
     { "tty0",    DEV_TTY0 },
     { "tty1",    DEV_TTY1 },
@@ -146,8 +146,6 @@ static struct {
     { "random",  DEV_RANDOM },
     { "urandom", DEV_URANDOM },
 };
-
-#define NDEVS (sizeof(dev_name_map)/sizeof(dev_name_map[0]))
 
 static dev_t name_to_dev(const char *name)
 {
@@ -216,7 +214,7 @@ static struct devfs_inode *devfs_sb_inode_alloc(struct super_block *sb)
 {
     struct devfs_inode *inod;
 
-    inod = kmalloc(sizeof(struct devfs_inode), 0);
+    inod = (struct devfs_inode *)kmalloc(sizeof(struct devfs_inode), 0);
     if (inod == NULL)
         return NULL;
 
@@ -224,10 +222,10 @@ static struct devfs_inode *devfs_sb_inode_alloc(struct super_block *sb)
     return inod;
 }
 
-static void devfs_sb_inode_free(struct devfs_inode *inode)
+static void devfs_sb_inode_free(struct devfs_inode *inod)
 {
-    list_delete(&inode->link);
-    kfree(inode, sizeof(struct devfs_inode));
+    list_delete(&inod->link);
+    kfree(inod, sizeof(struct devfs_inode));
 }
 
 static const struct super_ops devfs_sb_ops = {
@@ -252,7 +250,7 @@ static struct inode *dev_to_inode(dev_t dev)
     return (struct inode *)inod;
 }
 
-ssize_t devfs_read(dev_t dev, void *buf, size_t size, off_t off)
+ssize_t devfs_read(dev_t dev, void *buf, size_t size, size_t off)
 {
     ssize_t n = -1;
     struct inode *inod;
@@ -263,7 +261,7 @@ ssize_t devfs_read(dev_t dev, void *buf, size_t size, off_t off)
     return n;
 }
 
-ssize_t devfs_write(dev_t dev, const void *buf, size_t size, off_t off)
+ssize_t devfs_write(dev_t dev, const void *buf, size_t size, size_t off)
 {
     ssize_t n = -1;
     struct inode *inod;

@@ -62,7 +62,7 @@ struct pipe_inode
  * Normally, however, there is a single reader and a single writer for a pipe.
  */
 static int pipe_read(struct inode *inod, void *buf,
-        size_t count, off_t offset)
+        size_t count, size_t off)
 {
     int n, left;
     char *ptr = (char *)buf;
@@ -121,7 +121,7 @@ done:
  * the signal handler, write returns -1 with errno set to EPIPE.
  */
 static int pipe_write(struct inode *inod, const void *buf,
-                      size_t count, off_t offset)
+                      size_t count, size_t off)
 {
     size_t n, left;
     const char *ptr = (const char *)buf;
@@ -143,7 +143,7 @@ static int pipe_write(struct inode *inod, const void *buf,
             if (pnode->base.ref == 1)
             {
                 spinlock_unlock(&pnode->queue.lock);
-                task_signal(current_task, SIGPIPE);
+                task_signal(current, SIGPIPE);
                 scheduler();
                 /* in case the signal has been catched, return an error */
                 return -EPIPE;
@@ -194,7 +194,7 @@ static struct inode *pipe_inode_create(void)
     struct pipe_inode *pnode;
 
     /* TODO... set a pipe sb here to allow correct inode release */
-    pnode = kmalloc(sizeof(struct pipe_inode), 0);
+    pnode = (struct pipe_inode *)kmalloc(sizeof(struct pipe_inode), 0);
     if (!pnode)
         return NULL;
     memset(pnode, 0, sizeof(*pnode));
@@ -215,10 +215,10 @@ int pipe_create(int pipefd[2])
     struct file *file0, *file1;
 
     for (fd0 = 0; fd0 < OPEN_MAX; fd0++)
-        if (current_task->fds[fd0].fil == NULL)
+        if (current->fds[fd0].fil == NULL)
             break;
     for (fd1 = fd0 + 1; fd1 < OPEN_MAX; fd1++)
-        if (current_task->fds[fd1].fil == NULL)
+        if (current->fds[fd1].fil == NULL)
             break;
     if (fd1 >= OPEN_MAX)
         return -EMFILE; /* Too many open files */
@@ -246,8 +246,8 @@ int pipe_create(int pipefd[2])
     *file1 = *file0;
     file1->flags = O_WRONLY;
 
-    current_task->fds[fd0].fil = file0;
-    current_task->fds[fd1].fil = file1;
+    current->fds[fd0].fil = file0;
+    current->fds[fd1].fil = file1;
 
     pipefd[0] = fd0;
     pipefd[1] = fd1;

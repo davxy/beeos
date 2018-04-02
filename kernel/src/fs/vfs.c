@@ -31,14 +31,12 @@
 #include "kprintf.h"
 #endif
 
+#define FS_LIST_LEN 2
 
-static struct vfs_type fs_list[] = {
+static struct vfs_type fs_list[FS_LIST_LEN] = {
     { "ext2", ext2_super_create },
     { "dev",  devfs_super_create }
 };
-
-#define FS_LIST_LEN (sizeof(fs_list)/sizeof(fs_list[0]))
-
 
 
 void super_init(struct super_block *sb, dev_t dev, struct dentry *root,
@@ -78,12 +76,12 @@ static struct htable_link *inode_htable[1 << INODE_HTABLE_BITS];
 
 struct file *fs_file_alloc(void)
 {
-    return slab_cache_alloc(&file_cache, 0);
+    return (struct file *)slab_cache_alloc(&file_cache, 0);
 }
 
-void fs_file_free(struct file *file)
+void fs_file_free(struct file *fil)
 {
-    slab_cache_free(&file_cache, file);
+    slab_cache_free(&file_cache, fil);
 }
 
 static struct inode *inode_lookup(dev_t dev, ino_t ino)
@@ -105,25 +103,25 @@ static struct inode *inode_lookup(dev_t dev, ino_t ino)
 }
 
 
-void inode_init(struct inode *inode, struct super_block *sb,
-                ino_t ino, mode_t mode, const struct inode_ops *ops)
+static void inode_init(struct inode *inod, struct super_block *sb,
+                       ino_t ino, mode_t mode, const struct inode_ops *ops)
 {
-    memset(inode, 0, sizeof(*inode));
+    memset(inod, 0, sizeof(*inod));
 
-    inode->ops = ops;
-    inode->ino = ino;
-    inode->mode = mode;
-    inode->sb  = sb;
+    inod->ops = ops;
+    inod->ino = ino;
+    inod->mode = mode;
+    inod->sb  = sb;
 
     /*
      * TODO: consider the inode read return value.
      * This is just a quick and dirty solution for MISRA compliance
      */
     if (sb->ops->inode_read != NULL)
-        (void)sb->ops->inode_read(inode);
+        (void)sb->ops->inode_read(inod);
 
-    htable_insert(inode_htable, &inode->hlink,
-                  KEY(inode->sb->dev, inode->ino), INODE_HTABLE_BITS);
+    htable_insert(inode_htable, &inod->hlink,
+                  KEY(inod->sb->dev, inod->ino), INODE_HTABLE_BITS);
 }
 
 
@@ -230,7 +228,7 @@ struct dentry *dentry_create(const char *name, struct dentry *parent,
 {
     struct dentry *de;
 
-    de = kmalloc(sizeof(*de), 0);
+    de = (struct dentry *)kmalloc(sizeof(*de), 0);
     if (!de)
         return NULL;
     strcpy(de->name, name);
@@ -319,7 +317,7 @@ struct dentry *dget(struct dentry *dir, const char *name)
 static int dentry_can_delete(const struct dentry *dent)
 {
     int res = 1;
-    struct dentry *curr = current_task->cwd;
+    struct dentry *curr = current->cwd;
 
     while (curr->parent != curr) {
         if (curr == dent) {
@@ -360,7 +358,7 @@ int do_mount(struct dentry *mntpt, struct dentry *root)
 {
     struct vfsmount *mnt;
 
-    mnt = kmalloc(sizeof(*mnt), 0);
+    mnt = (struct vfsmount *)kmalloc(sizeof(*mnt), 0);
     if (mnt == NULL)
         return -1;
     mnt->mntpt = ddup(mntpt);
@@ -428,8 +426,7 @@ struct dentry *named(const char *path)
     if (path == NULL || *path == '\0')
         return NULL;
 
-    dent = (*path == '/') ? current_task->root : current_task->cwd;
-    ddup(dent);
+    dent = ddup((*path == '/') ? current->root : current->cwd);
 
     while ((path = skipelem(path, name)) != NULL)
     {

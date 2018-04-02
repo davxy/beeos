@@ -33,22 +33,21 @@ static void sleep_timer_handler(void *data)
 
 int sys_nanosleep(const struct timespec *req, struct timespec *rem)
 {
-    time_t ms;
-    time_t when;
-    time_t now;
+    unsigned long ms, when, now;
     struct timer_event tm;
 
-    if (req->tv_sec < 0 || req->tv_nsec < 0 || req->tv_nsec > 999999999)
+    if ((long)req->tv_sec < 0 || req->tv_nsec < 0 || req->tv_nsec > 999999999)
         return -EINVAL;
 
-    current_task->state = TASK_SLEEPING;
+    current->state = TASK_SLEEPING;
 
-    ms = req->tv_sec * 1000 + req->tv_nsec / 1000000;
-    when = (time_t)timer_ticks + msecs_to_ticks(ms);
-    timer_event_init(&tm, sleep_timer_handler, current_task, when);
+    ms   = (unsigned long)req->tv_sec * 1000 +
+           (unsigned long)req->tv_nsec / 1000000;
+    when = timer_ticks + msecs_to_ticks(ms);
+    timer_event_init(&tm, sleep_timer_handler, current, when);
 
     /* Do this after the timer initialization but before queue insertion */
-    list_insert_before(&current_task->timers, &tm.plink);
+    list_insert_before(&current->timers, &tm.plink);
 
     timer_event_add(&tm);
 
@@ -60,9 +59,9 @@ int sys_nanosleep(const struct timespec *req, struct timespec *rem)
     now = timer_ticks;
     if (now < when)
     {
-        ms = (time_t)ticks_to_msecs(when - now);
-        rem->tv_sec = ms / 1000;
-        rem->tv_nsec = (long)(ms % 1000) * 1000000;
+        ms = ticks_to_msecs(when - now);
+        rem->tv_sec  = (time_t)(ms / 1000);
+        rem->tv_nsec = (long)  (ms % 1000) * 1000000;
         return -EINTR; /* Early wakeup */
     }
 

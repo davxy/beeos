@@ -67,12 +67,24 @@ int random_init(const unsigned char *seed, size_t seed_siz)
     return 0;
 }
 
+
+static void rand_unaligned(unsigned char *buf, size_t n)
+{
+    uint32_t r;
+    size_t i;
+
+    r = rand_get();
+    for (i = 0; i < n; i++) {
+        *buf++ = (unsigned char)r;
+        r >>= 8;
+    }
+}
+
 int random_read(unsigned char *buf, size_t siz)
 {
-    int i;
-    int iter = siz >> 2;
-    uint32_t *buf32 = (uint32_t *) buf;
-    uint32_t r;
+    size_t i;
+    size_t iter;
+    uint32_t *buf32;
 
     if (rand_initialized == 0) {
         if (random_init((const unsigned char *)&timer_ticks,
@@ -81,16 +93,19 @@ int random_read(unsigned char *buf, size_t siz)
         }
     }
 
+    /* Eventually process front unaligned data */
+    if (((iter = ((uintptr_t)buf & 0x03))) != 0)
+        rand_unaligned(buf, sizeof(uint32_t) - iter);
+
+    /* At this point, buf is be aligned to a uint32_t boundary (safe cast) */
+    iter = (siz >> 2);
+    buf32 = (uint32_t *)ALIGN_UP((uintptr_t)buf, sizeof(uint32_t));
     for (i = 0; i < iter; i++)
         buf32[i] = rand_get();
 
-    if ((iter = (siz & 0x03)) != 0) {
-        r = rand_get();
-        buf = (unsigned char *)buf32;
-        for (i = 0; i < iter; i++) {
-            *buf++ = (unsigned char)r;
-            r >>= 8;
-        }
-    }
+    /* Eventually process back unaligned data */
+    if ((iter = (siz & 0x03)) != 0)
+        rand_unaligned((unsigned char *)&buf32[i], iter);
+
     return siz;
 }

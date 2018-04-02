@@ -36,8 +36,9 @@ static struct
 static ssize_t ramdisk_rw_block(void *buf, size_t blocknum, int doread)
 {
     ssize_t n = BLOCK_SIZE;
-    size_t off = blocknum * BLOCK_SIZE;
+    size_t off;
 
+    off = blocknum * BLOCK_SIZE;
     if (off > ramdisk.size)
         return -1;
     if (off + n > ramdisk.size)
@@ -64,7 +65,7 @@ static ssize_t ramdisk_write_block(void *buf, size_t blocknum)
 
 static char blk[BLOCK_SIZE];
 
-ssize_t ramdisk_read(void *buf, size_t size, off_t off)
+ssize_t ramdisk_read(void *buf, size_t size, size_t off)
 {
     unsigned int nblk;
     ssize_t left;
@@ -98,7 +99,7 @@ ssize_t ramdisk_read(void *buf, size_t size, off_t off)
     return size-left;
 }
 
-ssize_t ramdisk_write(const void *buf, size_t size, off_t off)
+ssize_t ramdisk_write(const void *buf, size_t size, size_t off)
 {
     return -1; /* TODO */
 }

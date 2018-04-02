@@ -84,7 +84,7 @@ void timer_update(void)
         }
     }
 
-    if (current_task->counter-- <= 0)
+    if (current->counter-- <= 0)
         need_resched = 1;
 }
 

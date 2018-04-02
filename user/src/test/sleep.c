@@ -25,7 +25,7 @@ int main(void)
     while (1)
     {
         printf("Hello from %d\n", getpid());
-        sleep(10);
+        sleep(3);
     }
     return 0;
 }

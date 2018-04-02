@@ -30,7 +30,7 @@
  * This function toggles the bit corresponding to the couple
  * and returns the modified bit value.
  */
-static int toggle_bit(const struct buddy_sys *ctx, int block_idx,
+static int toggle_bit(const struct buddy_sys *ctx, unsigned int block_idx,
                       unsigned int order)
 {
     unsigned int i;
@@ -124,12 +124,19 @@ int buddy_init(struct buddy_sys *ctx, unsigned int frames_num,
 {
     unsigned int i;
     unsigned int count;
+    unsigned int order_max;
+    unsigned int order_bit;
+
+    order_bit = fnzb(frame_size);
+    order_max = fnzb(frames_num);
+    if (order_bit + order_max >= 8 * sizeof(size_t))
+        return -1;  /* Impossible value... */
 
     /*
      * Create the frames list
      */
 
-    ctx->frames = kmalloc(frames_num * sizeof(struct frame), 0);
+    ctx->frames = (struct frame *)kmalloc(frames_num * sizeof(struct frame), 0);
     if (ctx->frames == NULL)
         goto e0;
     for (i = 0; i < frames_num; i++)
@@ -142,9 +149,10 @@ int buddy_init(struct buddy_sys *ctx, unsigned int frames_num,
      * Initialize the free frames table
      */
 
-    ctx->order_bit = fnzb(frame_size);
-    ctx->order_max = fnzb(frames_num);
-    ctx->free_area = kmalloc(sizeof(struct free_list) * (ctx->order_max+1), 0);
+    ctx->order_bit = order_bit;
+    ctx->order_max = order_max;
+    ctx->free_area = (struct free_list *)kmalloc(sizeof(struct free_list) *
+                                                (ctx->order_max+1), 0);
     if (ctx->free_area == NULL)
         goto e1;
 
@@ -158,7 +166,8 @@ int buddy_init(struct buddy_sys *ctx, unsigned int frames_num,
         count = (frames_num >> (i+1));
         /* Compute the required number of unsigned longs to hold the bitmap */
         count = (count - 1) / (8 * sizeof(unsigned long)) + 1;
-        ctx->free_area[i].map = kmalloc(sizeof(unsigned long) * count, 0);
+        ctx->free_area[i].map =
+                (unsigned long *)kmalloc(sizeof(unsigned long) * count, 0);
         if (ctx->free_area[i].map == NULL) {
             /* Rollback */
             while (i > 0) {

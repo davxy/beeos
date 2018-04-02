@@ -39,13 +39,16 @@ int sys_open(const char *pathname, int flags, mode_t mode)
     if (dent == NULL)
         return -ENOENT;
 
-    if (strcmp(pathname, "/dev/tty") == 0) {
-        if (tty_get() < 0)
+    if (current->pid == current->pgid &&
+        (flags & O_NOCTTY) == 0 &&
+        strcmp(pathname, "/dev/tty") == 0) {
+        current->tty = tty_get();
+        if (current->tty < 0)
             return -EBUSY;
     }
 
     for (fdn = 0; fdn < OPEN_MAX; fdn++)
-        if (current_task->fds[fdn].fil == NULL)
+        if (current->fds[fdn].fil == NULL)
             break;
     if (fdn == OPEN_MAX)
         return -EMFILE; /* Too many open files. */
@@ -57,11 +60,11 @@ int sys_open(const char *pathname, int flags, mode_t mode)
     fil->ref = 1;
     fil->off = 0;
     fil->mode = mode;
-    fil->flags = flags & ~O_CLOEXEC;
+    fil->flags = (unsigned int)flags & ~O_CLOEXEC;
     fil->dent = dent;
 
-    current_task->fds[fdn].fil = fil;
-    current_task->fds[fdn].flags = flags & O_CLOEXEC;
+    current->fds[fdn].fil = fil;
+    current->fds[fdn].flags = (unsigned int)flags & O_CLOEXEC;
 
     return fdn;
 }

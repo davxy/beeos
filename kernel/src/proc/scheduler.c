@@ -26,7 +26,11 @@
 
 
 struct task ktask;
-struct task *current_task;
+struct task *current;
+
+/* arch dependent */
+void sigret_prepare(struct isr_frame *ifr,
+                    const struct sigaction *act, int sig);
 
 
 static int sigpop(sigset_t *sigpend, const sigset_t *sigmask)
@@ -43,18 +47,18 @@ static int sigpop(sigset_t *sigpend, const sigset_t *sigmask)
     return sig;
 }
 
+
 int do_signal(void)
 {
     int sig;
-    uint32_t *esp;
     struct isr_frame *ifr;
     const struct sigaction *act;
 
-    sig = sigpop(&current_task->sigpend, &current_task->sigmask);
+    sig = sigpop(&current->sigpend, &current->sigmask);
     if (sig <= 0)
         return -1; /* no unmasked signals available */
-    ifr = current_task->arch.ifr;
-    act = &current_task->signals[sig - 1];
+    ifr = current->arch.ifr;
+    act = &current->signals[sig - 1];
 
     if (act->sa_handler == SIG_DFL)
     {
@@ -70,23 +74,18 @@ int do_signal(void)
     if (act->sa_restorer == NULL || act->sa_handler == SIG_IGN)
         return 0; /* No way to return from signal handlers or ignore */
 
-    if (!current_task->arch.sfr)
+    if (!current->arch.sfr)
     {
-        current_task->arch.sfr = kmalloc(sizeof(*ifr), 0);
-        if (!current_task->arch.sfr)
+        current->arch.sfr = (struct isr_frame *)kmalloc(sizeof(*ifr), 0);
+        if (!current->arch.sfr)
         {
             kprintf("[warn] no memory to handle signal (%d)\n", sig);
             return 0;
         }
-        memcpy(current_task->arch.sfr, ifr, sizeof(*ifr));
+        memcpy(current->arch.sfr, ifr, sizeof(*ifr));
     }
 
-    /* Adjust user stack to return in the signal handler */
-    esp = (uint32_t *)ifr->usr_esp;
-    *(--esp) = sig;
-    *(--esp) = (uint32_t)act->sa_restorer;
-    ifr->usr_esp = (uint32_t)esp;
-    ifr->eip = (uint32_t)act->sa_handler;
+    sigret_prepare(ifr, act, sig);
 
     return 0;
 }
@@ -96,23 +95,23 @@ void scheduler(void)
     struct task *curr;
     struct task *next;
 
-    curr = current_task;
-    next = list_container(current_task->tasks.next,
+    curr = current;
+    next = list_container(current->tasks.next,
             struct task, tasks);
 
-    while (next->state != TASK_RUNNING && next != current_task) {
+    while (next->state != TASK_RUNNING && next != current) {
         next = list_container(next->tasks.next, struct task, tasks);
     }
 
-    if (next == current_task)
+    if (next == current)
     {
         /* Nothing to run... run the idle() task */
         ktask.state = TASK_RUNNING;
         next = &ktask;
     }
 
-    current_task = next;
-    current_task->counter = msecs_to_ticks(SCHED_TIMESLICE);
+    current = next;
+    current->counter = msecs_to_ticks(SCHED_TIMESLICE);
 
     /*
      * Should be the last call... the following can return in another place.
@@ -125,13 +124,14 @@ void scheduler_init(void)
 {
     int i;
 
-    current_task = &ktask;
+    current = &ktask;
 
     /* Set to zero: uids, gids, pids... */
     memset(&ktask, 0, sizeof(ktask));
     ktask.cwd = NULL;
     ktask.state = TASK_RUNNING;
     ktask.brk = 0;
+    ktask.pptr = &ktask;
     list_init(&ktask.tasks);
     list_init(&ktask.sibling);
     list_init(&ktask.children);
@@ -140,8 +140,8 @@ void scheduler_init(void)
     if (task_arch_init(&ktask.arch, NULL) < 0)
         panic("Task 0 init failure");
 
-    (void)sigemptyset(&ktask.sigmask);
-    (void)sigemptyset(&ktask.sigpend);
+    sigemptyset(&ktask.sigmask);
+    sigemptyset(&ktask.sigpend);
     for (i = 0; i < SIGNALS_NUM; i++)
     {
         memset(&ktask.signals[i], 0, sizeof(struct sigaction));
@@ -160,6 +160,9 @@ static void task_dump(const struct task *t)
         break;
     case TASK_SLEEPING:
         state = 'S';
+        break;
+    case TASK_ZOMBIE:
+        state = 'Z';
         break;
     default:
         state = 'U';

@@ -35,27 +35,6 @@ static struct screen scr_table[TTYS_TOTAL];
 static unsigned int tty_curr;
 
 
-pid_t tty_getpgrp(void)
-{
-    return tty_table[tty_curr].pgrp;
-}
-
-
-int tty_setpgrp(pid_t pgrp)
-{
-    tty_table[tty_curr].pgrp = pgrp;
-    return 0;
-}
-
-
-void tty_change(int n)
-{
-    if (n >= 0 && n < TTYS_CONSOLE) {
-        tty_curr = n;
-        scr_table[n].dirty = 1;
-    }
-}
-
 struct tty_st *tty_lookup(dev_t dev)
 {
     struct tty_st *tty = NULL;
@@ -63,7 +42,7 @@ struct tty_st *tty_lookup(dev_t dev)
 
     if (dev == DEV_TTY) {
         for (i = 0; i < TTYS_TOTAL; i++) {
-            if (current_task->pgid == tty_table[i].pgrp) {
+            if (current->tty == tty_table[i].dev) {
                 tty = &tty_table[i];
                 break;
             }
@@ -77,15 +56,49 @@ struct tty_st *tty_lookup(dev_t dev)
 }
 
 
+pid_t tty_getpgrp(void)
+{
+    pid_t pgrp = -1;
+    struct tty_st *tty;
+
+    tty = tty_lookup(current->tty);
+    if (tty != NULL)
+        pgrp = tty->pgrp;
+    return pgrp;
+}
+
+
+int tty_setpgrp(pid_t pgrp)
+{
+    int res = -1;
+    struct tty_st *tty;
+
+    tty = tty_lookup(current->tty);
+    if (tty != NULL) {
+        res = 0;
+        tty->pgrp = pgrp;
+    }
+    return res;
+}
+
+
+void tty_change(int n)
+{
+    if (n >= 0 && n < TTYS_CONSOLE) {
+        tty_curr = n;
+        scr_table[n].dirty = 1;
+    }
+}
+
+
 dev_t tty_get(void)
 {
     int i;
-    pid_t curr_pgid = current_task->pgid;
     dev_t dev = (dev_t)-1;
 
     for (i = 0; i < TTYS_TOTAL; i++) {
-        if (tty_table[i].pgrp == 0 || tty_table[i].pgrp == curr_pgid) {
-            tty_table[i].pgrp = curr_pgid;
+        if (tty_table[i].pgrp == 0 || tty_table[i].pgrp == current->pgid) {
+            tty_table[i].pgrp = current->pgid;
             dev = tty_table[i].dev;
             tty_table[i].refs++;
             break;

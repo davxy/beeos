@@ -31,17 +31,17 @@
 pid_t sys_getpgid(pid_t pid)
 {
     const struct task *t = NULL;
-    const struct task *curr = current_task;
+    const struct task *curr = current;
 
     if (pid == 0)
-        pid = current_task->pid;
+        pid = current->pid;
     do {
         if (curr->pid == pid) {
             t = curr;
             break;
         }
         curr = list_container(curr->tasks.next, struct task, tasks);
-    } while (curr != current_task);
+    } while (curr != current);
     return (t != NULL) ? t->pgid : -ESRCH;
 }
 

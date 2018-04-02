@@ -32,8 +32,8 @@ int sys_sigaction(int sig, const struct sigaction *act,
         return 0;
 
     if (oact != NULL)
-        *oact = current_task->signals[sig-1];
-    current_task->signals[sig-1] = *act;
+        *oact = current->signals[sig-1];
+    current->signals[sig-1] = *act;
 
     return 0;
 }

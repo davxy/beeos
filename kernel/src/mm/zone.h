@@ -35,15 +35,15 @@
 /** Zone descriptor */
 struct zone_st 
 {
-	char        *addr;          /**< Zone (physical) address */
-	size_t      size;           /**< Zone size */
-    size_t      frame_size;     /**< Size of a single frame */
-	size_t      free_count;     /**< Number of free frames */
-	size_t      busy_count;     /**< Number of busy frames */
-	char        flags;          /**< Type of the zone (e.g. ZONE_HIGH) */
-	struct frame_st *frames;    /**< Array of frame structures in this zone */
-    struct zone_st *next;       /**< Link to next zone */
-	struct buddy_sys buddy;     /**< Buddy system for the zone */
+    char            *addr;       /**< Zone (physical) address */
+    size_t           size;       /**< Zone size */
+    size_t           frame_size; /**< Size of a single frame */
+    size_t           free_count; /**< Number of free frames */
+    size_t           busy_count; /**< Number of busy frames */
+    unsigned char    flags;      /**< Type of the zone (e.g. ZONE_HIGH) */
+    struct frame_st *frames;     /**< Array of frame structures in this zone */
+    struct zone_st  *next;       /**< Link to next zone */
+    struct buddy_sys buddy;      /**< Buddy system for the zone */
 };
 
 /**

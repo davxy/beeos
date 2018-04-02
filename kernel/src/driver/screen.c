@@ -34,12 +34,12 @@ void screen_putchar(struct screen *scr, int c)
 	{
 		switch (c)
 		{
-        case '\b':	/* backspace */
+        case '\b':  /* backspace */
             if (scr->pos_x != 0)
                 scr->pos_x--;
             break;
-        case '\t':	/* tab */
-            scr->pos_x = (scr->pos_x+4) & ~(4-1);
+        case '\t':  /* tab */
+            scr->pos_x = ((scr->pos_x + 4) & ~0x03);
             break;
         case '\n':
             scr->pos_y++;
