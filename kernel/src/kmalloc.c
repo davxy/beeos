@@ -89,7 +89,7 @@ void *kmalloc(size_t size, int flags)
     unsigned int i;
 
     if (kmalloc_initialized == 0)
-        return ksbrk(size);
+        return ksbrk((intptr_t)size);
     i = (size < 16) ? 16 : next_pow2(size);
     i >>= 4;
     i = fnzb(i);

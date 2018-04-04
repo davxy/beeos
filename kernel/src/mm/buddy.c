@@ -38,7 +38,7 @@ static int toggle_bit(const struct buddy_sys *ctx, unsigned int block_idx,
 
     i = block_idx >> (order + 1);
     word = &ctx->free_area[order].map[i / (8 * sizeof(unsigned long))];
-    bit = 1 << (i % (8 * sizeof(unsigned long)));
+    bit = 1UL << (i % (8 * sizeof(unsigned long)));
     *word ^= bit;           /* Toggle the bit value */
     return *word & bit;     /* Return the current value */
 }

@@ -25,7 +25,7 @@
 
 /* https://gist.github.com/badboy/6267743 */
 
-static inline int hash_32(uint32_t val, int bits)
+static inline unsigned int hash_32(uint32_t val, unsigned int bits)
 {
     uint32_t v = val;
 
@@ -38,7 +38,7 @@ static inline int hash_32(uint32_t val, int bits)
     return v >> (32 - bits);
 }
 
-static inline int hash_64(uint64_t val, int bits)
+static inline unsigned int hash_64(uint64_t val, unsigned int bits)
 {
     uint64_t v = val;
 
@@ -49,7 +49,7 @@ static inline int hash_64(uint64_t val, int bits)
     v = (v + (v << 2)) + (v << 4);  /* v * 21 */
     v = v ^ (v >> 28);
     v = v + (v << 31);
-    return (int)(v >> (64 - bits));
+    return (unsigned int)(v >> (64 - bits));
 }
 
 #define hash(val, bits) \
@@ -61,13 +61,13 @@ struct htable_link
     struct htable_link **pprev;
 };
 
-static inline void htable_init(struct htable_link **htable, int bits)
+static inline void htable_init(struct htable_link **htable, unsigned int bits)
 {
-    memset(htable, 0, sizeof(struct htable_link *)*(1 << bits));
+    memset(htable, 0, sizeof(struct htable_link *) * (1 << bits));
 }
 
 static inline void htable_insert(struct htable_link **htable,
-        struct htable_link *node, long long key, int bits)
+                struct htable_link *node, long long key, unsigned int bits)
 {
     int i;
 
@@ -91,7 +91,7 @@ static inline void htable_delete(const struct htable_link *node)
 
 static inline struct htable_link *htable_lookup(
         struct htable_link * const *htable,
-        long long key, int bits)
+        long long key, unsigned int bits)
 {
     return htable[hash(key, bits)];
 }

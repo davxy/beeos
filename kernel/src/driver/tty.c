@@ -38,7 +38,7 @@ static unsigned int tty_curr;
 struct tty_st *tty_lookup(dev_t dev)
 {
     struct tty_st *tty = NULL;
-    int i;
+    unsigned int i;
 
     if (dev == DEV_TTY) {
         for (i = 0; i < TTYS_TOTAL; i++) {
@@ -82,9 +82,9 @@ int tty_setpgrp(pid_t pgrp)
 }
 
 
-void tty_change(int n)
+void tty_change(unsigned int n)
 {
-    if (n >= 0 && n < TTYS_CONSOLE) {
+    if (n < TTYS_CONSOLE) {
         tty_curr = n;
         scr_table[n].dirty = 1;
     }
@@ -93,7 +93,7 @@ void tty_change(int n)
 
 dev_t tty_get(void)
 {
-    int i;
+    unsigned int i;
     dev_t dev = (dev_t)-1;
 
     for (i = 0; i < TTYS_TOTAL; i++) {
@@ -182,7 +182,7 @@ ssize_t tty_read(dev_t dev, void *buf, size_t size)
 
 static int tty_putchar(dev_t dev, int c)
 {
-    int i;
+    unsigned int i;
     struct screen *scr;
     struct tty_st *tty;
 
@@ -192,7 +192,7 @@ static int tty_putchar(dev_t dev, int c)
     i = minor(tty->dev) - 1; /* Here is "safe" to do so */
     scr = &scr_table[i];
 
-    screen_putchar(scr, c);
+    screen_putchar(scr, (char)c);
 
     /* Useful for debug */
     uart_putchar(c);
@@ -202,13 +202,13 @@ static int tty_putchar(dev_t dev, int c)
 
 ssize_t tty_write(dev_t dev, const void *buf, size_t n)
 {
-    size_t i;
+    ssize_t i;
 
     for (i = 0; i < n; i++) {
         if (tty_putchar(dev, ((const unsigned char *)buf)[i]) < 0)
             break;
     }
-    return (ssize_t)i;
+    return i;
 }
 
 

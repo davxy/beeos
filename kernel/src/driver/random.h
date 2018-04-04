@@ -24,7 +24,7 @@
 
 int random_init(const unsigned char *seed, size_t seed_siz);
 
-int random_read(unsigned char *buf, size_t siz);
+ssize_t random_read(unsigned char *buf, size_t siz);
 
 #endif /* BEEOS_DRIVER_RANDOM_H_ */
 
