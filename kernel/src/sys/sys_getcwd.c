@@ -24,15 +24,12 @@
 #include <string.h>
 
 
-char *sys_getcwd(char *buf, size_t size)
+int sys_getcwd(char *buf, size_t size)
 {
-    int res;
+    int res = 0;
 
     if (buf == NULL)
-        return (char *)-EINVAL;
+        return -EINVAL;
 
-    if ((res = dentry_path(current->cwd, buf, size)) < 0)
-        return (char *)res;
-
-    return buf;
+    return dentry_path(current->cwd, buf, size);
 }

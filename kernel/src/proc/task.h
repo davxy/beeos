@@ -72,24 +72,22 @@ struct task
 
 typedef void (* task_entry_t)(void);
 
-int task_init(struct task *task, task_entry_t entry);
+int task_init(struct task *tsk, task_entry_t entry);
 
-void task_deinit(struct task *task);
+void task_deinit(struct task *tsk);
 
 struct task *task_create(task_entry_t entry);
 
-void task_delete(struct task *task);
+void task_delete(struct task *tsk);
 
-void task_signal(struct task *task, int sig);
+void task_signal(struct task *tsk, int sig);
 
 
-int task_arch_init(struct task_arch *task, task_entry_t entry);
+int task_arch_init(struct task_arch *tsk, task_entry_t entry);
 
-void task_arch_deinit(struct task_arch *task);
+void task_arch_deinit(struct task_arch *tsk);
 
 void task_arch_switch(struct task_arch *curr, const struct task_arch *next);
-
-
 
 
 #endif /* BEEOS_PROC_TASK_H_ */

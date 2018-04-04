@@ -40,6 +40,12 @@ void scheduler_init(void);
  */
 int do_signal(void);
 
+/*
+ * Arch dependent return preparation from a signal handler.
+ */
+void sigret_prepare(struct isr_frame *ifr,
+                    const struct sigaction *act, int sig);
+
 
 /*
  * Start init user-mode process.

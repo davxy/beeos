@@ -35,7 +35,7 @@ static struct screen scr_table[TTYS_TOTAL];
 static unsigned int tty_curr;
 
 
-struct tty_st *tty_lookup(dev_t dev)
+static struct tty_st *tty_lookup(dev_t dev)
 {
     struct tty_st *tty = NULL;
     unsigned int i;
@@ -212,7 +212,7 @@ ssize_t tty_write(dev_t dev, const void *buf, size_t n)
 }
 
 
-/* 
+/*
  * This function is usually called in interrupt context by the lower
  * level interrupt handler (e.g kbd driver).
  * TODO: Move most work as possible to the process context (tty_read).
@@ -224,10 +224,10 @@ void tty_update(char c)
     struct tty_st *tty = &tty_table[tty_curr];
 
     spinlock_lock(&tty->rcond.lock);
-    
+
     if (tty->wpos >= MAX_CANON)
         tty->wpos = MAX_CANON-1;
-  
+
     if (tty->rpos > tty->wpos)
         tty->rpos = tty->wpos = 0;
 

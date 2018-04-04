@@ -269,7 +269,7 @@ int dentry_path(struct dentry *dent, char *buf, size_t size);
 
 struct file *fs_file_alloc(void);
 
-void fs_file_free(struct file *file);
+void fs_file_free(struct file *fil);
 
 
 

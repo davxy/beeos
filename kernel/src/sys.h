@@ -52,7 +52,7 @@ pid_t sys_getpid(void);
 
 pid_t sys_getppid(void);
 
-char *sys_getcwd(char *buf, size_t size);
+int sys_getcwd(char *buf, size_t size);
 
 uid_t sys_getuid(void);
 

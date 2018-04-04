@@ -160,7 +160,11 @@ int execvpe(const char *file, char *const argv[], char *const envp[]);
 
 static inline char *getcwd(char *buf, size_t size)
 {
-    return (char *)syscall(__NR_getcwd, buf, size);
+    char *ret = buf;
+
+    if (syscall(__NR_getcwd, buf, size) < 0)
+        ret = (void *)0;
+    return ret;
 }
 
 static inline pid_t getpid(void)

@@ -17,7 +17,7 @@
  * License along with BeeOS; if not, see <http://www.gnu/licenses/>.
  */
 
-
+#include "proc.h"
 #include "arch/x86/isr_arch.h"
 #include <signal.h>
 

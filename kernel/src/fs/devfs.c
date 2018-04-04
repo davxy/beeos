@@ -26,6 +26,7 @@
 #include "kprintf.h"
 #include "list.h"
 #include <errno.h>
+#include <string.h>
 
 
 

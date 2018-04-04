@@ -28,10 +28,6 @@
 struct task ktask;
 struct task *current;
 
-/* arch dependent */
-void sigret_prepare(struct isr_frame *ifr,
-                    const struct sigaction *act, int sig);
-
 
 static int sigpop(sigset_t *sigpend, const sigset_t *sigmask)
 {
