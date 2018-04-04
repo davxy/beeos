@@ -21,10 +21,10 @@
 #define BEEOS_VERSION_H_
 
 #define BEEOS_MAJOR       0
-#define BEEOS_MINOR       1
-#define BEEOS_PATCH       1
+#define BEEOS_MINOR       2
+#define BEEOS_PATCH       0
 
-#define BEEOS_CODENAME    "StoneAge"
+#define BEEOS_CODENAME    "BronzeAge"
 
 #endif /* BEEOS_VERSION_H_ */
 
