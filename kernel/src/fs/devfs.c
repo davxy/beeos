@@ -38,7 +38,7 @@ static struct list_link devfs_nodes;
 
 static struct super_block devfs_sb;
 
-static int devfs_ino = 0;
+static ino_t devfs_ino = 0;
 
 
 static ssize_t devfs_inode_read(struct inode *inod, void *buf,
@@ -59,10 +59,10 @@ static ssize_t devfs_inode_read(struct inode *inod, void *buf,
             break;
         case DEV_ZERO:
             memset(buf, 0, count);
-            n = count;
+            n = (ssize_t)count;
             break;
         case DEV_NULL:
-            n = count;
+            n = (ssize_t)count;
             break;
         case DEV_INITRD:
             n = ramdisk_read(buf, count, off);
@@ -103,7 +103,7 @@ static ssize_t devfs_inode_write(struct inode *inod, const void *buf,
             break;
         case DEV_ZERO:
         case DEV_NULL:
-            n = count;
+            n = (ssize_t)count;
             break;
         case DEV_INITRD:
             n = ramdisk_write(buf, count, off);

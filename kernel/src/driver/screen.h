@@ -28,7 +28,7 @@ struct screen
     unsigned int  pos_x;
     unsigned int  pos_y;
     unsigned char dirty;
-    unsigned char buf[SCREEN_WIDTH * SCREEN_HEIGHT];
+    char buf[SCREEN_WIDTH * SCREEN_HEIGHT];
 };
 
 /**
@@ -45,7 +45,7 @@ void screen_init(struct screen *scr);
  * @param buf   Characters string.
  * @param n     String length.
  */
-void screen_write(struct screen *scr, const char *buf, int n);
+void screen_write(struct screen *scr, const char *buf, unsigned int n);
 
 /**
  * Puts a single character to the screen.
@@ -53,7 +53,7 @@ void screen_write(struct screen *scr, const char *buf, int n);
  * @param scr   Screen context.
  * @param c     Character to put.
  */
-void screen_putchar(struct screen *scr, int c);
+void screen_putchar(struct screen *scr, char c);
 
 /**
  * Update the screen with the buffer content and cursor.

@@ -33,7 +33,7 @@
 /*
  * Mask an IRQ
  */
-void pic_mask(int n)
+void pic_mask(unsigned int n)
 {
     uint8_t val;
     uint16_t port;
@@ -51,7 +51,7 @@ void pic_mask(int n)
 /*
  * Unmask an IRQ
  */
-void pic_unmask(int n)
+void pic_unmask(unsigned int n)
 {
     uint8_t val;
     uint16_t port;
@@ -85,3 +85,4 @@ void pic_init(void)
     outb(PIC1_DATA, 0xFB);
     outb(PIC2_DATA, 0xFF);
 }
+

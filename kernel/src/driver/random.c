@@ -80,7 +80,7 @@ static void rand_unaligned(unsigned char *buf, size_t n)
     }
 }
 
-int random_read(unsigned char *buf, size_t siz)
+ssize_t random_read(unsigned char *buf, size_t siz)
 {
     size_t i;
     size_t iter;
@@ -107,5 +107,5 @@ int random_read(unsigned char *buf, size_t siz)
     if ((iter = (siz & 0x03)) != 0)
         rand_unaligned((unsigned char *)&buf32[i], iter);
 
-    return siz;
+    return (ssize_t)siz;
 }

@@ -42,6 +42,22 @@ void *frame_alloc(unsigned int order, unsigned int flags)
 }
 
 
+static int iswithin(uintptr_t b1, size_t sz1, uintptr_t b2, size_t sz2)
+{
+    uintptr_t e1;
+    uintptr_t e2;
+
+    if (sz1 == 0)
+        return ((b1 == b2) && (sz2 == 0));
+    e1 = b1 + sz1 - 1;
+    if (sz2 == 0)
+        return ((b1 <= b2) && (b2 <= e1));
+    e2 = b2 + sz2 - 1;
+    /* e1 and e2 are end addresses, the sum is immune to overflow */
+    return ((b1 <= b2) && (e1 >= e2));
+}
+
+
 void frame_free(void *ptr, unsigned int order)
 {
     const struct zone_st *zone;

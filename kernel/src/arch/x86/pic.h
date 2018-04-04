@@ -26,7 +26,7 @@
  *
  * @param n     IRQ number
  */
-void pic_mask(int n);
+void pic_mask(unsigned int n);
 
 /*
  * Unmask an IRQ.
@@ -34,7 +34,7 @@ void pic_mask(int n);
  *
  * @param n     IRQ number
  */
-void pic_unmask(int n);
+void pic_unmask(unsigned int n);
 
 /*
  * PIC initialization.
@@ -42,8 +42,7 @@ void pic_unmask(int n);
  */
 void pic_init(void);
 
-
-void pic_eoi(int n);
+void pic_eoi(unsigned int n);
 
 
 #endif /* BEEOS_ARCH_X86_PIC_H_ */
