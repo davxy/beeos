@@ -17,38 +17,35 @@
  * License along with BeeOS; if not, see <http://www.gnu/licenses/>.
  */
 
+#include "sys.h"
 #include "fs/vfs.h"
 #include "proc.h"
 #include <unistd.h>
 #include <errno.h>
 #include <limits.h>
 
-void fs_file_free(struct file *file);
 
-int sys_close(int fdn)
+int sys_close(int fd)
 {
-    struct file *file;
+    struct file *fil;
 
     /* Validate file descriptor */
-    if (fdn < 0 || OPEN_MAX <= fdn || !current_task->fd[fdn].file)
+    if (fd < 0 || OPEN_MAX <= fd || !current->fds[fd].fil)
         return -EBADF;
 
+    fil = current->fds[fd].fil;
+    current->fds[fd].fil = NULL;
+    current->fds[fd].flags = 0;
 
-    file = current_task->fd[fdn].file;
-    current_task->fd[fdn].file = NULL;
-    current_task->fd[fdn].flags = 0;
-
-    file->refs--;
-    if (file->refs == 0)
+    fil->ref--;
+    if (fil->ref == 0)
     {
-        iput(file->inode);  /* Before the NULL write!!! */
-        if (S_ISFIFO(file->inode->mode))
-            /* Wake up the other end, to allow EOF recv in user space */
-            fs_write(file->inode, NULL, 0, 0);
+        /* Wake up the other end, to allow EOF recv in user space */
+        if (S_ISFIFO(fil->dent->inod->mode))
+            (void)vfs_write(fil->dent->inod, NULL, 0, 0);
+        dput(fil->dent);
 
-        /* TODO VFS op required. iput of pipe_inode is different */
-        fs_file_free(file);
+        fs_file_free(fil);
     }
-
-    return fdn;
+    return 0;
 }

@@ -17,8 +17,8 @@
  * License along with BeeOS; if not, see <http://www.gnu/licenses/>.
  */
 
-#ifndef _BEEOS_TASK_H_
-#define _BEEOS_TASK_H_
+#ifndef BEEOS_PROC_TASK_H_
+#define BEEOS_PROC_TASK_H_
 
 #include "list.h"
 #include "fs/vfs.h"
@@ -33,7 +33,6 @@
 #define TASK_RUNNING    1
 #define TASK_SLEEPING   2
 #define TASK_ZOMBIE     3
-#define TASK_READY      4
 
 #define SIGNALS_NUM     (SIGUNUSED+1)
 
@@ -50,9 +49,9 @@ struct task
     gid_t               egid;           /**< Effective group ID. */
     gid_t               sgid;           /**< Saved group ID. */
     int                 state;          /**< Process state. */
-    struct inode        *cwd;           /**< Current working directory. */
-    struct inode        *root;
-    struct fd           fd[OPEN_MAX];   /**< Open files. */  
+    struct dentry       *cwd;           /**< Current working directory. */
+    struct dentry       *root;          /**< File system root. */
+    struct filedesc     fds[OPEN_MAX];  /**< Open files. */
     struct list_link    tasks;          /**< Tasks list link. */
     struct cond         chld_exit;      /**< Child exit condition */
     int                 counter;        /**< Remaining time slice for sched */
@@ -67,19 +66,29 @@ struct task
     struct list_link    timers;         /**< Process running timer events */
     struct timer_event  alarm;          /**< Alarm timer event (pre-allocated) */
     struct list_link    condw;          /**< Conditional wait */
+    dev_t               tty;            /**< Controlling terminal */
 };
 
-struct task *task_create(void);
-void task_delete(struct task *task);
 
-int task_init(struct task *task);
-void task_deinit(struct task *task);
+typedef void (* task_entry_t)(void);
+
+int task_init(struct task *tsk, task_entry_t entry);
+
+void task_deinit(struct task *tsk);
+
+struct task *task_create(task_entry_t entry);
+
+void task_delete(struct task *tsk);
+
+void task_signal(struct task *tsk, int sig);
 
 
-int task_arch_init(struct task_arch *task);
-void task_arch_deinit(struct task_arch *task);
+int task_arch_init(struct task_arch *tsk, task_entry_t entry);
 
-void task_arch_switch(struct task_arch *curr, struct task_arch *next);
+void task_arch_deinit(struct task_arch *tsk);
+
+void task_arch_switch(struct task_arch *curr, const struct task_arch *next);
 
 
-#endif /* _BEEOS_TASK_H_ */
+#endif /* BEEOS_PROC_TASK_H_ */
+

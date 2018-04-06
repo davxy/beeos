@@ -26,17 +26,18 @@ int sys_dup(int oldfd)
 {
     int newfd;
 
-    if (oldfd < 0 || oldfd >= OPEN_MAX || !current_task->fd[oldfd].file)
+    if (oldfd < 0 || oldfd >= OPEN_MAX || current->fds[oldfd].fil == NULL)
         return -EBADF; /* Invalid file descriptor */
 
-    for (newfd = 0; newfd < OPEN_MAX; newfd++)
-        if (current_task->fd[newfd].file == NULL)
+    for (newfd = 0; newfd < OPEN_MAX; newfd++) {
+        if (current->fds[newfd].fil == NULL) {
+            current->fds[newfd] = current->fds[oldfd];
+            current->fds[newfd].flags &= ~FD_CLOEXEC; /* Posix */
+            current->fds[newfd].fil->ref++;
             break;
+        }
+    }
     if (newfd == OPEN_MAX)
-        return -EMFILE; /* Too many open files */
-
-    current_task->fd[newfd] = current_task->fd[oldfd];
-    current_task->fd[newfd].flags &= ~FD_CLOEXEC; /* Posix */
-    current_task->fd[newfd].file->refs++;
+        newfd = -EMFILE; /* Too many open files */
     return newfd;
 }

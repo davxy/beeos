@@ -17,17 +17,18 @@
  * License along with BeeOS; if not, see <http://www.gnu/licenses/>.
  */
 
-#ifndef _BEEOS_RAMDISK_H_
-#define _BEEOS_RAMDISK_H_
+#ifndef BEEOS_DRIVER_RAMDISK_H_
+#define BEEOS_DRIVER_RAMDISK_H_
 
 #include <sys/types.h>
 
 
 void ramdisk_init(void *addr, size_t size);
 
-ssize_t ramdisk_read(void *buf, size_t size, off_t off);
+ssize_t ramdisk_read(void *buf, size_t size, size_t off);
 
-ssize_t ramdisk_write(const void *buf, size_t size, off_t off);
+ssize_t ramdisk_write(const void *buf, size_t size, size_t off);
 
 
-#endif /* _BEEOS_RAMDISK_H_ */
+#endif /* BEEOS_DRIVER_RAMDISK_H_ */
+

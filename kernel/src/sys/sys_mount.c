@@ -19,29 +19,26 @@
 
 #include "sys.h"
 #include "fs/vfs.h"
+#include "fs/devfs.h"
 #include "proc.h"
 #include <errno.h>
 #include <sys/stat.h>
 
-struct sb *devfs_sb_get(void);
 
 int sys_mount(const char *source, const char *target,
-              const char *filesystemtype, unsigned long mountflags,
+              const char *fs_type, unsigned long flags,
               const void *data)
 {
-    int res = 0;
-    struct inode *idst, *isrc;
+    struct dentry *dst, *src;
 
-    idst = fs_namei(target);
+    dst = named(target);
+    if (dst == NULL)
+        return -ENOENT;
 
-    if (strcmp(source, "dev") != 0)
-        isrc = fs_namei(source);
+    if (strcmp(fs_type, "dev") == 0)
+        src = devfs_sb_get()->root;
     else
-        isrc = devfs_sb_get()->root;
+        src = named(source);
 
-    isrc->sb->mnt = idst->sb;
-    idst->sb = isrc->sb;
-    idst->ops = isrc->ops;
-
-    return res;
+    return do_mount(dst, src);
 }

@@ -21,39 +21,53 @@
 #include "mm/slab.h"
 #include "util.h"
 
-#define KMALLOC_MIN_W   4
-#define KMALLOC_MAX_W   22  
 
+#define KMALLOCS_SLABS_NUM  19
+
+static struct slab_cache *kmalloc_caches[KMALLOCS_SLABS_NUM];
+
+static const char *names[KMALLOCS_SLABS_NUM] = {
+    "kmalloc-16",
+    "kmalloc-32",
+    "kmalloc-64",
+    "kmalloc-128",
+    "kmalloc-256",
+    "kmalloc-512",
+    "kmalloc-1K",
+    "kmalloc-2K",
+    "kmalloc-4K",
+    "kmalloc-8K",
+    "kmalloc-16K",
+    "kmalloc-32K",
+    "kmalloc-64K",
+    "kmalloc-128K",
+    "kmalloc-256K",
+    "kmalloc-512K",
+    "kmalloc-1M",
+    "kmalloc-2M",
+    "kmalloc-4M"
+};
 
 static int kmalloc_initialized = 0;
 
-static struct slab_cache *kmalloc_caches[KMALLOC_MAX_W - KMALLOC_MIN_W + 1];
-
-static const char *kmalloc_names[] =
+/*
+ * Align to the next power of two
+ */
+static unsigned long next_pow2(unsigned long val)
 {
-    "kmalloc-16",
-	"kmalloc-32",
-	"kmalloc-64",
-	"kmalloc-128",
-	"kmalloc-256",
-	"kmalloc-512",
-	"kmalloc-1K",
-	"kmalloc-2K",
-	"kmalloc-4K",
-	"kmalloc-8K",
-	"kmalloc-16K",
-	"kmalloc-32K",
-	"kmalloc-64K",
-	"kmalloc-128K",
-	"kmalloc-256K",
-	"kmalloc-512K",
-	"kmalloc-1M",
-	"kmalloc-2M",
-	"kmalloc-4M"
-};
+    unsigned long v = val;
 
+    v--;
+    v |= v >> 1;
+    v |= v >> 2;
+    v |= v >> 4;
+    v |= v >> 8;
+    v |= v >> 16;
+    v++;
+    return v;
+}
 
-/* 
+/*
  * Very primitive memory allocation form.
  * This is used silently used if the memory system has not been initialized.
  */
@@ -61,20 +75,21 @@ static void *ksbrk(intptr_t increment)
 {
     void *ptr;
     extern char kend;        /* Defined in the linker script. */
-    static char *brk = 0;
-    if (!brk)
-        brk = (char *)ALIGN_UP((uintptr_t)&kend, sizeof(uintptr_t));
+    static char *kbrk = NULL;
 
-    ptr = brk;
-    brk += ALIGN_UP(increment, sizeof(uintptr_t));
+    if (kbrk == NULL)
+        kbrk = (char *)ALIGN_UP((uintptr_t)&kend, sizeof(uintptr_t));
+    ptr = kbrk;
+    kbrk += ALIGN_UP(increment, sizeof(uintptr_t));
     return ptr;
 }
 
 void *kmalloc(size_t size, int flags)
 {
     unsigned int i;
-    if (!kmalloc_initialized)
-        return ksbrk(size);
+
+    if (kmalloc_initialized == 0)
+        return ksbrk((intptr_t)size);
     i = (size < 16) ? 16 : next_pow2(size);
     i >>= 4;
     i = fnzb(i);
@@ -84,7 +99,8 @@ void *kmalloc(size_t size, int flags)
 void kfree(void *ptr, size_t size)
 {
     unsigned int i;
-    if (!kmalloc_initialized)
+
+    if (kmalloc_initialized == 0)
         return;
     i= (size < 16) ? 16 : next_pow2(size);
     i >>= 4;
@@ -92,21 +108,17 @@ void kfree(void *ptr, size_t size)
     slab_cache_free(kmalloc_caches[i], ptr);
 }
 
+
 /* Initialize generic kernel memory allocator. */
 void kmalloc_init(void)
 {
     int i;
     size_t size;
 
-    /* Initialize the slab subsystem */
-    slab_init();
-
-    for (i = 0, size = (1 << KMALLOC_MIN_W);
-         i < KMALLOC_MAX_W - KMALLOC_MIN_W + 1;
-         i++, size <<= 1)
-    {
-        kmalloc_caches[i] = slab_cache_create(kmalloc_names[i],
-                size, 0, 0, NULL, NULL);
+    size = 16; /* Min slab size */
+    for (i = 0; i < KMALLOCS_SLABS_NUM; i++) {
+        kmalloc_caches[i] = slab_cache_create(names[i], size, 0, 0, NULL, NULL);
+        size <<= 1;
     }
     kmalloc_initialized = 1;
 }

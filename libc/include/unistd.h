@@ -31,37 +31,40 @@
 #define __NR_write          4
 #define __NR_open           5
 #define __NR_close          6
-#define __NR_mknod          29
-#define __NR_waitpid        7
-#define __NR_creat          8
-#define __NR_dup            9
-#define __NR_dup2           10
-#define __NR_execve         11
-#define __NR_lseek          12
-#define __NR_time           13
-#define __NR_getpid         20
-#define __NR_setpgid        21
-#define __NR_getpgid        22
-#define __NR_tcgetpgrp      23
-#define __NR_tcsetpgrp      24
-#define __NR_fstat          28
-#define __NR_getppid        64
-#define __NR_getcwd         65
-#define __NR_getuid         102
-#define __NR_getgid         104
-#define __NR_setuid         105
-#define __NR_setgid         106
-#define __NR_sbrk           30
-#define __NR_nanosleep      31
-#define __NR_sigaction      32
-#define __NR_sigreturn      33
-#define __NR_sigprocmask    34
-#define __NR_sigsuspend     35
-#define __NR_kill           37
-#define __NR_pipe           38
-#define __NR_chdir          39
-#define __NR_alarm          40
-#define __NR_info           99
+#define __NR_mknod          7
+#define __NR_waitpid        8
+#define __NR_creat          9
+#define __NR_dup            10
+#define __NR_dup2           11
+#define __NR_execve         12
+#define __NR_lseek          13
+#define __NR_time           14
+#define __NR_getpid         15
+#define __NR_setpgid        16
+#define __NR_getpgid        17
+#define __NR_tcgetpgrp      18
+#define __NR_tcsetpgrp      19
+#define __NR_fstat          20
+#define __NR_sbrk           21
+#define __NR_nanosleep      22
+#define __NR_sigaction      23
+#define __NR_sigreturn      24
+#define __NR_sigprocmask    25
+#define __NR_sigsuspend     26
+#define __NR_kill           27
+#define __NR_pipe           28
+#define __NR_chdir          29
+#define __NR_alarm          30
+#define __NR_mount          31
+#define __NR_getppid        32
+#define __NR_getcwd         33
+#define __NR_getuid         34
+#define __NR_getgid         35
+#define __NR_setuid         36
+#define __NR_setgid         37
+/* Custom info syscall */
+#define __NR_info           38
+
 
 #define STDIN_FILENO        0
 #define STDOUT_FILENO       1
@@ -79,8 +82,8 @@
 #define W_OK                2       /* Test for write permission */
 #define R_OK                4       /* Test for read permission */
 
-#ifndef __ASSEMBLER__
 
+#ifndef __ASSEMBLER__
 
 extern char **environ;  /**< Pointer to the environment strings */
 
@@ -157,7 +160,11 @@ int execvpe(const char *file, char *const argv[], char *const envp[]);
 
 static inline char *getcwd(char *buf, size_t size)
 {
-    return (char *)syscall(__NR_getcwd, buf, size);
+    char *ret = buf;
+
+    if (syscall(__NR_getcwd, buf, size) < 0)
+        ret = (void *)0;
+    return ret;
 }
 
 static inline pid_t getpid(void)
@@ -236,7 +243,6 @@ static inline int usleep(unsigned int usec)
     return 0;
 }
 
-
 int access(const char *path, int amode);
 
 int pause(void);
@@ -246,6 +252,27 @@ int gethostname(char *name, size_t len);
 static inline unsigned int alarm(unsigned int seconds)
 {
     return syscall(__NR_alarm, seconds);
+}
+
+
+static inline uid_t getuid(void)
+{
+    return syscall(__NR_getuid);
+}
+
+static inline int setuid(uid_t uid)
+{
+    return syscall(__NR_setuid, uid);
+}
+
+static inline gid_t getgid(void)
+{
+    return syscall(__NR_getgid);
+}
+
+static inline int setgid(gid_t gid)
+{
+    return syscall(__NR_setgid, gid);
 }
 
 

@@ -17,73 +17,54 @@
  * License along with BeeOS; if not, see <http://www.gnu/licenses/>.
  */
 
+#include "sys.h"
 #include "fs/vfs.h"
 #include "proc.h"
-#include "dev.h"
-#include "kmalloc.h"
 #include "driver/tty.h"
-#include <unistd.h>
 #include <errno.h>
-#include <limits.h>
 #include <string.h>
-#include <stdio.h>
+#include <fcntl.h>
 
-void *fs_file_alloc(void);
 
 int sys_open(const char *pathname, int flags, mode_t mode)
 {
     int fdn;
-    struct file *file;
-    struct inode *inode;
-    char buf[16];
+    struct file *fil;
+    struct dentry *dent;
 
     if (pathname == NULL)
         return -EINVAL;
 
-    if (strcmp(pathname, "/dev/tty") == 0)
-    {
-        dev_t dev = tty_get();
-        snprintf(buf, sizeof(buf), "/dev/tty%d", minor(dev));
-        pathname = buf;
-    }
-
-    inode = fs_namei(pathname);
-    if (inode == NULL)
+    dent = named(pathname);
+    if (dent == NULL)
         return -ENOENT;
 
+    if (current->pid == current->pgid &&
+        (flags & O_NOCTTY) == 0 &&
+        strcmp(pathname, "/dev/tty") == 0) {
+        current->tty = tty_get();
+        if (current->tty < 0)
+            return -EBUSY;
+    }
+
     for (fdn = 0; fdn < OPEN_MAX; fdn++)
-        if (current_task->fd[fdn].file == NULL)
+        if (current->fds[fdn].fil == NULL)
             break;
     if (fdn == OPEN_MAX)
         return -EMFILE; /* Too many open files. */
 
-    // TODO : temporary just to allow to proceed
-#if 0
-    if (strcmp(pathname, "console") == 0)
-    {
-        inode = kmalloc(sizeof(struct inode), 0);
-        memset(inode, 0, sizeof(*inode));
-        inode->mode = S_IFCHR;
-        inode->dev = tty_get();
-        inode->ref = 1;
-    }
-    else
-    {
-#endif
-        inode = fs_namei(pathname);
-        if (inode == NULL)
-            return -ENOENT;
- //   }
-
-    file = fs_file_alloc();
-    if (!file)
+    fil = fs_file_alloc();
+    if (!fil)
         return -ENOMEM;
 
-    file->refs = 1;
-    file->offset = 0;
-    file->inode = inode;
+    fil->ref = 1;
+    fil->off = 0;
+    fil->mode = mode;
+    fil->flags = (unsigned int)flags & ~O_CLOEXEC;
+    fil->dent = dent;
 
-    current_task->fd[fdn].file = file;
-    
+    current->fds[fdn].fil = fil;
+    current->fds[fdn].flags = (unsigned int)flags & O_CLOEXEC;
+
     return fdn;
 }

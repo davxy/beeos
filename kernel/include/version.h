@@ -17,16 +17,14 @@
  * License along with BeeOS; if not, see <http://www.gnu/licenses/>.
  */
 
-#ifndef _BEEOS_VERSION_H_
-#define _BEEOS_VERSION_H_
+#ifndef BEEOS_VERSION_H_
+#define BEEOS_VERSION_H_
 
 #define BEEOS_MAJOR       0
-#define BEEOS_MINOR       1
-#define BEEOS_PATCH       1
-#define BEEOS_VERSION \
-    (((BEEOS_MAJOR) << 16) + ((BEEOS_MINOR) << 8) + (BEEOS_PATCH))
+#define BEEOS_MINOR       2
+#define BEEOS_PATCH       0
 
-#define BEEOS_CODENAME    "StoneAge"
+#define BEEOS_CODENAME    "BronzeAge"
 
-#endif /* _BEEOS_VERSION_H_ */
+#endif /* BEEOS_VERSION_H_ */
 

@@ -17,24 +17,25 @@
  * License along with BeeOS; if not, see <http://www.gnu/licenses/>.
  */
 
+#include "sys.h"
 #include "proc.h"
 #include <sys/types.h>
 #include <errno.h>
 
 int sys_setgid(gid_t gid)
 {
-    if (current_task->egid == 0)
+    if (current->egid == 0)
     {
         /* If gid is not root then, after this, it will be
          * impossible for the program to regain root privileges. */
-        current_task->gid  = gid;
-        current_task->egid = gid;
-        current_task->sgid = gid;
+        current->gid  = gid;
+        current->egid = gid;
+        current->sgid = gid;
     }
-    else if (current_task->gid == gid
-          || current_task->sgid == gid)
+    else if (current->gid == gid
+          || current->sgid == gid)
     {
-        current_task->egid = gid;
+        current->egid = gid;
     }
     else
     {

@@ -19,49 +19,17 @@
 
 #include "sys.h"
 #include "proc.h"
+#include "fs/vfs.h" /* follow_up() */
 #include <errno.h>
 #include <string.h>
 
-char *sys_getcwd(char *buf, size_t size)
+
+int sys_getcwd(char *buf, size_t size)
 {
-    int i, j, status = 0;
-    size_t slen;
-    struct dirent dent;
-    struct inode *icurr, *iparent;
+    int res = 0;
 
     if (buf == NULL)
-        return (char *)-EINVAL;
+        return -EINVAL;
 
-    icurr = current_task->cwd;
-    j = size;
-    do {
-        iparent = fs_lookup(icurr, "..");
-        if (iparent == icurr)
-            break;
-        i = 0;
-        while ((status = fs_readdir(iparent, i++, &dent)) == 0)
-        {
-            if (dent.d_ino == icurr->ino)
-            {
-                slen = strlen(dent.d_name);
-                if (j - slen < 0)
-                    return (char *)-ENAMETOOLONG;
-                j -= slen;
-                memcpy(&buf[j], dent.d_name, slen);
-                if (j - 1 < 0)
-                    return (char *)-ENAMETOOLONG;
-                buf[--j] = '/';
-                icurr = iparent;
-                break;
-            }
-        }
-    } while (status == 0);
-    if (j == size)
-        buf[--j] = '/';
-
-    size -= j;
-    memmove(buf, buf + j, size);
-    buf[size] = '\0';
-
-    return buf;
+    return dentry_path(current->cwd, buf, size);
 }

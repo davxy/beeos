@@ -17,20 +17,20 @@
  * License along with BeeOS; if not, see <http://www.gnu/licenses/>.
  */
 
+#include "panic.h"
 #include "kprintf.h"
 #include <stdarg.h>
 
 void freeze(void);
-void print_stack_trace(void);
 
 void panic(const char *fmt, ...)
 {
     va_list va;
 
-    va_start(va, fmt);
     kprintf("*** kernel panic: ");
+    va_start(va, fmt);
     kvprintf(fmt, va);
-//    print_stack_trace();
+    va_end(va);
     kprintf("\n***\n");
     freeze();
 }

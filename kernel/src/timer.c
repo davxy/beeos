@@ -22,15 +22,21 @@
 
 unsigned long timer_ticks = 0;
 
-unsigned long timer_freq;
-
 /* Timer events queue. */
 static struct list_link timer_events;
 
+/**
+ * Architecture dependent timer initialization.
+ */
+void timer_arch_init(void);
+
+
 void timer_event_add(struct timer_event *tm)
 {
-    struct timer_event *e;
-    struct list_link *curr = timer_events.next;
+    const struct timer_event *e;
+    struct list_link *curr;
+
+    curr = timer_events.next;
     while (curr != &timer_events)
     {
         e = list_container(curr, struct timer_event, link);
@@ -78,14 +84,12 @@ void timer_update(void)
         }
     }
 
-    extern int need_resched;
-    if (current_task->counter-- <= 0)
+    if (current->counter-- <= 0)
         need_resched = 1;
 }
 
-void timer_init(unsigned int frequency)
+void timer_init(void)
 {
-    timer_freq = frequency;
     list_init(&timer_events);
-    timer_arch_init(frequency);
+    timer_arch_init();
 }

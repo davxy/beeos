@@ -22,33 +22,52 @@
 #include "kmalloc.h"
 #include "kprintf.h"
 
+
 /* List of all the registered zones */
 static struct zone_st *zone_list;
 
-void *frame_alloc(unsigned int order, int flags)
+void *frame_alloc(unsigned int order, unsigned int flags)
 {
     void *ptr = NULL;
-    struct zone_st *zone;
-    
+    const struct zone_st *zone;
+
     for (zone = zone_list; zone != NULL; zone = zone->next) {
-        if ((zone->flags & flags) != flags)
-            continue;
-        ptr = zone_alloc(zone, order);
-        if (ptr)
-            break;
+        if ((zone->flags & flags) == flags) {
+            ptr = zone_alloc(zone, order);
+            if (ptr != NULL)
+                break;
+        }
     }
     return ptr;
 }
 
+
+static int iswithin(uintptr_t b1, size_t sz1, uintptr_t b2, size_t sz2)
+{
+    uintptr_t e1;
+    uintptr_t e2;
+
+    if (sz1 == 0)
+        return ((b1 == b2) && (sz2 == 0));
+    e1 = b1 + sz1 - 1;
+    if (sz2 == 0)
+        return ((b1 <= b2) && (b2 <= e1));
+    e2 = b2 + sz2 - 1;
+    /* e1 and e2 are end addresses, the sum is immune to overflow */
+    return ((b1 <= b2) && (e1 >= e2));
+}
+
+
 void frame_free(void *ptr, unsigned int order)
 {
-    struct zone_st *zone;
+    const struct zone_st *zone;
 
-    if (!ptr)
+    if (ptr == NULL)
         return;
     for (zone = zone_list; zone != NULL; zone = zone->next) {
-        if (iswithin((uintptr_t)zone->addr, zone->size,
-                     (uintptr_t)ptr, 4096<<order)) {
+        if (order <= zone->buddy.order_max &&
+            iswithin((uintptr_t)zone->addr, zone->size, (uintptr_t)ptr,
+                     (size_t)1 << (order + zone->buddy.order_bit)) != 0) {
             zone_free(zone, ptr, order);
             break;
         }
@@ -57,21 +76,30 @@ void frame_free(void *ptr, unsigned int order)
 
 int frame_zone_add(void *addr, size_t size, size_t frame_size, int flags)
 {
+    int res;
     struct zone_st *zone;
-    
-    zone = kmalloc(sizeof(struct zone_st), 0);
-    if (!zone)
-        return -1;
-    zone_init(zone, addr, size, frame_size, flags);
-    zone->next = zone_list;
-    zone_list = zone;
-    return 0; 
+
+    zone = (struct zone_st *)kmalloc(sizeof(struct zone_st), 0);
+    if (zone != NULL) {
+        res = zone_init(zone, addr, size, frame_size, flags);
+        if (res == 0) {
+            zone->next = zone_list;
+            zone_list = zone;
+        } else {
+            kfree(zone, sizeof(struct zone_st));
+        }
+    } else {
+        res = -1;
+    }
+    return res;
 }
+
 
 void frame_dump(void)
 {
-    struct zone_st *zone;
+    const struct zone_st *zone;
 
     for (zone = zone_list; zone != NULL; zone = zone->next)
         zone_dump(zone);
 }
+

@@ -25,13 +25,12 @@
 
 #include "arch/x86/pic.h"
 
-#define HANDLERS_NUM    49  // TODO : not a generic number
 
 int need_resched;
 
-isr_handler_t isr_handlers[HANDLERS_NUM];
+#define HANDLERS_NUM    49
+static isr_handler_t isr_handlers[HANDLERS_NUM];
 
-void pic_eoi(int num);
 
 /* ISR arch independent dispatcher */
 void isr_handler(struct isr_frame *ifr)
@@ -45,8 +44,8 @@ void isr_handler(struct isr_frame *ifr)
      * Thus if, after isr handling, we return back to the kernel
      * we have the correct 'ifr' value within the current_task struct.
      */
-    previfr = current_task->arch.ifr;
-    current_task->arch.ifr = ifr;
+    previfr = current->arch.ifr;
+    current->arch.ifr = ifr;
     
     num = ifr->int_no;
     if (num == ISR_SYSCALL)
@@ -61,7 +60,7 @@ void isr_handler(struct isr_frame *ifr)
     if (32 <= num && num <= 47)
         pic_eoi(num);
 
-    if (need_resched)
+    if (need_resched != 0)
     {
         need_resched = 0;
         scheduler();
@@ -72,12 +71,12 @@ void isr_handler(struct isr_frame *ifr)
      * Do not handle nested signals (sfr should be null) and
      * handle signals only before return to user code (CS check).
      */
-    if (!sigisemptyset(&current_task->sigpend) &&
-            current_task->arch.sfr == NULL && (ifr->cs & 0x3) == 0x3)
-        do_signal();
+    if (!sigisemptyset(&current->sigpend) &&
+            current->arch.sfr == NULL && (ifr->cs & 0x3) == 0x3)
+        (void)do_signal();
 
     /* Eventually restore the previous ifr */
-    current_task->arch.ifr = previfr;
+    current->arch.ifr = previfr;
 }
 
 /*
@@ -101,12 +100,12 @@ void isr_register_handler(unsigned int num, isr_handler_t func)
 
 static void divide_error(void)
 {
-    sys_kill(current_task->pid, SIGFPE);
+    task_signal(current, SIGFPE);
 }
 
 static void invalid_opcode(void)
 {
-    sys_kill(current_task->pid, SIGILL);
+    task_signal(current, SIGILL);
 }
 
 void isr_init(void)

@@ -27,7 +27,6 @@
 static struct task *find_init(void)
 {
     struct task *t;
-    extern struct task ktask;
 
     t = list_container(ktask.tasks.next, struct task, tasks);
     while (t != &ktask) {
@@ -42,7 +41,8 @@ static struct task *find_init(void)
 
 static void children_split(struct task *node)
 {
-    struct task *head, *curr, *prev;
+    struct task *head, *curr;
+    const struct task *prev;
 
     head = NULL;
     prev = node;
@@ -57,7 +57,7 @@ static void children_split(struct task *node)
     }
     if (head == NULL)
         panic("corrupted children hierarchy");
-    
+
     /* second half */
     node->children.next->prev = head->children.prev;
     head->children.prev->next = node->children.next;
@@ -69,30 +69,32 @@ static void children_split(struct task *node)
 
 static void children_give(struct task *child)
 {
-    struct task *init, *init_child, *t;
+    struct task *init_task;
+    struct task *init_child;
+    struct task *curr_task;
 
-    init = find_init();
-    init_child = list_container(init->children.next,
+    init_task = find_init();
+    init_child = list_container(init_task->children.next,
                                 struct task, children);
     if (init_child->pid == 0)
         panic("init has not childs");
 
     /* node is in the middle of the children chain */
-    children_split(current_task);
-    t = child;
+    children_split(current);
+    curr_task = child;
     do {
-        if (t->pptr != current_task)
+        if (curr_task->pptr != current)
             panic("corrupted sibling list");
-        t->pptr = init; /* give in adoption */
+        curr_task->pptr = init_task; /* give in adoption */
         /*
          * Wake-up to eventually give the oppurtunity to terminate.
          * This may happen if the process is waiting on a pipe that has
          * been closed on the other side.
          */
-        t = list_container(t->sibling.next, struct task, sibling);
-    } while (t != child);
+        curr_task = list_container(curr_task->sibling.next, struct task, sibling);
+    } while (curr_task != child);
 
-    list_merge(&init_child->sibling, &child->sibling); 
+    list_merge(&init_child->sibling, &child->sibling);
 }
 
 /*
@@ -106,43 +108,43 @@ void sys_exit(int status)
     struct task *child;
     int i;
 
-    if (current_task->pid == 1)
+    if (current->pid == 1)
         panic("init exiting");
 
     /* Flush the timer event queue */
-    while (!list_empty(&current_task->timers))
+    while (!list_empty(&current->timers))
     {
-        lnk = current_task->timers.next;
+        lnk = current->timers.next;
         list_delete(lnk);    /* Remove from current process timers */
-        tm = list_container(lnk, struct timer_event, plink); 
+        tm = list_container(lnk, struct timer_event, plink);
         timer_event_del(tm); /* Remove from the global queue */
     }
 
     /* close all open files */
-    for (i = 0; i < OPEN_MAX; i++)
-    {
-        if (current_task->fd[i].file)
-            sys_close(i);
+    for (i = 0; i < OPEN_MAX; i++) {
+        if (current->fds[i].fil != NULL) {
+            if (sys_close(i) < 0) {
+                /* Should never happen... */
+                kprintf("[warn] sys_close error on opened file\n");
+            }
+        }
     }
 
-    iput(current_task->cwd);
-    current_task->cwd = NULL;
-   
     /* Give children to init */
-    child = list_container(current_task->children.next,
+    child = list_container(current->children.next,
                            struct task, children);
-    if (child->pptr == current_task)
+    if (child->pptr == current)
         children_give(child); /* Wrap around, current is not a leaf */
 
     /* Send SIGCHLD to the parent */
-    sys_kill(current_task->pptr->pid, SIGCHLD);
+    task_signal(current->pptr, SIGCHLD);
 
     /* Acquire the father conditional variable to prevent lost signals */
-    spinlock_lock(&current_task->pptr->chld_exit.lock);
-    current_task->state = TASK_ZOMBIE;
-    current_task->exit_code = status;
-    cond_signal(&current_task->pptr->chld_exit);
-    spinlock_unlock(&current_task->pptr->chld_exit.lock);
+    spinlock_lock(&current->pptr->chld_exit.lock);
+    current->state = TASK_ZOMBIE;
+    current->exit_code = status;
+    cond_signal(&current->pptr->chld_exit);
+    spinlock_unlock(&current->pptr->chld_exit.lock);
 
     scheduler();
     panic("zombie process resumed\n");

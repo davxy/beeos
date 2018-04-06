@@ -17,26 +17,30 @@
  * License along with BeeOS; if not, see <http://www.gnu/licenses/>.
  */
 
-#include "ipc/msg.h"
-#include "htable.h"
+.intel_syntax noprefix
 
-#define HTABLE_BITS 3
-struct htable_link *ipc_hmap[1<<HTABLE_BITS];
-int ipc_hmap_initialized;
+.section .text
 
-int msgget(key_t key, int flags)
-{
-    struct msqid_ds *msgq;
+/*
+ * void swtch(struct context **old, struct context *new);
+ */
+.globl swtch
+swtch:
+    mov     eax, [esp + 4]
+    mov     edx, [esp + 8]
+    /* Save old callee-save registers */
+    /* Instruction pointer saved implicitly by function "call" */
+    push    ebp
+    push    ebx
+    push    esi
+    push    edi
+    /* Switch stacks */
+    mov     [eax], esp
+    mov     esp, edx
+    /* Restore new context */
+    pop     edi
+    pop     esi
+    pop     ebx
+    pop     ebp
+    ret
 
-    if (!ipc_hmap_initialized)
-        htable_init(&ipc_hmap, HTABLE_BITS);
-
-    msgq = htable_lookup(&ipc_hmap, key, HTABLE_BITS);
-    if (!msgq)
-    {
-        if ((msgq = kmalloc(sizeof(*msgq), 0)) == NULL)
-            return -1;
-        htable_insert(&ipc_hmap, &msgq.hnode, key, HTABLE_BITS);
-    }
-    return 0;
-}

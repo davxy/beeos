@@ -18,20 +18,21 @@
  */
 
 #include "proc.h"
+#include "misc.h"
 
 /*
  * Kernel idle procedure.
  * This endless procedure is executed by the first kernel process when
  * there is nothing useful to do.
  */
-void idle()
+void idle(void)
 {
-    while (1)
-    {
-        current_task->state = TASK_SLEEPING;
+    do {
+        current->state = TASK_SLEEPING;
         scheduler();
-        asm volatile("sti");
-        asm volatile("hlt");
-        asm volatile("cli");
-    }
+        sti(); /* Enable interrupts */
+        hlt(); /* ...before halt the processor */
+        cli(); /* Disable interrupts in kernel code */
+    } while (current->state == TASK_RUNNING);
 }
+

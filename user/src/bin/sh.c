@@ -106,10 +106,10 @@ static int execute(int argc, char *argv[])
             printf("sh: cd: %s\n", strerror(errno));
     } else {
         /* Block SIGCHLD */
-        (void)sigemptyset(&zeromask);
-        (void)sigemptyset(&newmask);
+        sigemptyset(&zeromask);
+        sigemptyset(&newmask);
         (void)sigaddset(&newmask, SIGCHLD);
-        (void)sigprocmask(SIG_BLOCK, &newmask, &oldmask);
+        sigprocmask(SIG_BLOCK, &newmask, &oldmask);
 
         if (argc > 1 && *argv[argc-1] == '&') {
             /* Background job */
@@ -118,6 +118,9 @@ static int execute(int argc, char *argv[])
         }
 
         fgterm = 0;
+
+        /* Get the previous terminal process group */
+        pgrp = tcgetpgrp(STDOUT_FILENO);
 
         fgpid = pid = fork();
         if (pid >= 0) {
@@ -135,7 +138,7 @@ static int execute(int argc, char *argv[])
                     }
                     exit(status);
                 } else if (!bg) {
-                    pgrp = tcgetpgrp(STDOUT_FILENO);
+                    /* Set process group of controlling terminal */
                     tcsetpgrp(STDOUT_FILENO, pid);
                     while (!fgterm)
                         sigsuspend(&zeromask);
@@ -172,14 +175,11 @@ static int interactive(void)
     if (signal(SIGCHLD, sigchld) < 0)
         perror("signal: SIGCHLD");
 
-    if (tcgetpgrp(0) != getpid()) /* Hack to check if already open by father...*/
-    {
-        fd = open("/dev/tty", O_RDWR, 0); /* stdin (fd=0) */
-        if (fd < 0)
-            return -1;
-        dup(0); /* stdout (fd=1) */
-        dup(0); /* stderr (fd=2) */
-    }
+    fd = open("/dev/tty", O_RDWR, 0); /* stdin (fd=0) */
+    if (fd < 0)
+        return -1;
+    dup(0); /* stdout (fd=1) */
+    dup(0); /* stderr (fd=2) */
 
     /* USER@HOST */
     set_prompt_values();
@@ -208,12 +208,11 @@ int main(int argc, char *argv[])
     sigset_t mask;
 
     setpgid(0, 0);
-    //tcsetpgrp(STDOUT_FILENO, getpid());
-    
+
     /* Be sure that SIGCHLD is unblocked */
-    (void)sigemptyset(&mask);
+    sigemptyset(&mask);
     (void)sigaddset(&mask, SIGCHLD);
-    (void)sigprocmask(SIG_UNBLOCK, &mask, NULL);
+    sigprocmask(SIG_UNBLOCK, &mask, NULL);
 
     if (signal(SIGCHLD, sigchld) < 0)
         perror("signal");

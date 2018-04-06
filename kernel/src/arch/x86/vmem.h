@@ -17,8 +17,8 @@
  * License along with BeeOS; if not, see <http://www.gnu/licenses/>.
  */
 
-#ifndef _BEEOS_ARCH_X86_VMEM_H_
-#define _BEEOS_ARCH_X86_VMEM_H_
+#ifndef BEEOS_ARCH_X86_VMEM_H_
+#define BEEOS_ARCH_X86_VMEM_H_
 
 /*
  * Known virtual addresses
@@ -26,6 +26,7 @@
 #define KVBASE      0xC0000000  /**< Upper half virtual address */
 #define KVADDR      0xC0100000  /**< Kernel start virtual address */
 #define UVADDR      0x08000000  /**< User code stub virtual address */
+
 
 #ifndef __ASSEMBLER__
 
@@ -55,15 +56,7 @@ static inline void *virt_to_phys(void *addr)
     return (char *)addr - KVBASE;
 }
 
-#else
+#endif /* __ASSEMBLER__ */
 
-/*
- * Same functionality as the above inline C functions but callable
- * from assembly code.
- */
-#define phys_to_virt(addr) ((addr) + KVBASE)
-#define virt_to_phys(addr) ((addr) - KVBASE)
+#endif /* BEEOS_ARCH_X86_VMEM_H_ */
 
-#endif /* __ASSEMBLER __ */
-
-#endif /* _BEEOS_ARCH_X86_VMEM_H_ */

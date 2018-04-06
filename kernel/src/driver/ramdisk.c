@@ -26,30 +26,29 @@
 #define BLOCK_SIZE  512
 
 
-struct ramdisk
+static struct
 {
     void  *addr;
     size_t size;
-};
-
-struct ramdisk ramdisk;
+} ramdisk;
 
 
 static ssize_t ramdisk_rw_block(void *buf, size_t blocknum, int doread)
 {
-    ssize_t n = BLOCK_SIZE;
-    size_t off = blocknum * BLOCK_SIZE;
+    size_t n = BLOCK_SIZE;
+    size_t off;
 
+    off = blocknum * BLOCK_SIZE;
     if (off > ramdisk.size)
         return -1;
     if (off + n > ramdisk.size)
         n = ramdisk.size - off;
-    
-    if (doread)
+
+    if (doread == 1)
         memcpy(buf, (char *)ramdisk.addr + off, n);
     else
         memcpy((char *)ramdisk.addr + off, buf, n);
-    return n;
+    return (ssize_t)n;
 }
 
 static ssize_t ramdisk_read_block(void *buf, size_t blocknum)
@@ -66,10 +65,10 @@ static ssize_t ramdisk_write_block(void *buf, size_t blocknum)
 
 static char blk[BLOCK_SIZE];
 
-ssize_t ramdisk_read(void *buf, size_t size, off_t off)
+ssize_t ramdisk_read(void *buf, size_t size, size_t off)
 {
     unsigned int nblk;
-    ssize_t left;
+    size_t left;
     size_t ioff;
     ssize_t n;
     char *ptr;
@@ -81,7 +80,7 @@ ssize_t ramdisk_read(void *buf, size_t size, off_t off)
 
     if ((n = ramdisk_read_block(blk, nblk)) != BLOCK_SIZE)
         return n;
-    n = MIN(BLOCK_SIZE-ioff, left);
+    n = MIN(BLOCK_SIZE - ioff, left);
     memcpy(ptr, &blk[ioff], n);
     left -= n;
     ptr += n;
@@ -97,10 +96,10 @@ ssize_t ramdisk_read(void *buf, size_t size, off_t off)
         nblk++;
     }
 
-    return size-left;
+    return (ssize_t)(size - left);
 }
 
-ssize_t ramdisk_write(const void *buf, size_t size, off_t off)
+ssize_t ramdisk_write(const void *buf, size_t size, size_t off)
 {
     return -1; /* TODO */
 }

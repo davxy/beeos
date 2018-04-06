@@ -17,8 +17,8 @@
  * License along with BeeOS; if not, see <http://www.gnu/licenses/>.
  */
 
-#ifndef _SPINLOCK_H_
-#define _SPINLOCK_H_
+#ifndef BEEOS_SYNC_SPINLOCK_H_
+#define BEEOS_SYNC_SPINLOCK_H_
 
 struct spinlock
 {
@@ -26,7 +26,11 @@ struct spinlock
 };
 
 void spinlock_init(struct spinlock *lock);
+
 void spinlock_lock(struct spinlock *lock);
+
 void spinlock_unlock(struct spinlock *lock);
 
-#endif /* _SPINLOCK_H_ */
+
+#endif /* BEEOS_SYNC_SPINLOCK_H_ */
+

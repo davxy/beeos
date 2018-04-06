@@ -40,33 +40,18 @@ int sys_kill(pid_t pid, int sig)
     if (sig <= 0 || sig > SIGUNUSED)
         return -EINVAL;
 
-    t = current_task;
-    do
-    {
-        if (t->pid == pid)
-        {
+    t = current;
+    do {
+        if (t->pid == pid) {
             /* TODO: check for permissions */
 
             /* if sig is 0, only permissions are checked */
             if (sig != 0) 
-            {
-                sigaddset(&t->sigpend, sig);
-                /* check if signal is not masked */
-                if (sigismember(&t->sigmask, sig) <= 0)
-                {
-                    /* check if the process must be awake */
-                    if (t->state == TASK_SLEEPING)
-                    {
-                        if (!list_empty(&t->condw))
-                            list_delete(&t->condw);
-                        t->state = TASK_RUNNING;
-                    }
-                }
-            }
+                task_signal(t, sig);
             break;
         }
         t = struct_ptr(t->tasks.next, struct task, tasks);
-    } while (t != current_task);
+    } while (t != current);
 
     return 0;
 }

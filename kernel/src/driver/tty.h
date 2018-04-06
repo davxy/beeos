@@ -17,8 +17,8 @@
  * License along with BeeOS; if not, see <http://www.gnu/licenses/>.
  */
 
-#ifndef _BEEOS_DRIVER_TTY_H_
-#define _BEEOS_DRIVER_TTY_H_
+#ifndef BEEOS_DRIVER_TTY_H_
+#define BEEOS_DRIVER_TTY_H_
 
 #include "sync/cond.h"
 #include <sys/types.h>
@@ -48,13 +48,16 @@ ssize_t tty_write(dev_t dev, const void *buf, size_t n);
 /* Write a character to tty */
 void tty_update(char c);
 
-void tty_change(int n);
+void tty_change(unsigned int n);
 
 pid_t tty_getpgrp(void);
+
 int tty_setpgrp(pid_t pgrp);
 
 dev_t tty_get(void);
+
 void tty_put(dev_t dev);
 
 
-#endif /* _BEEOS_DRIVER_TTY_H_ */
+#endif /* BEEOS_DRIVER_TTY_H_ */
+

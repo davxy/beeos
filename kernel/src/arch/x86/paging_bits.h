@@ -21,8 +21,8 @@
  * Bits, values and flags used by paging code.
  */
 
-#ifndef _BEEOS_ARCH_X86_PAGING_BITS_H_
-#define _BEEOS_ARCH_X86_PAGING_BITS_H_
+#ifndef BEEOS_ARCH_X86_PAGING_BITS_H_
+#define BEEOS_ARCH_X86_PAGING_BITS_H_
 
 /*
  * Memory page size
@@ -54,4 +54,5 @@
 #define PTE_PS          0x00000080      /* Page size, if set 4MB else 4KB */
 #define PTE_MASK        0xFFFFF000      /* Page pysical address mask */
 
-#endif /* _BEEOS_ARCH_X86_PAGING_BITS_H_ */
+#endif /* BEEOS_ARCH_X86_PAGING_BITS_H_ */
+

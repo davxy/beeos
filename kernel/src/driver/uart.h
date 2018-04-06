@@ -17,12 +17,13 @@
  * License along with BeeOS; if not, see <http://www.gnu/licenses/>.
  */
 
-#include "sys.h"
-#include "driver/tty.h"
-#include <sys/types.h>
+#ifndef BEEOS_DRIVER_UART_H_
+#define BEEOS_DRIVER_UART_H_
 
-int sys_tcsetpgrp(int fd, pid_t pgrp)
-{
-    return tty_setpgrp(pgrp);
-}
+int uart_getchar(void);
 
+void uart_putchar(int c);
+
+void uart_init(void);
+
+#endif /* BEEOS_DRIVER_UART_H_ */

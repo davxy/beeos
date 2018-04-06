@@ -23,85 +23,74 @@
 #include "kmalloc.h"
 #include <stddef.h>
 
-extern uint32_t get_eip();
 
-extern struct task ktask;
-extern struct task *current_task;
+struct tss_struct tss;
+
+void swtch(struct context **old, struct context *new);
+
+
 
 /*
  * TODO : implement as clone syscall
  */
-int task_arch_init(struct task_arch *task)
+int task_arch_init(struct task_arch *tsk, task_entry_t entry)
 {
     char *ti;
-    extern uint32_t fork_ret;
+    uint32_t *sp;
 
-    if (task == &ktask.arch)
+    tsk->ifr = NULL;
+    tsk->sfr = NULL;
+
+    if (tsk == &ktask.arch)
     {
         /* The task 0 does not need complete initialization */
-        task->pgdir = (uint32_t)virt_to_phys(kpage_dir);
-        return 0;
+        tsk->pgdir = (uint32_t)virt_to_phys(kpage_dir);
+        tsk->ctx = NULL;
     }
 
-    task->pgdir = page_dir_dup(1);
-    if ((int)task->pgdir < 0)
-        return (int)task->pgdir; /* Fail */
+    tsk->pgdir = page_dir_dup(1);
+    if ((int)tsk->pgdir < 0)
+        return (int)tsk->pgdir; /* Fail */
 
-    task->ifr = NULL;
-    task->sfr = NULL;
-
-    ti = kmalloc(KSTACK_SIZE, 0);
+    /* Stack creation */
+    ti = (char *)kmalloc(KSTACK_SIZE, 0);
     if (ti == NULL)
         return -1;
 
-    task->ebp = (uint32_t)ti + KSTACK_SIZE;
-    task->esp = task->ebp;
-    task->eip = (uint32_t)&fork_ret;
+    sp = (uint32_t *)ALIGN_DOWN((uintptr_t)ti + KSTACK_SIZE, sizeof(uint32_t));
 
-    if (current_task->arch.ifr != NULL)
+    if (current->arch.ifr != NULL)
     {
-        struct isr_frame *ifr2;
-        
-        task->esp -= sizeof(struct isr_frame);
-        ifr2 = (struct isr_frame *)task->esp;
-        *ifr2 = *current_task->arch.ifr;
-        ifr2->eax = 0; /* fork returns 0 in the child */
+        struct isr_frame *ifr2 = ((struct isr_frame *)sp) - 1;
+
+        sp = (uint32_t *)ifr2; /* Safe... ifr2 should be aligned to uint32_t */
+        /* Child ifr is equal to the parent but fork returns 0 in the child */
+        *ifr2 = *current->arch.ifr;
+        ifr2->eax = 0;
     }
+
+    tsk->ctx = ((struct context *)sp) - 1;
+    tsk->ctx->ebp = (uint32_t)sp;
+    tsk->ctx->eip = (uint32_t)entry;
+    tsk->ctx->ebx = 0;
+    tsk->ctx->edi = 0;
+    tsk->ctx->esi = 0;
+
     return 0;
 }
 
-void task_arch_deinit(struct task_arch *task)
+void task_arch_deinit(struct task_arch *tsk)
 {
-    kfree((void *)ALIGN_DOWN(task->esp, KSTACK_SIZE), KSTACK_SIZE);
-    page_dir_del(task->pgdir);
+    kfree((void *)ALIGN_DOWN((uint32_t)tsk->ctx, KSTACK_SIZE), KSTACK_SIZE);
+    page_dir_del(tsk->pgdir);
 }
 
-struct tss_hdr {
-    uint32_t next;
-    uint32_t esp0;
-};
-
-void task_arch_switch(struct task_arch *curr, struct task_arch *next)
+void task_arch_switch(struct task_arch *curr, const struct task_arch *next)
 {
-    extern struct tss_hdr tss;
+    tss.esp0 = ALIGN_UP((uint32_t)next->ctx, KSTACK_SIZE);
+    page_dir_switch(next->pgdir);
 
-    asm volatile("mov   %0, esp \n\t"
-                 "mov   %1, ebp \n\t"
-                 "mov   %2, offset switch_end \n\t"
-                : "=r"(curr->esp),
-                  "=r"(curr->ebp),
-                  "=r"(curr->eip));
-
-    tss.esp0 = ALIGN_UP(next->esp, KSTACK_SIZE);
-
-    asm volatile("mov    esp, %0 \n\t"
-                 "mov    ebp, %1 \n\t"
-                 "mov    cr3, %2 \n\t"
-                 "jmp    %3      \n\t"
-                 "switch_end:    \n\t"
-              : : "r"(next->esp), 
-                  "r"(next->ebp), 
-                  "r"(next->pgdir),
-                  "r"(next->eip));
+    /* Execute this as the last statement. Can throw us in another place */
+    swtch(&curr->ctx, next->ctx);
 }
 

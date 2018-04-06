@@ -25,9 +25,9 @@
 #include <string.h>
 
 
-static void get_parent_dir(char *parent, const char *filepath)
+static void split_path(const char *filepath, char *parent, char *name)
 {
-    int i;
+    int i, k;
 
     i = strlen(filepath);
     while (i > 0) {
@@ -35,35 +35,57 @@ static void get_parent_dir(char *parent, const char *filepath)
         if (filepath[i] == '/')
             break;
     }
-    if (i > 0)
+    if (i > 0) {
+        k = (*filepath == '/') ? 1 : 0;
         strncpy(parent, filepath, i);
-    else
+        strcpy(name, filepath + i + k);
+    } else {
         parent[i++] = '/';
+        if (filepath[i] != '\0') {
+            strcpy(name, filepath + i);
+        }
+        else {
+            name[0] = '.';
+            name[1] = '\0';
+        }
+    }
     parent[i] = '\0';
 }
 
+
 int sys_mknod(const char *pathname, mode_t mode, dev_t dev)
 {
-    struct inode *inode, *idir;
+    int res;
+    struct dentry *dent;
+    const struct dentry *dnew;
     char parent[PATH_MAX];
+    char name[NAME_MAX];
 
-    inode = fs_namei(pathname);
-    if (inode != NULL)
+    dent = named(pathname);
+    if (dent != NULL)
     {
-        iput(inode);
-        return -EEXIST; /* file exists */
+        dput(dent);
+        return -EEXIST;
     }
 
-    get_parent_dir(parent, pathname);
-    idir = fs_namei(parent);
-    if (idir == NULL)
+    split_path(pathname, parent, name);
+
+    dent = named(parent);
+    if (dent == NULL)
         return -1;
 
-    inode = idir->sb->ops->inode_alloc();
-    inode->mode = mode;
-    inode->dev = dev;
+    res = vfs_mknod(dent->inod, mode, dev);
 
-    iput(idir);
-
-    return 0;
+    /*
+     * Create a dentry and keep a reference to it.
+     */
+    if (res == 0)
+    {
+        dnew = dget(dent, name);
+        if (dnew == NULL)
+            res = -1;
+    }
+    dput(dent);
+    return res;
 }
+

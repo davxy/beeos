@@ -23,8 +23,10 @@
 /*
  * Put a single character to the screen
  */
-void screen_putchar(struct screen *scr, int c)
+void screen_putchar(struct screen *scr, char c)
 {
+	unsigned int i;
+
 	if (' ' <= c && c <= '~')
 	{
 		scr->buf[scr->pos_y * SCREEN_WIDTH + scr->pos_x] = c;
@@ -34,12 +36,12 @@ void screen_putchar(struct screen *scr, int c)
 	{
 		switch (c)
 		{
-        case '\b':	/* backspace */
+        case '\b':  /* backspace */
             if (scr->pos_x != 0)
                 scr->pos_x--;
             break;
-        case '\t':	/* tab */
-            scr->pos_x = (scr->pos_x+4) & ~(4-1);
+        case '\t':  /* tab */
+            scr->pos_x = ((scr->pos_x + 4) & ~0x03);
             break;
         case '\n':
             scr->pos_y++;
@@ -63,7 +65,6 @@ void screen_putchar(struct screen *scr, int c)
 	if (scr->pos_y >= SCREEN_HEIGHT)
 	{
 		/* Scroll the screen */
-		int i;
 
 		/* move every line up by one */
 		for (i = 0; i < SCREEN_WIDTH * (SCREEN_HEIGHT - 1); i++)
@@ -81,9 +82,9 @@ void screen_putchar(struct screen *scr, int c)
 /*
  * Write an array of characters to the screen.
  */
-void screen_write(struct screen *scr, const char *buf, int n)
+void screen_write(struct screen *scr, const char *buf, unsigned int n)
 {
-	int i;
+	unsigned int i;
 
 	for (i = 0; i < n; i++)
 		screen_putchar(scr, buf[i]);

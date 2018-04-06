@@ -17,17 +17,17 @@
  * License along with BeeOS; if not, see <http://www.gnu/licenses/>.
  */
 
-#ifndef _BEEOS_DRIVER_SCREEN_H_
-#define _BEEOS_DRIVER_SCREEN_H_
+#ifndef BEEOS_DRIVER_SCREEN_H_
+#define BEEOS_DRIVER_SCREEN_H_
 
 #define SCREEN_WIDTH    80
 #define SCREEN_HEIGHT   25
 
 struct screen
 {
-    int pos_x;
-    int pos_y;
-    int dirty;
+    unsigned int  pos_x;
+    unsigned int  pos_y;
+    unsigned char dirty;
     char buf[SCREEN_WIDTH * SCREEN_HEIGHT];
 };
 
@@ -45,7 +45,7 @@ void screen_init(struct screen *scr);
  * @param buf   Characters string.
  * @param n     String length.
  */
-void screen_write(struct screen *scr, const char *buf, int n);
+void screen_write(struct screen *scr, const char *buf, unsigned int n);
 
 /**
  * Puts a single character to the screen.
@@ -53,7 +53,7 @@ void screen_write(struct screen *scr, const char *buf, int n);
  * @param scr   Screen context.
  * @param c     Character to put.
  */
-void screen_putchar(struct screen *scr, int c);
+void screen_putchar(struct screen *scr, char c);
 
 /**
  * Update the screen with the buffer content and cursor.
@@ -64,5 +64,5 @@ void screen_putchar(struct screen *scr, int c);
 void screen_update(struct screen *scr);
 
 
-#endif /* _BEEOS_DRIVER_SCREEN_H_ */
+#endif /* BEEOS_DRIVER_SCREEN_H_ */
 

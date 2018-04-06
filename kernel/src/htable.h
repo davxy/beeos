@@ -17,35 +17,39 @@
  * License along with BeeOS; if not, see <http://www.gnu/licenses/>.
  */
 
-#ifndef _BEEOS_HTABLE_H_
-#define _BEEOS_HTABLE_H_
+#ifndef BEEOS_HTABLE_H_
+#define BEEOS_HTABLE_H_
 
 #include <stdint.h>
 #include <string.h>
 
 /* https://gist.github.com/badboy/6267743 */
 
-static inline int hash_32(uint32_t val, int bits)
+static inline unsigned int hash_32(uint32_t val, unsigned int bits)
 {
-    val = (val ^ 61) ^ (val >> 16);
-    val = val + (val << 3);
-    val = val ^ (val >> 4);
-    val = val * 0x27d4eb2d;   /* a prime or an odd constant */
-    val = val ^ (val >> 15);
+    uint32_t v = val;
+
+    v = (v ^ 61) ^ (v >> 16);
+    v = v + (v << 3);
+    v = v ^ (v >> 4);
+    v = v * 0x27d4eb2d;   /* a prime or an odd constant */
+    v = v ^ (v >> 15);
     /* High bits are more random, so use them */
-    return val >> (32 - bits);
+    return v >> (32 - bits);
 }
 
-static inline int hash_64(uint64_t val, int bits)
+static inline unsigned int hash_64(uint64_t val, unsigned int bits)
 {
-    val = (~val) + (val << 21); // val = (val << 21) - val - 1;
-    val = val ^ (val >> 24);
-    val = (val + (val << 3)) + (val << 8); // val * 265
-    val = val ^ (val >> 14);
-    val = (val + (val << 2)) + (val << 4); // val * 21
-    val = val ^ (val >> 28);
-    val = val + (val << 31);
-    return (int)(val >> (64 - bits));
+    uint64_t v = val;
+
+    v = (~v) + (v << 21);   /* v = (v << 21) - v - 1; */
+    v = v ^ (v >> 24);
+    v = (v + (v << 3)) + (v << 8);  /* v * 265 */
+    v = v ^ (v >> 14);
+    v = (v + (v << 2)) + (v << 4);  /* v * 21 */
+    v = v ^ (v >> 28);
+    v = v + (v << 31);
+    return (unsigned int)(v >> (64 - bits));
 }
 
 #define hash(val, bits) \
@@ -57,35 +61,40 @@ struct htable_link
     struct htable_link **pprev;
 };
 
-static inline void htable_init(struct htable_link **htable, int bits)
+static inline void htable_init(struct htable_link **htable, unsigned int bits)
 {
-    memset(htable, 0, sizeof(struct htable_link *)*(1 << bits));
+    memset(htable, 0, sizeof(struct htable_link *) * (1 << bits));
 }
 
 static inline void htable_insert(struct htable_link **htable,
-        struct htable_link *node, long long key, int bits)
+                struct htable_link *node, long long key, unsigned int bits)
 {
-    int i = hash(key, bits);
+    int i;
+
+    i = hash(key, bits);
     node->next = htable[i];
     node->pprev = &htable[i];
-    if (htable[i])
+    if (htable[i] != NULL)
         htable[i]->pprev = (struct htable_link **)node;
     htable[i] = node;
 }
 
-static inline void htable_delete(struct htable_link *node)
+static inline void htable_delete(const struct htable_link *node)
 {
     struct htable_link *next = node->next;
     struct htable_link **pprev = node->pprev;
+
     *pprev = next;
-    if (next)
+    if (next != NULL)
         next->pprev = pprev;
 }
 
-static inline struct htable_link *htable_lookup(struct htable_link **htable,
-        long long key, int bits)
+static inline struct htable_link *htable_lookup(
+        struct htable_link * const *htable,
+        long long key, unsigned int bits)
 {
     return htable[hash(key, bits)];
 }
 
-#endif /* _BEEOS_HTABLE_H_ */
+#endif /* BEEOS_HTABLE_H_ */
+

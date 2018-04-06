@@ -17,8 +17,8 @@
  * License along with BeeOS; if not, see <http://www.gnu/licenses/>.
  */
 
-#ifndef _BEEOS_MM_ZONE_H_
-#define _BEEOS_MM_ZONE_H_
+#ifndef BEEOS_MM_ZONE_H_
+#define BEEOS_MM_ZONE_H_
 
 #include "buddy.h"
 #include "list.h"
@@ -35,15 +35,15 @@
 /** Zone descriptor */
 struct zone_st 
 {
-	char        *addr;          /**< Zone (physical) address */
-	size_t      size;           /**< Zone size */
-    size_t      frame_size;     /**< Size of a single frame */
-	size_t      free_count;     /**< Number of free frames */
-	size_t      busy_count;     /**< Number of busy frames */
-	char        flags;          /**< Type of the zone (e.g. ZONE_HIGH) */
-	struct frame_st *frames;    /**< Array of frame structures in this zone */
-    struct zone_st *next;       /**< Link to next zone */
-	struct buddy_sys buddy;     /**< Buddy system for the zone */
+    char            *addr;       /**< Zone (physical) address */
+    size_t           size;       /**< Zone size */
+    size_t           frame_size; /**< Size of a single frame */
+    size_t           free_count; /**< Number of free frames */
+    size_t           busy_count; /**< Number of busy frames */
+    unsigned char    flags;      /**< Type of the zone (e.g. ZONE_HIGH) */
+    struct frame_st *frames;     /**< Array of frame structures in this zone */
+    struct zone_st  *next;       /**< Link to next zone */
+    struct buddy_sys buddy;      /**< Buddy system for the zone */
 };
 
 /**
@@ -56,7 +56,7 @@ struct zone_st
  * @param flags         Zone flags (e.g. ZONE_HIGH).
  * @return              On error -1 is returned.
  */
-int zone_init(struct zone_st *ctx, void *base, size_t size,
+int zone_init(struct zone_st *ctx, void *addr, size_t size,
         size_t frame_size, int flags);
 
 /**
@@ -68,7 +68,7 @@ int zone_init(struct zone_st *ctx, void *base, size_t size,
  * @param order Frame order.
  * @return      Pointer to the allocated memory chunk.
  */
-void *zone_alloc(struct zone_st *ctx, int order);
+void *zone_alloc(const struct zone_st *ctx, int order);
 
 /**
  * Free a memory segment from the zone.
@@ -77,7 +77,7 @@ void *zone_alloc(struct zone_st *ctx, int order);
  * @param ptr   Pointer to the memory chunk
  * @param order Frame order.
  */
-void zone_free(struct zone_st *ctx, void *ptr, int order);
+void zone_free(const struct zone_st *ctx, const void *ptr, int order);
 
 /**
  * DEBUG function.
@@ -85,6 +85,7 @@ void zone_free(struct zone_st *ctx, void *ptr, int order);
  *
  * @param ctx   Zone descriptor structure.
  */
-void zone_dump(struct zone_st *ctx);
+void zone_dump(const struct zone_st *ctx);
 
-#endif /* _BEEOS_MM_ZONE_H_ */
+#endif /* BEEOS_MM_ZONE_H_ */
+

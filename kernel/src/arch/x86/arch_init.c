@@ -43,10 +43,10 @@
  */
 struct multiboot_info
 {
-	uint32_t flags;         /**< Various flags (see multiboot specification) */
-	uint32_t mem_lower;     /**< Memory in KB starting from 0x0 */
-	uint32_t mem_upper;     /**< Memory in KB starting from 0x100000 */
-	uint32_t boot_device;   /**< Device that contains the kernel image */
+    uint32_t flags;         /**< Various flags (see multiboot specification) */
+    uint32_t mem_lower;     /**< Memory in KB starting from 0x0 */
+    uint32_t mem_upper;     /**< Memory in KB starting from 0x100000 */
+    uint32_t boot_device;   /**< Device that contains the kernel image */
     uint32_t cmdline;       /**< Command line argument. */
     uint32_t mods_count;    /**< Number of loaded modules */
     uint32_t mods_addr;     /**< Module address array address */
@@ -72,9 +72,10 @@ struct multiboot_info
 #define ZONE_LOW_TOP        0x400000
 #define MB_HIGH_MEM_START   0x100000
 
-static void mm_init(struct multiboot_info *mbi)
+static void mm_init(const struct multiboot_info *mbi)
 {
-    char *kend, *mend;
+    char *kend;
+    const char *mend;
     size_t msize, lsize;
     int ret;
 
@@ -114,11 +115,31 @@ static void mm_init(struct multiboot_info *mbi)
     }
 }
 
+static void mod_load(const struct multiboot_info *mbi)
+{
+    char *addr;
+    char *start;
+    char *end;
+    size_t size;
+    char **mods_addr = (char **)mbi->mods_addr;
+
+    start = mods_addr[0];
+    end   = mods_addr[1];
+    if (end < start)
+        panic("malformed data within multiboot info");
+    size = end - start;
+    addr = (char *)kmalloc(size, 0);
+    if (addr == NULL)
+        panic("no space for initrd");
+    memmove(addr, phys_to_virt(start), size); /* Takes care of overlaps */
+    ramdisk_init(addr, size); /* Initialize ramdisk device */
+}
+
 /*
  * Architecture specific initialization.
  * Must be executed before other generic routines.
  */
-void arch_init(struct multiboot_info *mbi)
+void arch_init(const struct multiboot_info *mbi)
 {
     /* 
      * Check for initrd.
@@ -126,19 +147,7 @@ void arch_init(struct multiboot_info *mbi)
      * before any use of the memory allocator.
      */
     if (mbi->mods_count > 0)
-    {
-        void *addr;
-        size_t size;
-        uint32_t s = *(uint32_t *)mbi->mods_addr;
-        uint32_t e = *(uint32_t *)(mbi->mods_addr + 4);
-
-        size = e - s;
-        addr = kmalloc(size, 0);
-        if (!addr)
-            panic("no space for initrd");
-        memmove(addr, phys_to_virt((void *)s), size);
-        ramdisk_init(addr, size); /* Initialize ramdisk device */
-    }
+        mod_load(mbi);
 
     /* Initialize global descriptor table */
     gdt_init();

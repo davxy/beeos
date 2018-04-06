@@ -17,12 +17,14 @@
  * License along with BeeOS; if not, see <http://www.gnu/licenses/>.
  */
 
-#include "sys.h"
-#include "driver/tty.h"
+#ifndef BEEOS_DRIVER_RANDOM_H_
+#define BEEOS_DRIVER_RANDOM_H_
+
 #include <sys/types.h>
 
-int sys_tcsetpgrp(int fd, pid_t pgrp)
-{
-    return tty_setpgrp(pgrp);
-}
+int random_init(const unsigned char *seed, size_t seed_siz);
+
+ssize_t random_read(unsigned char *buf, size_t siz);
+
+#endif /* BEEOS_DRIVER_RANDOM_H_ */
 

@@ -22,13 +22,13 @@
 #include "kprintf.h"
 #include "proc.h"
 
-extern unsigned long timer_ticks;
 
 static void alarm_handler(void *data)
 {
-    struct task *task = (struct task *)data;
-    list_delete(&task->alarm.plink);
-    sys_kill(task->pid, SIGALRM);
+    struct task *t = (struct task *)data;
+
+    list_delete(&t->alarm.plink);
+    task_signal(t, SIGALRM);
 }
 
 unsigned int sys_alarm(unsigned int seconds)
@@ -37,25 +37,22 @@ unsigned int sys_alarm(unsigned int seconds)
     unsigned long now, when;
     struct timer_event *tm;
 
-    tm = &current_task->alarm;
+    tm = &current->alarm;
     if (tm->func != alarm_handler)
-        timer_event_init(tm, alarm_handler, current_task, 0);
+        timer_event_init(tm, alarm_handler, current, 0);
 
     when = tm->expires;
     now = timer_ticks;
     if (when > now)
         left = ticks_to_msecs(when-now)/1000;
 
-    if (seconds != 0)
-    {
+    if (seconds != 0) {
         when = now + msecs_to_ticks(seconds*1000);
         timer_event_mod(tm, when);
         /* Also add to the process timers */
         if (list_empty(&tm->plink))
-            list_insert_before(&current_task->timers, &tm->plink);
-    }
-    else
-    {
+            list_insert_before(&current->timers, &tm->plink);
+    } else {
         if (!list_empty(&tm->link))
             timer_event_del(tm);
         if (!list_empty(&tm->plink))

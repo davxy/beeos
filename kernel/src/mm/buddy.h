@@ -17,8 +17,8 @@
  * License along with BeeOS; if not, see <http://www.gnu/licenses/>.
  */
 
-#ifndef _BEEOS_MM_BUDDY_H_
-#define _BEEOS_MM_BUDDY_H_
+#ifndef BEEOS_MM_BUDDY_H_
+#define BEEOS_MM_BUDDY_H_
 
 #include "list.h"
 
@@ -29,8 +29,8 @@ struct frame
     struct list_link    link;
     /** Number of references. */
     unsigned int        refs;
-    /** 
-     * Context specific pointer. 
+    /**
+     * Context specific pointer.
      * E.g. if allocated by slab, this points there.
      */
     void                *ctx;
@@ -45,7 +45,7 @@ struct free_list
     unsigned long       *map;
 };
 
-/** 
+/**
  * Buddy system context.
  * Allows to have a separate buddy allocator for each memory zone.
  */
@@ -80,7 +80,7 @@ int buddy_init(struct buddy_sys *ctx, unsigned int frames_num,
  * @param order     Requested chunk order.
  * @return          Memory chunk start frame.
  */
-struct frame *buddy_alloc(struct buddy_sys *ctx, unsigned int order);
+struct frame *buddy_alloc(const struct buddy_sys *ctx, unsigned int order);
 
 /**
  * Release a chunk of memory.
@@ -89,7 +89,8 @@ struct frame *buddy_alloc(struct buddy_sys *ctx, unsigned int order);
  * @param frame     Memory chunk start frame.
  * @param order     Memory chunk order.
  */
-void buddy_free(struct buddy_sys *ctx, struct frame *frame, unsigned int order);
+void buddy_free(const struct buddy_sys *ctx, const struct frame *frm,
+                unsigned int order);
 
 /**
  * Prints buddy system status.
@@ -97,6 +98,7 @@ void buddy_free(struct buddy_sys *ctx, struct frame *frame, unsigned int order);
  * @param ctx       Buddy system context pointer.
  * @param base      Memory start
  */
-void buddy_dump(struct buddy_sys *ctx, char *base);
+void buddy_dump(const struct buddy_sys *ctx, char *base);
 
-#endif /* _BEEOS_MM_BUDDY_H_ */ 
+#endif /* BEEOS_MM_BUDDY_H_ */
+

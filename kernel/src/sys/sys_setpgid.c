@@ -17,9 +17,10 @@
  * License along with BeeOS; if not, see <http://www.gnu/licenses/>.
  */
 
+#include "sys.h"
+#include "proc.h"
 #include <sys/types.h>
 #include <errno.h>
-#include "proc.h"
 
 /*
  * Sets the process group ID to pgid in the process whose process ID equals
@@ -30,44 +31,43 @@
  * A process can set the process group ID of only itself or any of its
  * children.
  *
- * Furthermore, it can’t change the process group ID of one of its
+ * Furthermore, it can't change the process group ID of one of its
  * children after that child has called one of the exec functions.
  * NOTE: for simplicity, we don't respect this last requirement here!!!
  */
-
 int sys_setpgid(pid_t pid, pid_t pgid)
 {
-    struct task *task = NULL;
+    struct task *t = NULL;
 
     if (pgid < 0)
         return -EINVAL;
     if (pid == 0)
-        pid = current_task->pid;
+        pid = current->pid;
     if (pgid == 0)
         pgid = pid;
 
-    if (pid != current_task->pid) {
+    if (pid != current->pid) {
         struct task *child, *sib;
 
-        child = list_container(current_task->children.next, struct task,
+        child = list_container(current->children.next, struct task,
                                children);
-        if (child->pptr != current_task)
+        if (child->pptr != current)
             return -ESRCH; /* Wrap around... */
 
         sib = child;
         do {
             if (sib->pid == pid) {
-                task = sib;
+                t = sib;
                 break;
             }
             sib = list_container(sib->sibling.next, struct task, sibling);
         } while (sib != child);
-        if (task == NULL)
+        if (t == NULL)
             return -ESRCH;
     } else {
-        task = current_task;
+        t = current;
     }
-    task->pgid = pgid;
+    t->pgid = pgid;
     return 0;
 }
 

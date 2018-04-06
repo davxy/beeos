@@ -18,48 +18,52 @@
  */
 
 #include "fs/vfs.h"
+#include "fs/devfs.h"   /* devfs_super_create */
+#include "fs/ext2.h"    /* ext2_super_create */
 #include "mm/slab.h"
 #include "kmalloc.h"
 #include "proc.h"
 #include "panic.h"
+#include <limits.h>
+#include <errno.h>
 
+#ifdef DEBUG_VFS
+#include "kprintf.h"
+#endif
 
-struct sb *ext2_sb_create(dev_t dev);
+#define FS_LIST_LEN 2
 
-// http://www.tldp.org/LDP/lki/lki-3.html
-
-struct fs_type fs_list[] =
-{
-    { "ext2",   ext2_sb_create }
+static struct vfs_type fs_list[FS_LIST_LEN] = {
+    { "ext2", ext2_super_create },
+    { "dev",  devfs_super_create }
 };
 
-#define FS_LIST_LEN (sizeof(fs_list)/sizeof(fs_list[0]))
 
-void sb_init(struct sb *sb, dev_t dev, struct inode *root,
-        const struct sb_ops *ops)
+void super_init(struct super_block *sb, dev_t dev, struct dentry *root,
+                const struct super_ops *ops)
 {
     sb->dev = dev;
-    sb->root = root;
-    sb->mnt = sb;
+    sb->root = ddup(root);
     sb->ops = ops;
 }
 
-struct sb *vfs_sb_create(dev_t dev, const char *type)
+struct super_block *vfs_super_create(dev_t dev, const char *name)
 {
     int i;
-    struct sb *sb;
+    struct super_block *sb = NULL;
 
-    sb = NULL;
     for (i = 0; i < FS_LIST_LEN; i++)
     {
-        if (strcmp(type, fs_list[i].name) == 0)
+        if (strcmp(name, fs_list[i].name) == 0)
         {
-            sb = fs_list[i].sb_create(dev);
+            sb = fs_list[i].create(dev);
             break;
         }
     }
     return sb;
 }
+
+
 
 static struct slab_cache inode_cache;
 static struct slab_cache file_cache;
@@ -67,96 +71,30 @@ static struct slab_cache file_cache;
 #define INODE_HTABLE_BITS     3   /* 8 elements hash table (TODO change) */
 static struct htable_link *inode_htable[1 << INODE_HTABLE_BITS];
 
-#define KEY(dev,ino)    (((dev)<<16) + (ino))
+#define KEY(dev, ino)    (((dev) << 16) + (ino))
 
-int fs_init(void)
-{
-    slab_cache_init(&inode_cache, "inode-cache", sizeof(struct inode),
-            0, 0, NULL, NULL);
-
-    slab_cache_init(&file_cache, "file-cache", sizeof(struct file),
-            0, 0, NULL, NULL);
-
-    htable_init(inode_htable, INODE_HTABLE_BITS);
-    
-    return 0;
-}
 
 struct file *fs_file_alloc(void)
 {
-    struct file *file = slab_cache_alloc(&file_cache, 0);
-    return file;
+    return (struct file *)slab_cache_alloc(&file_cache, 0);
 }
 
-void fs_file_free(struct file *file)
+void fs_file_free(struct file *fil)
 {
-    slab_cache_free(&file_cache, file);
+    slab_cache_free(&file_cache, fil);
 }
 
-struct inode *fs_inode_alloc(void)
-{
-    struct inode *inode = slab_cache_alloc(&inode_cache, 0);
-    return inode;
-}
-
-
-/**
- * The VFS maintains an inode cache to speed up accesses to all of the 
- * mounted file systems. Every time a VFS inode is read from the inode cache 
- * the system saves an access to a physical device.
- * The VFS inode cache is implmented as a hash table whose entries are pointers
- * to lists of VFS inode which have the same hash value. The hash value of an
- * inode is calculated from its inode number and from the device identifier for
- * the underlying physical device containing the file system. Whenever the VFS
- * needs to access an inode, it first looks in the VFS inode cache. 
- * To find an inode in the cache, the system first calculates its hash value 
- * and then uses it as an index into the inode hash table. This gives it a 
- * pointer to a list of inodes with the same hash value. It then reads each 
- * inode in turn until it finds one with both the same inode number and the 
- * same device identifier as the one that it is searching for.
- *
- * If it can find the inode in the cache, its count is incremented to show that
- * it has another user and the file system access continues. Otherwise a free 
- * VFS inode must be found so that the file system can read the inode from 
- * memory. VFS has a number of choices about how to get a free inode. If the 
- * system may allocate more VFS inodes then this is what it does; it allocates 
- * kernel pages and breaks them up into new, free, inodes and puts them into 
- * the inode list. All of the system's VFS inodes are in a list pointed at by 
- * first_inode  as well as in the inode hash table. If the system already has 
- * all of the inodes that it is allowed to have, it must find an inode that is
- * a good candidate to be reused. Good candidates are inodes with a usage count
- * of zero; this indicates that the system is not currently using them. Really 
- * important VFS inodes, for example the root inodes of file systems always
- * have a usage count greater than zero and so are never candidates for reuse. 
- * Once a candidate for reuse has been located it is cleaned up. 
- * The VFS inode might be dirty and in this case it needs to be written back 
- * to the file system or it might be locked and in this case the system must 
- * wait for it to be unlocked before continuing. The candidate VFS inode must 
- * be cleaned up before it can be reused.
- * However the new VFS inode is found, a file system specific routine must be 
- * called to to fill it out from information read from the underlying real file
- * system. Whilst it is being filled out, the new VFS inode has a usage count 
- * of one and is locked so that nothing else accesses it until it contains 
- * valid information.
- * To get the VFS inode that is actually needed, the file system may need to 
- * access several other inodes. This happens when you read a directory; only 
- * the inode for the final directory is needed but the inodes for the 
- * intermediate directories must also be read. As the VFS inode cache is used 
- * and filled up, the less used inodes will be discarded and the more used
- * inodes will remain in the cache.
- */
-
-struct inode *inode_lookup(dev_t dev, ino_t ino)
+static struct inode *inode_lookup(dev_t dev, ino_t ino)
 {
     struct inode *ip;
     struct htable_link *lnk;
+
     lnk = htable_lookup(inode_htable, KEY(dev,ino), INODE_HTABLE_BITS);
     while (lnk != NULL)
     {
         ip = struct_ptr(lnk, struct inode, hlink);
-        if (ip->ref > 0 && ip->dev == dev && ip->ino == ino)
+        if (ip->ref > 0 && ip->sb->dev == dev && ip->ino == ino)
         {
-            ip->ref++;
             return ip;
         }
         lnk = lnk->next;
@@ -164,77 +102,100 @@ struct inode *inode_lookup(dev_t dev, ino_t ino)
     return NULL;
 }
 
-void inode_init(struct inode *inode, dev_t dev, ino_t ino)
+
+static void inode_init(struct inode *inod, struct super_block *sb,
+                       ino_t ino, mode_t mode, const struct inode_ops *ops)
 {
-    inode->dev = dev;
-    inode->rdev = 0;
-    inode->ino = ino;
-    inode->ref = 1;
-    inode->sb = NULL;
-    htable_insert(inode_htable, &inode->hlink, KEY(dev,ino), INODE_HTABLE_BITS);
+    memset(inod, 0, sizeof(*inod));
+
+    inod->ops = ops;
+    inod->ino = ino;
+    inod->mode = mode;
+    inod->sb  = sb;
+
+    /*
+     * TODO: consider the inode read return value.
+     * This is just a quick and dirty solution for MISRA compliance
+     */
+    if (sb->ops->inode_read != NULL)
+        (void)sb->ops->inode_read(inod);
+
+    htable_insert(inode_htable, &inod->hlink,
+                  KEY(inod->sb->dev, inod->ino), INODE_HTABLE_BITS);
 }
 
-struct inode *inode_create(dev_t dev, ino_t ino)
+
+struct inode *inode_create(struct super_block *sb, ino_t ino, mode_t mode,
+                           const struct inode_ops *ops)
 {
-    struct inode *inode;
-    inode = fs_inode_alloc();
-    if (inode == NULL)
-        return NULL;
-    inode_init(inode, dev, ino);
-    return inode;
+    struct inode *inod;
+
+    inod = sb->ops->inode_alloc(sb);
+    if (inod != NULL)
+        inode_init(inod, sb, ino, mode, ops);
+    return inod;
 }
 
-struct inode *iget(dev_t dev, ino_t ino)
+void inode_delete(struct inode *inod)
 {
-    struct inode *inode;
-
-    if ((inode = inode_lookup(dev, ino)) != NULL)
-        return inode;
-
-    inode = kmalloc(sizeof(*inode), 0);
-    if (!inode)
-        panic("iget: no free inodes");
-    inode_init(inode, dev, ino);
-    return inode;
-}
-
-void iput(struct inode *ip)
-{
-    ip->ref--;
-    if (ip->ref != 0)
-        return;
     /* Check if was in the hash table (e.g. pipe inodes are not) */
-    if (ip->hlink.pprev != NULL)
-    {
-        /* TODO temporary code... 
-         * If is a pipe the pipe_inode structure must be released differently */
-        htable_delete(&ip->hlink); 
-        slab_cache_free(&inode_cache, ip);
+    if (inod->hlink.pprev != NULL)
+        htable_delete(&inod->hlink);
+
+    if (inod->sb->ops->inode_free != NULL)
+        inod->sb->ops->inode_free(inod);
+    else
+        slab_cache_free(&inode_cache, inod);
+}
+
+
+
+void iput(struct inode *inod)
+{
+    inod->ref--;
+#ifdef DEBUG_VFS
+    kprintf("iput: ino=%d, ref=%d\n", inod->ino, inod->ref);
+    if (inod->ref < 0)
+        kprintf("WARNING iref < 0\n");
+#endif
+    if (inod->ref == 0) {
+        inode_delete(inod);
     }
 }
 
-struct inode *idup(struct inode *ip)
+struct inode *iget(struct super_block *sb, ino_t ino)
 {
-    ip->ref++;
-    return ip;
+    struct inode *inod;
+
+    inod = inode_lookup(sb->dev, ino);
+    if (inod == NULL)
+    {
+        inod = inode_create(sb, ino, 0, sb->root->inod->ops);
+        if (inod == NULL)
+            return NULL;
+    }
+    inod->ref++;
+#ifdef DEBUG_VFS
+    kprintf("iget: ino=%d, ref=%d\n", inod->ino, inod->ref);
+#endif
+    return inod;
 }
 
 
-
-// Copy the next path element from path into name.
-// Return a pointer to the element following the copied one.
-// The returned path has no leading slashes,
-// so the caller can check *path=='\0' to see if the name is the last one.
-// If no name to remove, return 0.
-//
-// Examples:
-//   skipelem("a/bb/c", name) = "bb/c", setting name = "a"
-//   skipelem("///a//bb", name) = "bb", setting name = "a"
-//   skipelem("a", name) = "", setting name = "a"
-//   skipelem("", name) = skipelem("////", name) = 0
-//
-#define DIRSIZ  64
-
+/*
+ * Copy the next path element from path into name.
+ * Return a pointer to the element following the copied one.
+ * The returned path has no leading slashes,
+ * so the caller can check *path=='\0' to see if the name is the last one.
+ * If no name to remove, return 0.
+ *
+ * Examples:
+ *   skipelem("a/bb/c", name) = "bb/c", setting name = "a"
+ *   skipelem("///a//bb", name) = "bb", setting name = "a"
+ *   skipelem("a", name) = "", setting name = "a"
+ *   skipelem("", name) = skipelem("////", name) = 0
+ *
+ */
 static const char *skipelem(const char *path, char *name)
 {
     const char *s;
@@ -248,8 +209,8 @@ static const char *skipelem(const char *path, char *name)
     while(*path != '/' && *path != 0)
         path++;
     len = path - s;
-    if(len >= DIRSIZ)
-        memmove(name, s, DIRSIZ);
+    if(len >= NAME_MAX)
+        memmove(name, s, NAME_MAX);
     else
     {
         memmove(name, s, len);
@@ -261,33 +222,286 @@ static const char *skipelem(const char *path, char *name)
 }
 
 
-struct inode *fs_namei(const char *path)
-{
-    char name[DIRSIZ];
-    struct inode *ip, *previp;
 
-    if (!path || *path == '\0')
+struct dentry *dentry_create(const char *name, struct dentry *parent,
+                             const struct dentry_ops *ops)
+{
+    struct dentry *de;
+
+    de = (struct dentry *)kmalloc(sizeof(*de), 0);
+    if (!de)
+        return NULL;
+    strcpy(de->name, name);
+    de->ref = 0;
+    de->inod = NULL; /* May be without an inode */
+    de->parent = (parent != NULL) ? parent : de;
+    list_init(&de->child);  /* Empty children list */
+    list_insert_before(&parent->child, &de->link); /* Insert in the parent child  list */
+    de->mounted = 0;
+    de->ops = ops;
+    return de;
+}
+
+void dentry_delete(struct dentry *dent)
+{
+    struct list_link *curr;
+    struct dentry *curr_de;
+
+    /* Eventually remove the reference in the children */
+    curr = dent->child.next;
+    while (curr != &dent->child) {
+        curr_de = list_container(curr, struct dentry, link);
+        curr_de->parent = NULL;
+        curr = curr->next;
+    }
+
+    /* Delete from siblings list */
+    list_delete(&dent->link);
+
+    kfree(dent, sizeof(struct dentry));
+}
+
+static struct dentry *dentry_lookup(const struct dentry *dir, const char *name)
+{
+    struct list_link *curr;
+    struct dentry *curr_dent;
+    struct dentry *res = NULL;
+
+    curr = dir->child.next;
+    while (curr != &dir->child) {
+        curr_dent = list_container(curr, struct dentry, link);
+        if (strcmp(curr_dent->name, name) == 0) {
+            res = curr_dent;
+            break;
+        }
+        curr = curr->next;
+    }
+    return res;
+}
+
+
+struct dentry *dget(struct dentry *dir, const char *name)
+{
+    struct dentry *dent;
+    struct inode  *inod;
+
+    dent = dentry_lookup(dir, name);
+    if (dent == NULL) {
+        inod = vfs_lookup(dir->inod, name);
+        if (inod == NULL)
+            return NULL;
+        dent = dentry_create(name, dir, dir->ops);
+        if (dent == NULL)
+            return NULL;
+        dent->inod = idup(inod);
+    }
+
+    dent->ref++;
+#ifdef DEBUG_VFS
+    kprintf("dget: (%s) ino=%d, iref=%d, dref=%d\n",
+            dent->name, dent->inod->ino, dent->inod->ref, dent->ref);
+#endif
+    return dent;
+}
+
+#if 0
+/*
+ * Actually this doesn't work...
+ * For example doesn't handle the following case:
+ * 1. I'm in the root dir
+ * 2. I jump two levels. (e.g. cd /usr/bin)
+ * The cwd is still '/' thus the 'usr' dentry reference is destroyed.
+ * The getcwd thus is not able to reconstruct the path from the 'dentry parent'
+ * hierarchy.
+ */
+static int dentry_can_delete(const struct dentry *dent)
+{
+    int res = 1;
+    struct dentry *curr = current->cwd;
+
+    while (curr->parent != curr) {
+        if (curr == dent) {
+            res = 0;
+            break;
+        }
+        curr = curr->parent;
+    }
+    return res;
+}
+#endif
+
+void dput(struct dentry *dent)
+{
+    dent->ref--;
+
+#ifdef DEBUG_VFS
+    kprintf("dput: (%s) ino=%d, iref=%d, dref=%d\n",
+            dent->name, dent->inod->ino, dent->inod->ref, dent->ref);
+    if (dent->ref < 0)
+        kprintf("WARNING dref < 0\n");
+#endif
+
+#if 0
+    if (dent->ref == 0 && dentry_can_delete(dent) != 0) {
+        if (dent->inod != NULL)
+            iput(dent->inod);
+        dentry_delete(dent);
+    }
+#endif
+}
+
+
+
+static struct list_link mounts;
+
+int do_mount(struct dentry *mntpt, struct dentry *root)
+{
+    struct vfsmount *mnt;
+
+    mnt = (struct vfsmount *)kmalloc(sizeof(*mnt), 0);
+    if (mnt == NULL)
+        return -1;
+    mnt->mntpt = ddup(mntpt);
+    mnt->root  = ddup(root);
+    list_insert_after(&mounts, &mnt->link);
+    mntpt->mounted = 1;
+    return 0;
+}
+
+
+static struct dentry *follow_up(struct dentry *root)
+{
+    struct dentry *res = root;
+    const struct list_link *curr;
+    const struct vfsmount *mnt;
+
+    /* TODO: this is not efficient... use a hash map here */
+    curr = mounts.next;
+    while (curr != &mounts) {
+        mnt = list_container(curr, struct vfsmount, link);
+        if (mnt->root == res)
+        {
+            dput(mnt->mntpt);
+            res = ddup(mnt->mntpt);
+            /* Reiterate to see if this is a also mount point */
+            curr = mounts.next;
+        } else {
+            curr = curr->next;
+        }
+    }
+    return res;
+}
+
+static struct dentry *follow_down(struct dentry *mntpt)
+{
+    struct dentry *res = mntpt;
+    const struct list_link *curr;
+    const struct vfsmount *mnt;
+
+    /* TODO: this is not efficient... use a hash map here */
+    curr = mounts.next;
+    while (curr != &mounts) {
+        mnt = list_container(curr, struct vfsmount, link);
+        if (mnt->mntpt == res)
+        {
+            dput(res);
+            res = ddup(mnt->root);
+            /* Reiterate to see if this is a also mount point */
+            curr = mounts.next;
+        } else {
+            curr = curr->next;
+        }
+    }
+    return res;
+}
+
+
+
+struct dentry *named(const char *path)
+{
+    char name[NAME_MAX];
+    struct dentry *dent;
+    struct dentry *tmp;
+
+    if (path == NULL || *path == '\0')
         return NULL;
 
-    if (*path == '/')
-        ip = idup(current_task->root);
-    else
-        ip = idup(current_task->cwd);
+    dent = ddup((*path == '/') ? current->root : current->cwd);
 
     while ((path = skipelem(path, name)) != NULL)
     {
-        if (!S_ISDIR(ip->mode))
-        {
-            iput(ip);
+        if (!S_ISDIR(dent->inod->mode))
             return NULL;
-        }
-        previp = ip;
-        ip = fs_lookup(ip, name);
-        iput(previp);
-        if (ip == NULL)
-            return NULL;
-        idup(ip);
-    }
 
-    return ip;
+        if (strcmp(name, ".") == 0) {
+            continue;
+        } else if (strcmp(name, "..") == 0) {
+            if (strcmp(dent->name, "/") == 0)
+                dent = follow_up(dent);
+            tmp = ddup(dent->parent);
+        } else {
+            if (dent->mounted != 0)
+                dent = follow_down(dent);
+            tmp = dget(dent, name);
+        }
+        dput(dent);
+        if (tmp == NULL)
+            return NULL;
+        dent = tmp;
+    }
+    if (S_ISDIR(dent->inod->mode) && dent->mounted != 0)
+        dent = follow_down(dent);
+    return dent;
 }
+
+
+int dentry_path(struct dentry *dent, char *buf, size_t size)
+{
+    int res = 0;
+    size_t j;
+    size_t slen;
+    struct dentry *curr = dent;
+
+    j = size;
+    do {
+        if (strcmp(curr->name, "/") == 0)
+            curr = follow_up(curr);
+        if (curr == curr->parent)
+            break;
+
+        slen = strlen(curr->name);
+        if (slen < j) {
+            j -= slen;
+            memcpy(&buf[j], curr->name, slen);
+            buf[--j] = '/';
+
+            curr = curr->parent;
+        } else {
+            res = -ENAMETOOLONG;
+        }
+    } while (res == 0);
+
+    if (res == 0) {
+        if (j == size)
+            buf[--j] = '/';
+        size -= j;
+        memmove(buf, buf + j, size);
+        buf[size] = '\0';
+    }
+    return res;
+}
+
+
+void vfs_init(void)
+{
+    slab_cache_init(&inode_cache, "inode-cache", sizeof(struct inode),
+            0, 0, NULL, NULL);
+
+    slab_cache_init(&file_cache, "file-cache", sizeof(struct file),
+            0, 0, NULL, NULL);
+
+    htable_init(inode_htable, INODE_HTABLE_BITS);
+
+    list_init(&mounts);
+}
+

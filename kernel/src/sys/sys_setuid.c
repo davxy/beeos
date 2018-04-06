@@ -17,24 +17,25 @@
  * License along with BeeOS; if not, see <http://www.gnu/licenses/>.
  */
 
+#include "sys.h"
 #include "proc.h"
 #include <sys/types.h>
 #include <errno.h>
 
 int sys_setuid(uid_t uid)
 {
-    if (current_task->euid == 0)
+    if (current->euid == 0)
     {
         /* If uid is not root then, after this, it will be
          * impossible for the program to regain root privileges. */
-        current_task->uid  = uid;
-        current_task->euid = uid;
-        current_task->suid = uid;
+        current->uid  = uid;
+        current->euid = uid;
+        current->suid = uid;
     }
-    else if (current_task->uid == uid
-          || current_task->suid == uid)
+    else if (current->uid == uid
+          || current->suid == uid)
     {
-        current_task->euid = uid;
+        current->euid = uid;
     }
     else
     {

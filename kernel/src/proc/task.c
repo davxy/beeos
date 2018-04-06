@@ -25,110 +25,123 @@
 #include "panic.h"
 #include <string.h>
 
-int task_init(struct task *task)
+
+void task_signal(struct task *tsk, int sig)
+{
+    sigaddset(&tsk->sigpend, sig);
+
+    /* check if signal is not masked */
+    if (sigismember(&tsk->sigmask, sig) <= 0) {
+        /* check if the process must be awake */
+        if (tsk->state == TASK_SLEEPING) {
+            if (!list_empty(&tsk->condw))
+                list_delete(&tsk->condw);
+            tsk->state = TASK_RUNNING;
+        }
+    }
+}
+
+int task_init(struct task *tsk, task_entry_t entry)
 {
     static pid_t next_pid = 1;
     int i;
     struct task *sib;
 
     /* pids */
-    task->pid = next_pid++;
-    task->pgid = current_task->pgid;
-    task->pptr = current_task;
+    tsk->pid = next_pid++;
+    tsk->pgid = current->pgid;
+    tsk->pptr = current;
 
     /* user and group */
-    task->uid = current_task->uid;
-    task->euid = current_task->euid;
-    task->suid = current_task->suid;
-    task->gid = current_task->gid;
-    task->egid = current_task->egid;
-    task->sgid = current_task->sgid;
- 
+    tsk->uid = current->uid;
+    tsk->euid = current->euid;
+    tsk->suid = current->suid;
+    tsk->gid = current->gid;
+    tsk->egid = current->egid;
+    tsk->sgid = current->sgid;
+
     /* file system */
-    task->cwd = idup(current_task->cwd);
-    task->root = idup(current_task->root);
+    tsk->cwd = ddup(current->cwd);
+    tsk->root = ddup(current->root);
 
     /* duplicate valid file descriptors */
-    memset(task->fd, 0, sizeof(task->fd));
+    memset(tsk->fds, 0, sizeof(tsk->fds));
     for (i = 0; i < OPEN_MAX; i++)
     {
-        if (!current_task->fd[i].file)
-            continue;
-        task->fd[i] = current_task->fd[i];
-        task->fd[i].file->refs++;
+        if (current->fds[i].fil != NULL) {
+            tsk->fds[i] = current->fds[i];
+            tsk->fds[i].fil->ref++;
+        }
     }
-    
+
     /* memory */
-    task->brk = current_task->brk;
+    tsk->brk = current->brk;
 
     /* sheduler */
-    task->state = TASK_RUNNING;
-    task->counter = msecs_to_ticks(SCHED_TIMESLICE);
-    task->exit_code = 0;
+    tsk->state = TASK_RUNNING;
+    tsk->counter = msecs_to_ticks(SCHED_TIMESLICE);
+    tsk->exit_code = 0;
 
-    list_init(&task->tasks);
-    list_init(&task->children);
-    list_init(&task->sibling);
+    list_init(&tsk->tasks);
+    list_init(&tsk->children);
+    list_init(&tsk->sibling);
 
     /* Add to the global tasks list */
-    list_insert_before(&current_task->tasks, &task->tasks);
-    
-    sib = list_container(current_task->children.next, struct task, children);
-    if (list_empty(&current_task->children) || sib->pptr != current_task)
-        list_insert_after(&current_task->children, &task->children);
-    else
-        list_insert_before(&sib->sibling, &task->sibling);
+    list_insert_before(&current->tasks, &tsk->tasks);
 
-    cond_init(&task->chld_exit);
-    
+    sib = list_container(current->children.next, struct task, children);
+    if (list_empty(&current->children) || sib->pptr != current)
+        list_insert_after(&current->children, &tsk->children);
+    else
+        list_insert_before(&sib->sibling, &tsk->sibling);
+
+    cond_init(&tsk->chld_exit);
+
     /* signals */
-    (void)sigemptyset(&task->sigpend);
-    (void)sigemptyset(&task->sigmask);
-    memcpy(task->signals, current_task->signals, sizeof(task->signals));
+    sigemptyset(&tsk->sigpend);
+    sigemptyset(&tsk->sigmask);
+    memcpy(tsk->signals, current->signals, sizeof(tsk->signals));
 
     /* Timers events */
-    list_init(&task->timers);
+    list_init(&tsk->timers);
 
     /* Conditional wait link */
-    list_init(&task->condw);
+    list_init(&tsk->condw);
 
-    task_arch_init(&task->arch);
+    /* Controlling terminal */
+    tsk->tty = current->tty;
 
-    return 0;
+    return task_arch_init(&tsk->arch, entry);
 }
 
-void task_deinit(struct task *task)
+
+void task_deinit(struct task *tsk)
 {
-	//iput(task->root);
-    task_arch_deinit(&task->arch);
+    dput(tsk->cwd);
+    dput(tsk->root);
+    task_arch_deinit(&tsk->arch);
 }
 
-struct task *task_create(void)
+
+struct task *task_create(task_entry_t entry)
 {
-    struct task *task = kmalloc(sizeof(struct task), 0);
-    if (task)
-    {
-        memset(task, 0, sizeof(*task));
-        task_init(task);
+    struct task *tsk;
+
+    tsk = (struct task *)kmalloc(sizeof(struct task), 0);
+    if (tsk != NULL) {
+        memset(tsk, 0, sizeof(*tsk));
+        if (task_init(tsk, entry) < 0) {
+            kfree(tsk, sizeof(struct task));
+            tsk = NULL;
+        }
     }
-    return task;
+    return tsk;
 }
 
-void task_delete(struct task *task)
+
+void task_delete(struct task *tsk)
 {
-    task_deinit(task);
-    kfree(task, sizeof(struct task));
+    task_deinit(tsk);
+    kfree(tsk, sizeof(struct task));
 }
 
-void init_start(void)
-{
-    struct task *task;
-    void init(void);
-
-    task = task_create();
-    if (task == NULL)
-        panic("init_start");
-
-    task->arch.eip = (uint32_t)init;
-    task->arch.esp = task->arch.ebp;
-}

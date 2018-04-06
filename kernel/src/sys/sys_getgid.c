@@ -17,10 +17,11 @@
  * License along with BeeOS; if not, see <http://www.gnu/licenses/>.
  */
 
-#include <sys/types.h>
+#include "sys.h"
 #include "proc.h"
+#include <sys/types.h>
 
-gid_t sys_getgid()
+gid_t sys_getgid(void)
 {
-    return current_task->gid;
+    return current->gid;
 }

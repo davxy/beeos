@@ -17,12 +17,14 @@
  * License along with BeeOS; if not, see <http://www.gnu/licenses/>.
  */
 
-#ifndef _KPRINTF_H_
-#define _KPRINTF_H_
+#ifndef BEEOS_KPRINTF_H_
+#define BEEOS_KPRINTF_H_
 
 #include <stdarg.h>
 
-int kprintf(const char *fmt, ...);
-int kvprintf(const char *fmt, va_list arg);
+void kprintf(const char *fmt, ...);
 
-#endif /* _LIBK_H_ */
+void kvprintf(const char *fmt, va_list arg);
+
+#endif /* BEEOS_KPRINTF_H_ */
+

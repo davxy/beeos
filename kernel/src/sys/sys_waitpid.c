@@ -17,14 +17,12 @@
  * License along with BeeOS; if not, see <http://www.gnu/licenses/>.
  */
 
-#include <unistd.h>
-#include <sys/wait.h>
+#include "sys.h"
 #include "proc.h"
 #include "util.h"
-#include "kprintf.h"    // TODO : remove
-#include "kmalloc.h"
+#include <sys/wait.h>
 
-/* 
+/*
  * Wait for a child process to exit and return its pid.
  * Return -1 if this process has no children.
  */
@@ -32,17 +30,18 @@ pid_t sys_waitpid(pid_t pid, int *wstatus, int options)
 {
     struct task *t;
     int havekids;
+    int retry;
 
-    spinlock_lock(&current_task->chld_exit.lock);
+    spinlock_lock(&current->chld_exit.lock);
 
-    while (1)
-    {
+    do {
+        retry = 0;
         havekids = 0;
 
-        t = struct_ptr(current_task->tasks.next, struct task, tasks);
-        while (t != current_task)
+        t = struct_ptr(current->tasks.next, struct task, tasks);
+        while (t != current)
         {
-            if (t->pptr == current_task 
+            if (t->pptr == current
                 && (pid == t->pid || pid == -1))
             {
                 havekids = 1;
@@ -50,7 +49,7 @@ pid_t sys_waitpid(pid_t pid, int *wstatus, int options)
                 {
                     /* found one */
                     pid = t->pid;
-                    if (wstatus)
+                    if (wstatus != NULL)
                         *wstatus = t->exit_code;
                     /* resources already released by the sys_exit */
                     list_delete(&t->tasks);
@@ -63,31 +62,31 @@ pid_t sys_waitpid(pid_t pid, int *wstatus, int options)
             t = struct_ptr(t->tasks.next, struct task, tasks);
         }
 
-        if (t == current_task)
+        if (t == current)
         {
-            if (havekids)
+            /* We've not found any terminated children */
+            if (havekids != 0)
             {
+                /* There are not terminated children around */
                 if ((options & WNOHANG) == 0)
                 {
-                    cond_wait(&current_task->chld_exit);
+                    /* WNOHANG flag not specified, wait for a child */
+                    cond_wait(&current->chld_exit);
+                    retry = 1;
                 }
                 else
                 {
                     pid = 0;
-                    break;
                 }
             }
             else
             {
                 pid = -1;
-                break;
             }
         }
-        else
-            break;
-    }
-    
-    spinlock_unlock(&current_task->chld_exit.lock);
+    } while (retry != 0);
+
+    spinlock_unlock(&current->chld_exit.lock);
 
     return pid;
 }

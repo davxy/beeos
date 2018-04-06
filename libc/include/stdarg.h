@@ -23,13 +23,13 @@
 typedef unsigned char *va_list;
 
 #define va_start(ap, last) \
-	((void) ((ap) = ((va_list) &(last)) + (sizeof (last))))
+    ((ap) = ((va_list) &(last)) + (sizeof (last)))
 
 #define va_end(ap) \
-	((void) ((ap) = 0))
+    ((ap) = (va_list)0)
 
 #define va_copy(dest, src) \
-    ((void) ((dest) = (va_list) (src)))
+    ((dest) = (va_list) (src))
 
 #define va_arg(ap, type) \
      (((ap) = (ap) + (sizeof (type))), *((type *) ((ap) - (sizeof (type)))))

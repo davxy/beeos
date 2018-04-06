@@ -30,9 +30,30 @@
 #include <sys/types.h>
 #include <stddef.h>
 
+
+/**
+ * Compares the first n bytes (each interpreted as unsigned char) of the memory
+ * areas s1 and s2.
+ *
+ * Returns an integer less than, equal to, or greater than zero if the first
+ * n bytes of s1 is found, respectively, to be less than, to match, or be
+ * greater than the first n bytes of s2.
+ * For a nonzero return value, the sign is determined by the sign of the
+ * difference between the first pair of bytes (interpreted as unsigned char)
+ * that differ in s1 and s2.
+ * If n is zero, the return value is zero.
+ *
+ * @param s1    First memory region.
+ * @param s2    Second memory region pointer.
+ * @param n     Number of bytes to compare.
+ * @return      0 if equal, <0 if s1 < s2 and >0 is s1 > s2.
+ */
+int memcmp(const void *s1, const void *s2, size_t n);
+
 /**
  * Copies n bytes from memory area src to memory area dst. The memory areas
  * must not overlap. Use memmove if the memory areas do overlap.
+ *
  * @param dst
  * 	Destination memory pointer.
  * @param src

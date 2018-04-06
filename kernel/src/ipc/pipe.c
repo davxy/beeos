@@ -17,21 +17,22 @@
  * License along with BeeOS; if not, see <http://www.gnu/licenses/>.
  */
 
+#include "ipc/pipe.h"
 #include "sync/spinlock.h"
+#include "sync/cond.h"
 #include "fs/vfs.h"
 #include "proc.h"
-#include "sync/cond.h"
 #include "kmalloc.h"
+#include "kprintf.h"
 #include "sys.h"
-#include <sys/types.h>
 #include <limits.h>
 #include <fcntl.h>
 #include <errno.h>
 
-#define PIPE_SIZE   PIPE_BUF
-#define DATA_SIZE   (PIPE_SIZE+1)
 
-struct file *fs_file_alloc(void);
+#define PIPE_SIZE   PIPE_BUF
+#define DATA_SIZE   (PIPE_SIZE + 1)
+
 
 /* Implemented as a ring-buffer */
 struct pipe_inode
@@ -45,23 +46,27 @@ struct pipe_inode
     char data[DATA_SIZE];   /**< Pipe data */
 };
 
-/* TODO: in VFS this is a 'file' operation. 
- * Thus the function should take a file and as a consequence 
- * we can check if that is not blocking */
+/*
+ * TODO: in VFS this is a 'file' operation.
+ * Thus the function should take a file and as a consequence
+ * we can check if that is not blocking
+ */
 
 /*
  * From APUE
- * If we read from a pipe whose write end has been closed, read returns 0 to indicate an end of file after
- * all the data has been read. (Technically, we should say that this end of file is not generated until there are
- * no more writers for the pipe. It's possible to duplicate a pipe descriptor so that multiple processes have
- * the pipe open for writing. Normally, however, there is a single reader and a single writer for a pipe.
+ * If we read from a pipe whose write end has been closed, read returns 0
+ * to indicate an end of file after all the data has been read.
+ * Technically, we should say that this end of file is not generated until
+ * there are no more writers for the pipe. It's possible to duplicate a pipe
+ * descriptor so that multiple processes have the pipe open for writing.
+ * Normally, however, there is a single reader and a single writer for a pipe.
  */
-static int pipe_read(struct inode *inode, void *buf,
-        size_t count, off_t offset)
+static int pipe_read(struct inode *inod, void *buf,
+        size_t count, size_t off)
 {
     int n, left;
     char *ptr = (char *)buf;
-    struct pipe_inode *pnode = (struct pipe_inode *)inode;
+    struct pipe_inode *pnode = (struct pipe_inode *)inod;
 
     left = count;
     spinlock_lock(&pnode->queue.lock);
@@ -80,7 +85,7 @@ static int pipe_read(struct inode *inode, void *buf,
             if (left != count && pnode->queued_writers == 0)
                 goto done;
 
-            /* TODO: if BLOCKING allowed */ 
+            /* TODO: if BLOCKING allowed */
             pnode->queued_readers++;
             if (pnode->queued_writers > 0)      /* if there are pending writers */
                 cond_broadcast(&pnode->queue);  /* wakeup them before sleep */
@@ -111,15 +116,16 @@ done:
 
 /*
  * From APUE.
- * If we write to a pipe whose read end has been closed, the signal SIGPIPE is generated. If we either
- * ignore the signal or catch it and return from the signal handler, write returns –1 with errno set to EPIPE .
+ * If we write to a pipe whose read end has been closed, the signal SIGPIPE
+ * is generated. If we either ignore the signal or catch it and return from
+ * the signal handler, write returns -1 with errno set to EPIPE.
  */
-static int pipe_write(struct inode *inode, const void *buf,
-        size_t count, off_t offset)
+static int pipe_write(struct inode *inod, const void *buf,
+                      size_t count, size_t off)
 {
     size_t n, left;
-    char *ptr = (char *)buf;
-    struct pipe_inode *pnode = (struct pipe_inode *)inode;
+    const char *ptr = (const char *)buf;
+    struct pipe_inode *pnode = (struct pipe_inode *)inod;
 
     left = count;
     spinlock_lock(&pnode->queue.lock);
@@ -137,20 +143,20 @@ static int pipe_write(struct inode *inode, const void *buf,
             if (pnode->base.ref == 1)
             {
                 spinlock_unlock(&pnode->queue.lock);
-                sys_kill(sys_getpid(), SIGPIPE);
+                task_signal(current, SIGPIPE);
+                scheduler();
                 /* in case the signal has been catched, return an error */
                 return -EPIPE;
             }
 
-            //if (BLOKING)
+            /* if is BLOCKING */
             pnode->queued_writers++;
-            if (pnode->queued_readers > 0) /* there are pending writers */
+            if (pnode->queued_readers > 0)     /* there are pending writers */
                 cond_broadcast(&pnode->queue); /* wakeup all before (eventually) sleep */
             cond_wait(&pnode->queue);
             pnode->queued_writers--;
+            /* else unlock first!!! And then go to spinlock unlock */
 
-            //else // unlock first!!!
-            //    return goto spinlock unlock;
         }
 
         if (pnode->nrp <= pnode->nwp)
@@ -183,10 +189,12 @@ static const struct inode_ops pipe_ops =
     .write = pipe_write
 };
 
-struct inode *pipe_inode_create(void)
+static struct inode *pipe_inode_create(void)
 {
     struct pipe_inode *pnode;
-    pnode = kmalloc(sizeof(struct pipe_inode), 0);
+
+    /* TODO... set a pipe sb here to allow correct inode release */
+    pnode = (struct pipe_inode *)kmalloc(sizeof(struct pipe_inode), 0);
     if (!pnode)
         return NULL;
     memset(pnode, 0, sizeof(*pnode));
@@ -197,24 +205,26 @@ struct inode *pipe_inode_create(void)
     return &pnode->base;
 }
 
+/* TODO : all error checking and rollback code is missing */
 
 int pipe_create(int pipefd[2])
 {
     int fd0, fd1;
-    struct inode *inode;
+    struct inode *inod;
+    struct dentry *dent;
     struct file *file0, *file1;
 
     for (fd0 = 0; fd0 < OPEN_MAX; fd0++)
-        if (current_task->fd[fd0].file == NULL)
+        if (current->fds[fd0].fil == NULL)
             break;
-    for (fd1 = fd0+1; fd1 < OPEN_MAX; fd1++)
-        if (current_task->fd[fd1].file == NULL)
+    for (fd1 = fd0 + 1; fd1 < OPEN_MAX; fd1++)
+        if (current->fds[fd1].fil == NULL)
             break;
-    if (fd1 == OPEN_MAX)
+    if (fd1 >= OPEN_MAX)
         return -EMFILE; /* Too many open files */
 
-    inode = pipe_inode_create();
-    if (!inode)
+    inod = pipe_inode_create();
+    if (!inod)
         return -1;
 
     /* Inode allocated */
@@ -223,17 +233,24 @@ int pipe_create(int pipefd[2])
     if (!file0 || !file1)
         return -1;
 
+    dent = dentry_create("", NULL, NULL);
+    if (dent == NULL)
+        return -1;
+    dent->inod = idup(inod);
+
     file0->flags = O_RDONLY;
-    file0->refs = 1;
-    file0->offset = 0;
-    file0->inode = inode;
+    file0->ref = 1;
+    file0->off = 0;
+    file0->dent = dent;
+    dent->ref = 2;  /* Held by two files */
     *file1 = *file0;
     file1->flags = O_WRONLY;
 
-    current_task->fd[fd0].file = file0;
-    current_task->fd[fd1].file = file1;
+    current->fds[fd0].fil = file0;
+    current->fds[fd1].fil = file1;
 
     pipefd[0] = fd0;
     pipefd[1] = fd1;
     return 0;
 }
+

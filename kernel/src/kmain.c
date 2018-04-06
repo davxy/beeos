@@ -24,29 +24,62 @@
 #include "timer.h"
 #include "sys.h"
 #include "proc.h"
+#include "mm/slab.h"
 #include "driver/tty.h"
 #include "fs/vfs.h"
 #include "fs/devfs.h"
 #include "proc/task.h"
 #include "dev.h"
-#include <string.h>
-#include <stdio.h>
-#include <unistd.h>
-
 
 
 #define ROOT_FS_TYPE    "ext2"
 #define ROOT_DEV        DEV_INITRD
 
+/* Init process entry point (arch defined) */
+void init(void);
+
+
+static void mount_root(void)
+{
+    const struct super_block *sb;
+
+    /*
+     * DEVFS is temporary mounted as system root.
+     * To create the initrd node (used to read the real fs from the disk.
+     */
+    sb = vfs_super_create(0, "dev");
+    if (sb == NULL)
+        panic("Unable to create dev fs");
+
+    current->cwd = ddup(sb->root);
+    current->root = ddup(sb->root);
+
+    /* Initrd node created to read data from ramdisk */
+    if (sys_mknod("/initrd", S_IFBLK, DEV_INITRD) < 0)
+        panic("Creating initrd temporary root");
+
+    /*
+     * Initialization finished
+     */
+
+    sb = vfs_super_create(ROOT_DEV, ROOT_FS_TYPE);
+    if (sb == NULL)
+        panic("Unable to create root file system");
+
+    dput(current->root);
+    dput(current->cwd);
+    current->root = ddup(sb->root);
+    current->cwd  = ddup(sb->root);
+}
+
 
 void kmain(void)
 {
-    struct sb *sb;
-
     /*
      * Core
      */
-    
+
+    slab_init();
     kmalloc_init();
     isr_init();
 
@@ -54,8 +87,8 @@ void kmain(void)
      * Primary
      */
 
-    timer_init(100);
-    fs_init();
+    timer_init();
+    vfs_init();
     scheduler_init();
     tty_init();
     syscall_init();
@@ -63,41 +96,19 @@ void kmain(void)
     kprintf("BeeOS v%d.%d.%d - %s\n\n",
             BEEOS_MAJOR, BEEOS_MINOR, BEEOS_PATCH, BEEOS_CODENAME);
 
-    /*
-     * DEVFS is temporary mounted as system root.
-     * To create the initrd node (used to read the real fs from the disk.
-     */
-
-    sb = devfs_init();
-    if (sb == NULL)
-        panic("Unable to create dev file system");
-    current_task->cwd = sb->root;
-    current_task->root = sb->root;
-    /* Initrd node */
-    sys_mknod("/initrd", S_IFBLK, DEV_INITRD);
+    /* Mount root filesystem */
+    mount_root();
 
     /*
-     * Initialization finished
+     * Start the init process
      */
-
-    sb = vfs_sb_create(ROOT_DEV, ROOT_FS_TYPE);
-    if (sb == NULL)
-        panic("Unable to create root file system");
-    current_task->cwd = sb->root;
-    current_task->root = sb->root;
-
-    void sys_mount(const char *source, const char *target);
-    sys_mount("dev", "/dev");
+    if (task_create(init) == NULL)
+        panic("Unable to start init task");
 
     /*
-     * Fork and start the init process
+     * Process 0 continues with the idle procedure
      */
-
-    init_start();
-
-    /*
-     * Idle procedure
-     */
-
     idle();
+    /* Should never happen */
+    panic("Idle task exited");
 }

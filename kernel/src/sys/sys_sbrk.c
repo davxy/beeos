@@ -17,16 +17,16 @@
  * License along with BeeOS; if not, see <http://www.gnu/licenses/>.
  */
 
+#include "sys.h"
 #include "proc.h"
 #include <unistd.h>
 #include <errno.h>
 #include "arch/x86/paging.h"
 
-
 void *sys_sbrk(intptr_t incr)
 {
     uintptr_t addr;
-    addr = current_task->brk;
-    current_task->brk += incr;
+    addr = current->brk;
+    current->brk += incr;
     return (void *)addr;
 }

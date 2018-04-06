@@ -17,52 +17,20 @@
  * License along with BeeOS; if not, see <http://www.gnu/licenses/>.
  */
 
-#ifndef BEEOS_PROC_H_
-#define BEEOS_PROC_H_
-
-#include "proc/task.h"
-
-/* Default process timeslice (milliseconds) */
-#define SCHED_TIMESLICE     100
-
-extern struct task *current;
-extern struct task ktask;
-
-extern int need_resched;
+#include "proc.h"
+#include "arch/x86/isr_arch.h"
+#include <signal.h>
 
 
-void scheduler(void);
-
-void scheduler_init(void);
-
-/**
- * Process pending (non masked) signals.
- */
-int do_signal(void);
-
-/*
- * Arch dependent return preparation from a signal handler.
- */
 void sigret_prepare(struct isr_frame *ifr,
-                    const struct sigaction *act, int sig);
+                    const struct sigaction *act, int sig)
+{
+    uint32_t *esp;
 
-
-/*
- * Start init user-mode process.
- */
-void init_start(void);
-
-/**
- * Idle procedure.
- * This is executed by the first kernel process (pid=0) after that the
- * init process (pid=1) has been started.
- */
-void idle(void);
-
-
-void proc_dump(void);
-
-
-#endif /* BEEOS_PROC_H_ */
-
-
+    /* Adjust user stack to return in the signal handler */
+    esp = (uint32_t *)ifr->usr_esp;
+    *(--esp) = sig;
+    *(--esp) = (uint32_t)act->sa_restorer;
+    ifr->usr_esp = (uint32_t)esp;
+    ifr->eip = (uint32_t)act->sa_handler;
+}

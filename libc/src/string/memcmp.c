@@ -17,21 +17,20 @@
  * License along with BeeOS; if not, see <http://www.gnu/licenses/>.
  */
 
-#include "kprintf.h"
-#include "elf.h"
-#include <stdint.h>
+#include <string.h>
 
-extern struct elf_file kernel_elf;
-
-void print_stack_trace()
+int memcmp(const void *s1, const void *s2, size_t n)
 {
-    uint32_t *ebp, *eip;
-    /* Get the current EBP value */
-    asm volatile ("mov %%ebp, %0" : "=r"(ebp));
-    while (ebp)
-    {
-        eip = ebp+1; 
-        kprintf("    [0x%x] %s\n", *eip, "");//elf_lookup_symbol(&kernel_elf, *eip));
-        ebp = (uint32_t *) *ebp;
+    const char *a = (const char *) s1;
+    const char *b = (const char *) s2;
+    size_t i;
+    int res = 0;
+
+    for (i = 0; i < n; i++) {
+        if (a[i] != b[i]) {
+            res = (int)a[i] - b[i];
+            break;
+        }
     }
+    return res;
 }

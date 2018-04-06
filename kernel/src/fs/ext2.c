@@ -25,6 +25,9 @@
 #include "util.h"
 #include "panic.h"
 #include <errno.h>
+#include <string.h>
+#include <stdint.h>
+
 
 #define EXT2_MAGIC          0xef53
 #define EXT2_NDIR_BLOCKS    12  /* Number of direct blocks */
@@ -32,47 +35,104 @@
 #define EXT2_BLK_DBL        13  /* Double indirect blocks index */
 #define EXT2_BLK_TPL        14  /* Triple indirect blocks index */
 
-struct ext2_sb
-{
-    struct sb   base;
-    uint32_t    block_size;
-    uint32_t    inodes_per_group;
-    uint32_t    log_block_size;
-    struct ext2_group_desc *gd_table; 
+/*
+ * Unused macros reserved for future extensions or completeness.
+ */
+
+#define EXT2_BAD_INO            1
+#define EXT2_ROOT_INO           2
+#define EXT2_ACL_IDX_INO        3
+#define EXT2_ACL_DATA_INO       4
+#define EXT2_BOOT_LOADER_INO    5
+#define EXT2_UNDEL_DIR_INO      6
+
+
+struct ext2_disk_super_block {
+    uint32_t inodes_count;      /* Count of inodes in fs */
+    uint32_t blocks_count;      /* Count of blocks in fs */
+    uint32_t r_blocks_count;    /* Count of # of reserved blocks */
+    uint32_t free_blocks_count; /* Count of # of free blocksw */
+    uint32_t free_inodes_count; /* Count of # of free inodes */
+    uint32_t first_data_block;  /* First block that contains data */
+    uint32_t log_block_size;    /* Indicator of block size */
+    int32_t  log_frag_size;     /* Indicator of the size of fragments */
+    uint32_t blocks_per_group;  /* Count of # of blocks in each block group */
+    uint32_t frags_per_group;   /* Count of # of fragments in each block group */
+    uint32_t inodes_per_group;  /* Count of # of inodes in each blcok group */
+    uint32_t mtime;             /* time filesystem was last mounted */
+    uint32_t wtime;             /* time filesystem was last written to */
+    uint16_t mnt_count;         /* number of times the fs has been mounted */
+    int16_t  max_mnt_count;     /* number of times the fs can be mounted */
+    uint16_t magic;             /* EXT2 Magic number */
+    uint16_t state;             /* flags indicating current state of fs */
+    uint16_t errors;            /* flags indicating errors */
+    uint16_t pad;               /* padding */
+    uint32_t lastcheck;         /* time the fs was last checked */
+    uint32_t checkinterval;     /* maximum time between checks */
+    uint32_t creator_os;        /* indicator of which OS created */
+    uint32_t rev_level;         /* EXT2 revision level */
+    uint32_t reserved[236];     /* padding to 1024 bytesOS */
 };
 
-struct ext2_inode
-{
+struct ext2_group_desc {
+    uint32_t block_bitmap;  /* address of block containing the block bitmap for this group */
+    uint32_t inode_bitmap;  /* address of block containing the inode bitmap for this group */
+    uint32_t inode_table;   /* address of the block containing the inode table for this group */
+    uint16_t free_blocks_count; /* count of free blocks in group */
+    uint16_t free_inodes_count; /* count of free inodes in group */
+    uint16_t used_dirs_count;   /* number of inodes in this group that are directories */
+    uint16_t pad;
+    uint32_t reserved[3];
+};
+
+struct ext2_disk_inode {
+    uint16_t mode;          /* File mode */
+    uint16_t uid;           /* Owner UID */
+    uint32_t size;          /* size in bytes */
+    uint32_t atime;         /* access time */
+    uint32_t ctime;         /* creation time */
+    uint32_t mtime;         /* modification time */
+    uint32_t dtime;         /* deletion time */
+    uint16_t gid;           /* Group ID */
+    uint16_t links_count;   /* links count */
+    uint32_t blocks;        /* blocks count */
+    uint32_t flags;         /* file flags */
+    uint32_t reserved1;
+    uint32_t block[15];     /* pointers to blocks */
+    uint32_t version;
+    uint32_t file_acl;      /* file ACL */
+    uint32_t dir_acl;       /* directory acl */
+    uint8_t  faddr;         /* fragment address */
+    uint8_t  fsize;         /* fragment size */
+    uint16_t pad1;
+    uint32_t reserved2[3];
+};
+
+struct ext2_disk_dirent {
+    uint32_t ino;
+    uint16_t rec_len;
+    uint8_t  name_len;
+    uint8_t  file_type;
+    char     name[255];
+};
+
+struct ext2_super_block {
+    struct super_block      base;
+    uint32_t                block_size;
+    uint32_t                inodes_per_group;
+    uint32_t                log_block_size;
+    struct ext2_group_desc *gd_table;
+};
+
+struct ext2_inode {
     struct inode base;
     uint32_t blocks[15]; /* pointers to blocks */
 };
 
-struct ext2_disk_sb dsb;
-uint32_t gd_block;
-uint32_t block_size;
 
 
-static struct inode *ext2_inode_create(dev_t dev, ino_t ino)
-{
-    struct ext2_inode *inode;
-    if ((inode = (struct ext2_inode *)inode_lookup(dev, ino)) != NULL)
-        return &inode->base;
-     
-    inode = kmalloc(sizeof(struct ext2_inode), 0);
-    if (!inode)
-        return NULL;
-    inode_init(&inode->base, dev, ino);
-    return &inode->base;
-}
-
-void ext2_inode_delete(struct inode *inode)
-{
-    kfree(inode, sizeof(struct ext2_inode));
-}
-
-
-static int offset_to_block(off_t offset, struct ext2_inode *inode,
-        struct ext2_sb *sb)
+static int offset_to_block(size_t offset, const struct ext2_inode *inod,
+                           const struct ext2_super_block *sb)
 {
     uint32_t triple_block, double_block, indirect_block, block;
     uint8_t ind, dbl, tpl;
@@ -80,27 +140,33 @@ static int offset_to_block(off_t offset, struct ext2_inode *inode,
     uint32_t shift;
 
     shift = 10 + sb->log_block_size;
+    if (shift >= 8 * sizeof(size_t))
+        return -1;
 
     /* Is direct? */
-    if (offset < EXT2_NDIR_BLOCKS*sb->block_size)
-        return inode->blocks[offset >> shift];
+    if (offset < EXT2_NDIR_BLOCKS * sb->block_size) {
+        ind = offset >> shift;
+        if (ind >= sizeof(inod->blocks)/sizeof(inod->blocks[0]))
+            return -1;
+        return inod->blocks[ind];
+    }
 
-    buf = kmalloc(sb->block_size, 0);
+    buf = (uint32_t *)kmalloc(sb->block_size, 0);
 
-    indirect_block = inode->blocks[EXT2_BLK_IND];
-    double_block = inode->blocks[EXT2_BLK_DBL];
-    triple_block = inode->blocks[EXT2_BLK_TPL];
+    indirect_block = inod->blocks[EXT2_BLK_IND];
+    double_block = inod->blocks[EXT2_BLK_DBL];
+    triple_block = inod->blocks[EXT2_BLK_TPL];
 
     offset = (offset >> shift) - EXT2_NDIR_BLOCKS;
     ind = offset;
     dbl = offset >> 8;
     tpl = offset >> 16;
 
-    if (tpl) {
+    if (tpl != 0) {
         panic("ext2: required triple block %d", triple_block);
     }
 
-    if (dbl) {
+    if (dbl != 0) {
         panic("ext2: required double block %d", double_block);
     }
 
@@ -114,24 +180,30 @@ static int offset_to_block(off_t offset, struct ext2_inode *inode,
     return block;
 }
 
-ssize_t ext2_read(struct ext2_inode *inode, void *buf, size_t count, off_t off)
+/******************************************************************************
+ *  Dentry operations
+ ******************************************************************************/
+
+static ssize_t ext2_read(struct ext2_inode *inod, void *buf,
+                         size_t count, size_t off)
 {
-    struct ext2_sb *sb = (struct ext2_sb *)inode->base.sb;
+    const struct ext2_super_block *sb;
     int left;
     int block;
-    off_t ext2_off, block_off, file_off;
+    size_t ext2_off, block_off, file_off;
     ssize_t n;
 
-    if (inode->base.size < off)
+    sb = (struct ext2_super_block *)inod->base.sb;
+
+    if (inod->base.size < off)
         return 0; /* EOF */
-    if (inode->base.size < off + count)
-        count = inode->base.size - off;
+    if (inod->base.size < off + count)
+        count = inod->base.size - off;
 
     file_off = off;
     left = count;
-    while (left > 0)
-    {
-        block = offset_to_block(file_off, inode, sb);
+    while (left > 0) {
+        block = offset_to_block(file_off, inod, sb);
         if (block < 0)
             break;
         block_off = off % sb->block_size; /* used just by the first block */
@@ -148,14 +220,15 @@ ssize_t ext2_read(struct ext2_inode *inode, void *buf, size_t count, off_t off)
     return count-left;
 }
 
-struct inode *ext2_lookup(struct inode *dir, const char *name)
+static struct inode *ext2_lookup(struct inode *dir, const char *name)
 {
-    struct ext2_disk_dirent *dirent;
+    struct ext2_disk_dirent *curr;
     struct ext2_disk_dirent *dirbuf;
     int count;
-    struct inode *inode = NULL;
+    struct inode *inod = NULL;
 
-    if ((dirbuf = kmalloc(dir->size, 0)) == NULL)
+    dirbuf = (struct ext2_disk_dirent *)kmalloc(dir->size, 0);
+    if (dirbuf == NULL)
         return NULL;
 
     if (devfs_read(dir->sb->dev, dirbuf, dir->size,
@@ -163,68 +236,75 @@ struct inode *ext2_lookup(struct inode *dir, const char *name)
         goto end;
 
     count = dir->size;
-    dirent = dirbuf;
-    while(count > 0)
-    {
-        /* name are not null terminated */
-        if(dirent->name_len == strlen(name)
-            && strncmp(dirent->name, name, dirent->name_len) == 0)
+    curr = dirbuf;
+    while(count >= sizeof(struct ext2_disk_dirent)) {
+        /* dirent->name is not null terminated */
+        if(strlen(name) == (size_t)curr->name_len &&
+           memcmp(name, curr->name, curr->name_len) == 0)
         {
-            /* TODO: iget first...?!?! (old comment... cannot remember :D) */
-            inode = inode_lookup(dir->dev, dirent->inode);
-            if (inode == NULL)
-            {
-                inode = ext2_inode_create(dir->dev, dirent->inode);
-                inode->sb = dir->sb;
-                if (dir->sb->ops->inode_read(inode) != 0)
-                    ext2_inode_delete(inode);
-            }
+            inod = iget(dir->sb, curr->ino);
+            if (inod != NULL)
+                inod->ref--; /* iget incremented the counter... release it */
             break;
         }
-        if((dirent->rec_len) == 0)
+        if((curr->rec_len) == 0)
             break;
-        count -= dirent->rec_len;
-        dirent = (struct ext2_disk_dirent *)((char *)dirent + dirent->rec_len);
+        count -= curr->rec_len;
+        curr = (struct ext2_disk_dirent *)((char *)curr + curr->rec_len);
     }
 
 end:
     kfree(dirbuf, dir->size);
-    return inode;
+    return inod;
 }
 
+
+static const struct inode_ops ext2_inode_ops = {
+    .read   = (inode_read_t)ext2_read,
+    .lookup = ext2_lookup,
+};
+
+
+/******************************************************************************
+ *  Dentry operations
+ ******************************************************************************/
+
 static int ext2_readdir(struct inode *dir, unsigned int i,
-        struct dirent *dent)
+                        struct dirent *dent)
 {
-    struct ext2_disk_dirent *dirent;
+    struct ext2_disk_dirent *curr;
     struct ext2_disk_dirent *dirbuf;
-    int count, n;
+    size_t count, n;
     int ret = -1;
 
-    if ((dirbuf = kmalloc(dir->size, 0)) == NULL)
+    dirbuf = (struct ext2_disk_dirent *)kmalloc(dir->size, 0);
+    if (dirbuf == NULL)
         return -ENOMEM;
-
-    if (devfs_read(dir->sb->dev, dirbuf, dir->size,
-                  ((struct ext2_inode *)dir)->blocks[0] * 1024) != dir->size)
+    
+    ret = devfs_read(dir->sb->dev, dirbuf, dir->size,
+                    ((struct ext2_inode *)dir)->blocks[0] * 1024);
+    if (ret != dir->size) {
+        if (ret >= 0)
+            ret = -EIO;
         goto end;
+    }
 
     count = dir->size;
-    dirent = dirbuf;
+    curr = dirbuf;
     n = 0;
-    while(count > 0)
-    {
-        if (n++ == i)
-        {
-            n = MIN(dirent->name_len, NAME_MAX);
-            memcpy(&dent->d_name, dirent->name, n);
+    while(count >= sizeof(struct ext2_disk_dirent)) {
+        if (n++ == i) {
+            n = MIN(curr->name_len, NAME_MAX);
+            memcpy(&dent->d_name, curr->name, n);
             dent->d_name[n] = '\0';
-            dent->d_ino = dirent->inode;
+            dent->d_ino = curr->ino;
             ret = 0;
             break;
         }
-        if((dirent->rec_len) == 0)
+        if((curr->rec_len) == 0)
             break;
-        count -= dirent->rec_len;
-        dirent = (struct ext2_disk_dirent *)((char *)dirent + dirent->rec_len);
+        count -= curr->rec_len;
+        curr = (struct ext2_disk_dirent *)((char *)curr + curr->rec_len);
     }
 
 end:
@@ -232,76 +312,111 @@ end:
     return ret;
 }
 
-static const struct inode_ops ext2_inode_ops =
+
+static int ext2_dentry_readdir(struct dentry *dir, unsigned int i,
+                               struct dirent *dent)
 {
-    .read = (inode_read_t)ext2_read,
-    .lookup = ext2_lookup,
-    .readdir = ext2_readdir,
+    return ext2_readdir(dir->inod, i, dent);
+}
+
+static const struct dentry_ops ext2_dentry_ops = {
+    .readdir = ext2_dentry_readdir
 };
 
+
+
+/******************************************************************************
+ *  Superblock operations
+ ******************************************************************************/
+
+
+static struct inode *ext2_super_inode_alloc(struct super_block *sb)
+{
+    struct inode *inod;
+
+    inod = (struct inode *)kmalloc(sizeof(struct ext2_inode), 0);
+    if (inod != NULL)
+        memset(inod, 0, sizeof(*inod));
+    return inod;
+}
+
+static void ext2_super_inode_free(struct inode *inod)
+{
+    kfree(inod, sizeof(struct ext2_inode));
+}
 
 /*
  * Fetch inode information from the device.
  */
-int ext2_sb_inode_read(struct inode *inode)
+static int ext2_super_inode_read(struct inode *inod)
 {
     int n;
-    struct ext2_disk_inode dnode;
-    struct ext2_sb *sb = (struct ext2_sb *) inode->sb;
+    struct ext2_disk_inode disk_inod;
+    const struct ext2_super_block *sb = (struct ext2_super_block *) inod->sb;
 
-    int group = ((inode->ino - 1) / sb->inodes_per_group); 
-    struct ext2_group_desc *gd = &sb->gd_table[group];
+    int group = ((inod->ino - 1) / sb->inodes_per_group);
+    const struct ext2_group_desc *gd = &sb->gd_table[group];
 
-    int table_index = (inode->ino - 1 ) % sb->inodes_per_group;
+    int table_index = (inod->ino - 1 ) % sb->inodes_per_group;
     int blockno = ((table_index * 128) / 1024 ) + gd->inode_table;
     int ind = table_index % (1024 /128);
 
-    n = devfs_read(sb->base.dev, &dnode, sizeof(dnode),
-                blockno*1024 + ind*sizeof(dnode));
-    if (n != sizeof(dnode))
+    n = devfs_read(sb->base.dev, &disk_inod, sizeof(disk_inod),
+                   blockno * 1024 + ind*sizeof(disk_inod));
+    if (n != sizeof(disk_inod))
         return -1;
 
-    inode->ops = &ext2_inode_ops;
-    inode->mode = dnode.mode;
-    //inode->nlink = dnode.links_count;
-    inode->uid = dnode.uid;
-    inode->gid = dnode.gid;
-    if (S_ISCHR(inode->mode) || S_ISBLK(inode->mode))
-        inode->rdev  = dnode.block[0];
-    inode->size = dnode.size;
-    //inode->atime 
-    //inode->dtime
-    //inode->mtime
-    //inode->blksize = 512; // sicuro???
-    //inode->blocks = (dnode.size-1)/inode->blksize+1;
-    memcpy(((struct ext2_inode *)inode)->blocks, dnode.block,
-            sizeof(dnode.block));
-    
+    inod->ops = &ext2_inode_ops;
+    inod->mode = disk_inod.mode;
+    inod->uid = disk_inod.uid;
+    inod->gid = disk_inod.gid;
+    if (S_ISCHR(inod->mode) || S_ISBLK(inod->mode))
+        inod->rdev  = disk_inod.block[0];
+    inod->size = disk_inod.size;
+    inod->atime = disk_inod.atime;
+    inod->mtime = disk_inod.mtime;
+    inod->ctime = disk_inod.ctime;
+
+#if 0
+    inod->blksize = 512; /* sure ??? */
+    inod->blocks = (disk_inod.size-1)/inod->blksize+1;
+#endif
+
+    memcpy(((struct ext2_inode *)inod)->blocks, disk_inod.block,
+            sizeof(disk_inod.block));
+
     return 0;
 }
 
 
-/* TODO */
-static const struct sb_ops ext2_sb_ops =
+static const struct super_ops ext2_sb_ops =
 {
-    .inode_read = ext2_sb_inode_read,
+    .inode_alloc = ext2_super_inode_alloc,
+    .inode_free  = ext2_super_inode_free,
+    .inode_read  = ext2_super_inode_read,
 };
 
 
-
-struct sb *ext2_sb_create(dev_t dev)
+/*
+ * TODO : rollback on error
+ */
+struct super_block *ext2_super_create(dev_t dev)
 {
-    int n;
-    struct ext2_sb *sb;
-    struct inode *root;
+    size_t n;
+    struct ext2_super_block *sb;
+    struct inode *iroot;
+    struct dentry *droot;
+    unsigned int num_groups;
+    struct ext2_disk_super_block dsb;
+    uint32_t gd_block;
 
-    if ((n = devfs_read(dev, &dsb, sizeof(dsb), 1024)) != sizeof(dsb))
+    if (devfs_read(dev, &dsb, sizeof(dsb), 1024) != sizeof(dsb))
         return NULL;
 
     if (dsb.magic != EXT2_MAGIC)
         return NULL;
 
-    sb = kmalloc(sizeof(struct ext2_sb), 0);
+    sb = (struct ext2_super_block *)kmalloc(sizeof(struct ext2_super_block), 0);
     if (sb == NULL)
         return NULL;
 
@@ -309,23 +424,24 @@ struct sb *ext2_sb_create(dev_t dev)
     sb->base.dev = dev;
     sb->log_block_size = dsb.log_block_size;
     sb->block_size = 1024 << dsb.log_block_size;
-    gd_block = (dsb.log_block_size == 0) ? 3 : 2;
-    int num_groups = (dsb.blocks_count - 1) / dsb.blocks_per_group + 1;
+    gd_block = (dsb.log_block_size == 0) ? (uint32_t)3 : (uint32_t)2;
+    num_groups = (dsb.blocks_count - 1) / dsb.blocks_per_group + 1;
 
     n = sizeof(struct ext2_group_desc) * num_groups;
-    sb->gd_table = kmalloc(n, 0);
-    if (!sb->gd_table)
+    sb->gd_table = (struct ext2_group_desc *)kmalloc(n, 0);
+    if (sb->gd_table == NULL)
         return NULL;
 
     if (devfs_read(dev, sb->gd_table, n, sb->block_size*(gd_block-1)) != n)
         return NULL;
 
-    /* Now that we can read inodes, we cache the root inode */
-    root = ext2_inode_create(dev, EXT2_ROOT_INO);
-    root->sb = &sb->base;
-    ext2_sb_inode_read(root);
+    droot = dentry_create("/", NULL, &ext2_dentry_ops);
+    super_init(&sb->base, dev, droot, &ext2_sb_ops);
 
-    sb_init(&sb->base, dev, root, &ext2_sb_ops);
+    /* Now that we can read inodes, we cache the root inode */
+    iroot = inode_create(&sb->base, EXT2_ROOT_INO, S_IFDIR, &ext2_inode_ops);
+    droot->inod = idup(iroot);
 
     return &sb->base;
 }
+

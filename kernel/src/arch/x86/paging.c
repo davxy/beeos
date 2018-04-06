@@ -26,7 +26,6 @@
 #include "vmem.h"
 #include "isr.h"
 #include "kprintf.h"
-#include "kmalloc.h"
 #include "mm/frame.h"
 #include "panic.h"
 #include "proc.h"
@@ -38,7 +37,7 @@
  * via the following special virtual addresses thus there is no need to
  * temporary map dirs and tables to a reserved virtual address.
  *
- * The last 4 MB of the current process virtual memory space 
+ * The last 4 MB of the current process virtual memory space
  * [0xFFC00000:0xFFFFFFFF] are reserved to access to the current process page
  * directory and page tables.
  * The second-to-last 4 MB of the current process virtual memory space
@@ -46,14 +45,13 @@
  * directory and page tables.
  * Loosing 8 MB of memory space in 4 GB is not such a big deal.
  *
- * We also reserve a "wild" page starting below the second-to-last 4MB to 
+ * We also reserve a "wild" page starting below the second-to-last 4MB to
  * temporary map arbitrary physical addresses to a well known virtual address.
  * This wild page is used to copy pages between two different processes.
  */
 #define PAGE_TAB_MAP    0xFFC00000  /* Current page tables base vaddress */
 #define PAGE_DIR_MAP    0xFFFFF000  /* Current page directory vaddress */
 #define PAGE_TAB_MAP2   0xFF800000  /* Temporary page tables base vaddress */
-#define PAGE_DIR_MAP2   0xFFBFF000  /* Temporary page directory vaddress */
 #define PAGE_WILD       (PAGE_TAB_MAP2-4096) /* Temporary "wild" page */
 
 /* Virtual address to page directory index (virt / 4M) */
@@ -73,33 +71,39 @@
  */
 #define page_invalidate(phys) flush_tlb()
 
+/* Get page fault address */
+#define fault_addr_get(virt) \
+    asm volatile("mov %0, cr2" : "=r"(virt))
+
+
 /*
  * Maps a page virtual memory address to a physical memory address.
  */
-uint32_t page_map(void *virt, uint32_t page_phys)
+uint32_t page_map(void *virt, uint32_t phys)
 {
-    uint32_t phys;
-    int di = DIR_INDEX(virt);
-    int ti = TAB_INDEX(virt);
+    unsigned int di = DIR_INDEX(virt);
+    unsigned int ti = TAB_INDEX(virt);
+    uint32_t tab_phys;
+    uint32_t pag_phys = phys;
     uint32_t *dir = (uint32_t *)PAGE_DIR_MAP;
     uint32_t *tab = (uint32_t *)(PAGE_TAB_MAP + (di * 0x1000));
-    int flags = PTE_P | PTE_W;
+    uint32_t flags = PTE_P | PTE_W;
 
     /* Check if is user space memory */
     if ((uint32_t)virt < KVBASE)
         flags |= PTE_U;
-    
-    /* 
+
+    /*
      * Check if the page table is present.
      * Note that is not required to be identity mappable.
      * TODO: Add ZONE_ANY flag?
      */
     if (!(dir[di] & PTE_P)) {
         /* page table not present */
-        phys = (uint32_t)frame_alloc(0, ZONE_LOW);
-        if (!phys)
+        tab_phys = (uint32_t)frame_alloc(0, ZONE_LOW);
+        if (tab_phys == 0)
             return (uint32_t)-ENOMEM;
-        dir[di] = phys | flags;
+        dir[di] = tab_phys | flags;
         /* Clean the new page table entries */
         memset(tab, 0, PAGE_SIZE);
     }
@@ -111,22 +115,20 @@ uint32_t page_map(void *virt, uint32_t page_phys)
      */
     if (!(tab[ti] & PTE_P)) {
         /* page not present */
-        if ((int32_t)page_phys == -1) {
+        if ((int32_t)pag_phys == -1) {
             /* By default we map to high mem */
-            phys = (uint32_t)frame_alloc(0, ZONE_HIGH);
-            if (!phys)
+            pag_phys = (uint32_t)frame_alloc(0, ZONE_HIGH);
+            if (pag_phys == 0)
                 return (uint32_t)-ENOMEM;
-        } else
-            phys = page_phys;
-        tab[ti] = phys | flags;
+        }
+        tab[ti] = pag_phys | flags;
     } else if (!(tab[ti] & PTE_W)) /* read only page (cow) */
         panic("COW not implemented yet");
     else
         panic("already mapped");
 
-    flush_tlb(); /* Just in case... */
-
-    return phys;
+    flush_tlb(); /* Is this really required? */
+    return pag_phys;
 }
 
 /*
@@ -134,28 +136,31 @@ uint32_t page_map(void *virt, uint32_t page_phys)
  */
 uint32_t page_unmap(void *virt, int retain)
 {
-    int i;
-    int di = DIR_INDEX(virt);
-    int ti = TAB_INDEX(virt);
+    unsigned int i;
+    unsigned int di = DIR_INDEX(virt);
+    unsigned int ti = TAB_INDEX(virt);
     uint32_t *dir = (uint32_t *)PAGE_DIR_MAP;
     uint32_t *tab = (uint32_t *)(PAGE_TAB_MAP + (di * 0x1000));
-    uint32_t tab_phys, pag_phys = -1;
+    uint32_t tab_phys;
+    uint32_t pag_phys = -1;
 
-    if(dir[di] & PTE_P) {
-        if (tab[ti] & PTE_P) {
-            pag_phys = tab[ti] & PTE_MASK;
+    if((dir[di] & PTE_P) != 0) {
+        if ((tab[ti] & PTE_P) != 0) {
+            pag_phys = (tab[ti] & PTE_MASK);
             tab[ti] = 0;
             page_invalidate(pag_phys);
-            if (!retain)
+            if (retain == 0)
                 frame_free((void *)pag_phys, 0);
         }
 
         /* Check if that was the last page in the page table */
-        for (i = 0; i < 1024; i++)
-            if (tab[i] & PTE_P)
+        for (i = 0; i < 1024; i++) {
+            if ((tab[i] & PTE_P) != 0)
                 break;
+        }
+
         if (i == 1024) { /* If is the last page, delete the page table */
-            tab_phys = PTE_MASK & dir[di];
+            tab_phys = (PTE_MASK & dir[di]);
             dir[di] = 0;
             page_invalidate(tab_phys);
             frame_free((void *)tab_phys, 0);
@@ -170,11 +175,12 @@ uint32_t page_unmap(void *virt, int retain)
  */
 void page_dir_del(uint32_t phys)
 {
-    int di, ti;
-    uint32_t *tab;
-    uint32_t *dir_curr, *dir;
-    
-    dir_curr = (uint32_t *)PAGE_DIR_MAP; 
+    unsigned int di, ti;
+    const uint32_t *tab;
+    const uint32_t *dir;
+    uint32_t *dir_curr;
+
+    dir_curr = (uint32_t *)PAGE_DIR_MAP;
     /* Temporary map the dir in under the current dir */
     dir_curr[1022] = phys | PTE_W | PTE_P;
     dir = (uint32_t *)(PAGE_TAB_MAP + (1022 * 4096));
@@ -183,10 +189,10 @@ void page_dir_del(uint32_t phys)
      * Release user space
      */
     for (di = 0; di < 768; di++) {
-        if (dir[di] & PTE_P) {
+        if ((dir[di] & PTE_P) != 0) {
             tab = (uint32_t *)(PAGE_TAB_MAP2 + (di * 4096));
             for (ti = 0; ti < 1024; ti++) {
-                if (tab[ti] & PTE_P)
+                if ((tab[ti] & PTE_P) != 0)
                     frame_free((char *)(tab[ti] & PTE_MASK), 0);
             }
             frame_free((char *)(dir[di] & PTE_MASK), 0);
@@ -199,72 +205,75 @@ void page_dir_del(uint32_t phys)
     flush_tlb();
 }
 
+
+
+static void page_tab_dup(uint32_t *dir_dst, unsigned int i, uint32_t flags)
+{
+    const uint32_t *tab_src;
+    uint32_t *tab_dst;
+    const void *mem_src;
+    void *mem_dst;
+    uint32_t phys;
+    unsigned int j;
+
+    tab_src = (uint32_t *)(PAGE_TAB_MAP + (i * PAGE_SIZE));
+    tab_dst = (uint32_t *)(PAGE_TAB_MAP2 + (i * PAGE_SIZE));
+    phys = page_map(tab_dst, -1);
+    memset(tab_dst, 0, PAGE_SIZE);
+    dir_dst[i] = phys | flags;
+
+    for (j = 0; j < 1024; j++) {
+        if (tab_src[j] != 0) {
+            /* TODO: copy on write (in the page fault handler) */
+            /*
+             * tab_src[j] &= ~PTE_W; // NON SEMBRA FUNZIONARE...
+             * tab_dst[j] = tab_src[j];
+             */
+            mem_src = (void *)((i * 0x400000) + (j * 0x1000));
+            mem_dst = (void *)PAGE_WILD;
+            phys = page_map(mem_dst, -1);
+            memcpy(mem_dst, mem_src, PAGE_SIZE);
+            if ((int)page_unmap(mem_dst, 1) < 0)
+                panic("Unmapping a mapped page");
+            tab_dst[j] = phys | flags;
+        }
+    }
+}
+
+
 /*
  * Duplicates the current process page directory.
  */
 uint32_t page_dir_dup(int dup_user)
 {
-    int i, j;
-    uint32_t *dir_src; 
+    unsigned int i;
+    uint32_t *dir_src;
     uint32_t *dir_dst;
-    uint32_t *tab_src;
-    uint32_t *tab_dst;
-    void *mem_src, *mem_dst;
     uint32_t phys;
-    int flags = PTE_W | PTE_P;
+    uint32_t flags = PTE_W | PTE_P;
 
-    dir_src = (uint32_t *)PAGE_DIR_MAP; 
+    dir_src = (uint32_t *)PAGE_DIR_MAP;
     dir_dst = (uint32_t *)(PAGE_TAB_MAP + (1022 * 4096));
     phys = (uint32_t) frame_alloc(0, 0);
-    dir_src[1022] = phys | flags; /* Temporary map the dst page table */
+    dir_src[1022] = (phys | flags); /* Temporary map the dst page table */
     memset(dir_dst, 0, PAGE_SIZE);
 
-    /*
-     * Kernel code and data
-     */
-
+    /* Kernel code and data is shared */
     memcpy(&dir_dst[768], &dir_src[768], 254*4);
     dir_dst[1023] = phys | flags;
     dir_dst[1022] = 0;
     flush_tlb();
 
-    if (dup_user != 0)
-    {
-        /*
-         * User space
-         */
-
+    if (dup_user != 0) {
+        /* User space is deep copied */
         flags |= PTE_U;
-        for (i = 0; i < 768; i++)
-        {
-            if (!dir_src[i])
-                continue;
-
-            tab_src = (uint32_t *)(PAGE_TAB_MAP + (i * PAGE_SIZE));
-            tab_dst = (uint32_t *)(PAGE_TAB_MAP2 + (i * PAGE_SIZE));
-            phys = page_map(tab_dst, -1);
-            memset(tab_dst, 0, PAGE_SIZE);
-            dir_dst[i] = phys | flags;
-
-            for (j = 0; j < 1024; j++)
-            {
-                if (!tab_src[j])
-                    continue;
-
-                /* TODO: copy on write (in the page fault handler) */
-                //tab_src[j] &= ~PTE_W; // NON SEMBRA FUNZIONARE...
-                //tab_dst[j] = tab_src[j];
-                mem_src = (void *)((i * 0x400000) + (j * 0x1000));
-                mem_dst = (void *)PAGE_WILD;
-                phys = page_map(mem_dst, -1);
-                memcpy(mem_dst, mem_src, PAGE_SIZE);
-                page_unmap(mem_dst, 1);
-                tab_dst[j] = phys | flags;
-            }
+        for (i = 0; i < 768; i++) {
+            if (dir_src[i] != 0)
+                page_tab_dup(dir_dst, i, flags);
         }
     }
 
-    phys = dir_src[1022] & PTE_MASK;
+    phys = (dir_src[1022] & PTE_MASK);
     dir_src[1022] = 0;
     page_invalidate(phys);
     return phys;
@@ -275,21 +284,19 @@ uint32_t page_dir_dup(int dup_user)
  * This happens for kmalloced virtual addresses that are after the initially
  * mapped kernel space (4MB).
  */
-static void map_propagate(int idx)
+static void map_propagate(unsigned int idx)
 {
     uint32_t *dir_src, *dir_dst;
-    struct task *other;
+    const struct task *other;
 
-    other = list_container(current_task->tasks.next, 
-            struct task, tasks);
+    other = list_container(current->tasks.next, struct task, tasks);
     /*
      * The non-current process page dir is mapped just below the
      * current process page directory.
      */
-    dir_src = (uint32_t *)PAGE_DIR_MAP; 
+    dir_src = (uint32_t *)PAGE_DIR_MAP;
     dir_dst = (uint32_t *)(PAGE_TAB_MAP + (1022 * 4096));
-    while (other != current_task)
-    {
+    while (other != current) {
         dir_src[1022] = other->arch.pgdir | PTE_W | PTE_P;
         dir_dst[idx] = dir_src[idx];
         flush_tlb();
@@ -317,15 +324,15 @@ static void map_propagate(int idx)
 static void page_fault_handler(void)
 {
     uint32_t virt, phys;
-    int flags = ZONE_LOW;
+    unsigned int zone_flags = ZONE_LOW;
 
-    asm volatile ("mov %0, cr2" : "=r"(virt));
+    fault_addr_get(virt);
 
-#if DEBUG
-    kprintf("pid: %d\n", current_task->pid);
-    kprintf("page fault at 0x%x\n", current_task->arch.ifr->eip);
+#ifdef DEBUG_PAGING
+    kprintf("pid: %d\n", current->pid);
+    kprintf("page fault at 0x%x\n", current->arch.ifr->eip);
     kprintf("faulting address 0x%x\n", virt);
-    kprintf("error code: %x\n", current_task->arch.ifr->err_no);
+    kprintf("error code: %x\n", current->arch.ifr->err_no);
 #endif
 
     if (virt < KVBASE) {
@@ -334,17 +341,17 @@ static void page_fault_handler(void)
          * 1) Can expand stack
          * 2) Can expand heap
          */
-        flags = ZONE_HIGH;
+        zone_flags = ZONE_HIGH;
     }
 
-    phys = (uint32_t)frame_alloc(0, flags);
-    if (!phys)
+    phys = (uint32_t)frame_alloc(0, zone_flags);
+    if (phys == 0)
         panic("Out of mem in page fault handler");
     if ((int)page_map((char *)virt, (uint32_t)-1) < 0)
         panic("Map page error");
-    
+
     if (virt >= KVBASE) {
-        map_propagate(DIR_INDEX(virt)); 
+        map_propagate(DIR_INDEX(virt));
         kprintf("Propagate\n");
     }
 }
@@ -354,10 +361,10 @@ static void page_fault_handler(void)
  */
 void paging_init(void)
 {
-    int i;
+    unsigned int i;
     uint32_t *tab, phys;
 
-    /* 
+    /*
      * New page table physical address.
      * For the first process we preserve the page dir already in use.
      */
@@ -367,14 +374,14 @@ void paging_init(void)
     kpage_dir[1023] = (uint32_t)virt_to_phys(kpage_dir) | PTE_W | PTE_P;
 
     /* Temporary mapping to construct the page table */
-    kpage_dir[0] = phys | PTE_W | PTE_P;
+    kpage_dir[0] = (phys | PTE_W | PTE_P);
     flush_tlb();
-   
+
     tab = (uint32_t *)PAGE_TAB_MAP; /* Page table for virtual address 0x0 */
     for (i = 0; i < 1024; i++)      /* Identity map the first 4 MB */
         tab[i] = (i * PAGE_SIZE) | PTE_W | PTE_P;
 
-    /* 
+    /*
      * Now the new kernel page table is ready to be used in place of the
      * current page dir entry. Note that this operation MUST be done after
      * the table construction (is flush strictly needed???)

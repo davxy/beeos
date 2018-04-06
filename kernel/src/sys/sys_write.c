@@ -27,23 +27,23 @@
 #include <limits.h>
 #include <fcntl.h>
 
-ssize_t sys_write(int fdn, const void *buf, size_t count)
+ssize_t sys_write(int fd, const void *buf, size_t count)
 {
     ssize_t n;
-    struct file *file;
+    struct file *fil;
 
-    if (OPEN_MAX <= fdn || current_task->fd[fdn].file == NULL)
+    if (fd < 0 || fd >= OPEN_MAX || current->fds[fd].fil == NULL)
         return -EBADF;
 
-    file = current_task->fd[fdn].file;
+    fil = current->fds[fd].fil;
 
-    switch (file->inode->mode & S_IFMT) {
+    switch (fil->dent->inod->mode & S_IFMT) {
         case S_IFBLK:
         case S_IFCHR:
         case S_IFREG:
         case S_IFIFO:
         case S_IFSOCK:
-            n = fs_write(file->inode, buf, count, file->offset);
+            n = vfs_write(fil->dent->inod, buf, count, fil->off);
             break;
         case S_IFDIR:
             n = -EBADF;
@@ -54,6 +54,6 @@ ssize_t sys_write(int fdn, const void *buf, size_t count)
     }
 
     if (n > 0)
-        file->offset += n;
+        fil->off += n;
     return n;
 }

@@ -19,39 +19,37 @@
 
 #include "cond.h"
 #include "proc.h"
-#include "kmalloc.h"
 
 
-void cond_init(struct cond *cond)
+void cond_init(struct cond *cv)
 {
-    spinlock_init(&cond->lock);
-    list_init(&cond->queue);
+    spinlock_init(&cv->lock);
+    list_init(&cv->queue);
 }
 
-void cond_wait(struct cond *cond)
+void cond_wait(struct cond *cv)
 {
-    list_insert_before(&cond->queue, &current_task->condw);
-    current_task->state = TASK_SLEEPING;
+    list_insert_before(&cv->queue, &current->condw);
+    current->state = TASK_SLEEPING;
 
-    spinlock_unlock(&cond->lock);
+    spinlock_unlock(&cv->lock);
     scheduler();
-    spinlock_lock(&cond->lock);
+    spinlock_lock(&cv->lock);
 }
 
-void cond_signal(struct cond *cond)
+void cond_signal(struct cond *cv)
 {
-    struct task *task;
+    struct task *t;
 
-    if (list_empty(&cond->queue))
+    if (list_empty(&cv->queue))
         return;
-    task = struct_ptr(cond->queue.next, struct task, condw);
-    list_delete(&task->condw);
-    task->state = TASK_RUNNING;
+    t = struct_ptr(cv->queue.next, struct task, condw);
+    list_delete(&t->condw);
+    t->state = TASK_RUNNING;
 }
 
-void cond_broadcast(struct cond *cond)
+void cond_broadcast(struct cond *cv)
 {
-    while (!list_empty(&cond->queue))
-        cond_signal(cond);
+    while (!list_empty(&cv->queue))
+        cond_signal(cv);
 }
-

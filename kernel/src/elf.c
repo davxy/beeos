@@ -22,17 +22,17 @@
 #include <stddef.h> /* NULL */
 #include "arch/x86/vmem.h"
 
-const char *elf_lookup_symbol(struct elf_file *elf, uint32_t addr)
+const char *elf_lookup_symbol(const struct elf_file *elf, uint32_t addr)
 {
     int i;
-    const char *name = "***"; 
+    const char *name = "***";
+
     for (i = 0; i < elf->symtabsz/sizeof(struct elf_symbol_hdr); i++)
     {
         if ((addr >= elf->symtab[i].value) &&
             (addr < elf->symtab[i].value + elf->symtab[i].size))
         {
-            name = phys_to_virt((char *)elf->strtab + 
-                                 elf->symtab[i].name);
+            name = phys_to_virt((char *)elf->strtab + elf->symtab[i].name);
             break;
         }
     }

@@ -21,44 +21,47 @@
 #include "util.h"
 #include <sys/types.h>
 
-void *zone_alloc(struct zone_st *ctx, int order)
-{
-    struct frame *frame;
 
-    frame = buddy_alloc(&ctx->buddy, order);
-    if (!frame)
+void *zone_alloc(const struct zone_st *ctx, int order)
+{
+    struct frame *frm;
+
+    frm = buddy_alloc(&ctx->buddy, order);
+    if (!frm)
         return NULL;
-    frame->refs++;
-    return (ctx->addr + ctx->frame_size*(frame-ctx->buddy.frames));
+    frm->refs++;
+    return (ctx->addr + ctx->frame_size*(frm-ctx->buddy.frames));
 }
 
-void zone_free(struct zone_st *ctx, void *ptr, int order)
+void zone_free(const struct zone_st *ctx, const void *ptr, int order)
 {
     int i;
-    struct frame *frame;
-    
-    i = ((char *) ptr - ctx->addr) / ctx->frame_size;
-    frame = &ctx->buddy.frames[i];
-    if (frame->refs > 0)
+    struct frame *frm;
+
+    i = ((const char *) ptr - ctx->addr) / ctx->frame_size;
+    frm = &ctx->buddy.frames[i];
+    if (frm->refs > 0)
     {
-        frame->refs--;
-        if (frame->refs == 0)
-            buddy_free(&ctx->buddy, frame, order);
+        frm->refs--;
+        if (frm->refs == 0)
+            buddy_free(&ctx->buddy, frm, order);
     }
 }
 
 int zone_init(struct zone_st *ctx, void *addr, size_t size,
-        size_t frame_size, int flags)
+              size_t frame_size, int flags)
 {
+    if (frame_size == 0)
+        return -1;
     ctx->addr = addr;
     ctx->size = size;
     ctx->frame_size = frame_size;
     ctx->flags = flags;
     ctx->next = NULL;
-    return buddy_init(&ctx->buddy, size/frame_size, frame_size);
+    return buddy_init(&ctx->buddy, size / frame_size, frame_size);
 }
 
-void zone_dump(struct zone_st *ctx)
+void zone_dump(const struct zone_st *ctx)
 {
     buddy_dump(&ctx->buddy, ctx->addr);
 }

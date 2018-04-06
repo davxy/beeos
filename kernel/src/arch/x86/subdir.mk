@@ -1,6 +1,7 @@
 LDFLAGS += -Tsrc/arch/x86/linker.ld
 
 local_sources := init.S \
+				 swtch.S \
 				 startup.S \
 				 pic.c \
 				 isr_stub.S \
@@ -11,7 +12,7 @@ local_sources := init.S \
 				 kbd.c \
 				 arch_init.c \
 				 paging.c \
-				 stack_trace.c \
 				 task.c \
+				 misc.c \
 				 timer.c \
 				 uart.c
