@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015-2017, Davide Galassi. All rights reserved.
+ * Copyright (c) 2015-2018, Davide Galassi. All rights reserved.
  *
  * This file is part of the BeeOS software.
  *
