@@ -5,15 +5,32 @@ This project adheres to "Semantic Versioning" (http://semver.org)
 
 ################################################################################
 
-[ Version 0.2.0 - Unreleased ]
+[ Version 0.2.0 - 2018-04-06 ]
 
 Features
 
+- VFS mount syscall implementation
+- VFS trafersing is now performed via (cached) dentries.
+- DEVFS implementation
+- Pseudo random number generator device driver
+
 Improvements
+
+- General code cleanup as the result of coding standards analysis
+	- MISRA C 2012
+	- MISRA C 2004
+	- SEI CERT C
+  Full report publication: https://datawok.net/articles/2018/beeos_static
+  The analysis produced a lot of code refactory. Only mahor changes are
+  listed here.
+- Better context switch code using the stack.
+- Dead code removal
 
 Bugfix
 
-User
+- TTY driver fix in the get current process group controlling terminal
+- Set kernel process0 task parent of itself
+- VFS iget/iput fix
 
 ################################################################################
 
