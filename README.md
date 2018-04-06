@@ -63,7 +63,6 @@ README
 
     - Signals
     - Pipes
-    - System V messages
     
 **Synchronization**
 
@@ -76,6 +75,7 @@ README
     - Screen
     - Ramdisk
     - Keyboard
+    - PRNG
 
 **Other**
 
