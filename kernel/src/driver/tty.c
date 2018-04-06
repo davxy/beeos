@@ -113,7 +113,7 @@ void tty_put(dev_t dev)
     struct tty_st *tty;
 
     tty = tty_lookup(dev);
-    if (tty) {
+    if (tty != NULL) {
         if (tty->refs > 0) {
             tty->refs--;
             if (tty->refs == 0)
