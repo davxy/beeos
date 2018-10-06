@@ -23,6 +23,7 @@
 int snprintf(char *str, size_t size, const char *fmt, ...)
 {
     va_list ap;
+
     va_start(ap, fmt);
     return vsnprintf(str, size, fmt, ap);
 }

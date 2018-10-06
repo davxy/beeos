@@ -29,23 +29,22 @@
  */
 
 
+#include "FILE.h"
 #include <stdio.h>
 #include <unistd.h>
 
 int vprintf(const char *format, va_list ap)
 {
     int written;
-    int    tot;
+    int tot;
     int rtot;
     char buf[BUFSIZ];
     char *ptr = buf;
 
     rtot = vsnprintf(buf, BUFSIZ, format, ap);
     tot = rtot;
-    while (tot > 0)
-    {
-        written = write(1, ptr, tot);
-//        written = write(STDOUT_FILENO, ptr, tot);
+    while (tot > 0) {
+        written = write(stdout->fd, ptr, tot);
         if (written < 0)
             break;
         tot -= written;

@@ -24,8 +24,7 @@ char *fgets(char *str, int size, FILE *fp)
 {
     int i; /* index inside string buffer. */
 
-    for (i = 0; i < (size-1); i++)
-    {
+    for (i = 0; i < (size-1); i++) {
         str[i] = fgetc(fp);
         if (str[i] == EOF || str[i] == '\n')
             break;

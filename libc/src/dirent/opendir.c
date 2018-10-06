@@ -37,23 +37,20 @@ DIR *opendir(const char *name)
     if (fdn < 0)
         return NULL;    /* errno already set */
 
-    if (fstat(fdn, &st) != 0)
-    {
+    if (fstat(fdn, &st) != 0) {
         close(fdn);     /* errno already set */
         return NULL;
     }
 
     /* Verify it is a directory */
-    if (!S_ISDIR(st.st_mode))
-    {
+    if (!S_ISDIR(st.st_mode)) {
         close(fdn);
         errno = ENOTDIR;
         return NULL;
     }
 
     dirp = malloc(sizeof(DIR));
-    if (!dirp)
-    {
+    if (dirp == NULL) {
         close(fdn);
         errno = ENOMEM;
         return NULL;
@@ -61,7 +58,6 @@ DIR *opendir(const char *name)
 
     dirp->fdn = fdn;
     memset(&dirp->dent, 0, sizeof(dirp->dent));
-
 
     return dirp;
 }

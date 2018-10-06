@@ -29,23 +29,19 @@ char *getenv(const char *name)
     int i;
 
     namelen = strlen(name);
-    if (name == NULL || namelen == 0 || strchr(name, '=') != NULL)
-    {
+    if (name == NULL || namelen == 0 || strchr(name, '=') != NULL) {
         errno = EINVAL;
         return NULL;
     }
 
     i = 0;
     value = NULL;
-    while (environ[i])
-    {
-        if (strncmp(name, environ[i], namelen) == 0)
-        {
+    while (environ[i] != NULL) {
+        if (strncmp(name, environ[i], namelen) == 0) {
             value = environ[i] + namelen + 1;
             break;
         }
         i++;
     }
-
     return value;
 }

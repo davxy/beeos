@@ -23,5 +23,6 @@
 void _Exit(int status)
 {
     _exit(status);
+    /* Should never return, but if it does... loop forever */
     while (1);
 }

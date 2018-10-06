@@ -28,15 +28,13 @@ int pclose(FILE *stream)
     int fd, status;
     pid_t pid;
 
-    if (popen_childs == NULL)
-    {
+    if (popen_childs == NULL) {
         errno = EINVAL;
         return -1;  /* popen() has never been called */
     }
 
     fd = fileno(stream);
-    if ((pid = popen_childs[fd]) == 0)
-    {
+    if ((pid = popen_childs[fd]) == 0) {
         errno = EINVAL;
         return -1;
     }
@@ -45,8 +43,9 @@ int pclose(FILE *stream)
     if (fclose(stream) == EOF)
         return -1;
 
-    while (waitpid(pid, &status, 0) < 0)
+    while (waitpid(pid, &status, 0) < 0) {
         if (errno != EINTR)
             return -1;  /* error other that EINTR from waitpid() */
+    }
     return status;
 }

@@ -23,8 +23,7 @@
 #define FILE_FLAG_ERROR (1 << 0)
 #define FILE_FLAG_EOF   (1 << 1)
 
-struct _FILE
-{
+struct _FILE {
     int fd;
     int flags;
 };

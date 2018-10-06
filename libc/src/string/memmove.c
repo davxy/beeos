@@ -39,19 +39,13 @@ void *memmove(void *dst, const void *src, size_t n)
      * Depending on the memory start locations, copy may be direct or
      * reverse, to avoid overwriting before the relocation is done.
      */
-    if (d < s)
-    {
+    if (d < s) {
         for (i = 0; i < n; i++)
-        {
             d[i] = s[i];
-        }
-    }
-    else /* s <= d */
-    {
+    } else { /* s <= d */
         i = n;
         while (i-- > 0)
             d[i] = s[i];
     }
-
     return dst;
 }

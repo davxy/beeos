@@ -35,6 +35,7 @@
 int printf(const char *format, ...)
 {
     va_list ap;
+
     va_start(ap, format);
     return vprintf(format, ap);
 }

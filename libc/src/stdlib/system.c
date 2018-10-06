@@ -30,8 +30,7 @@ int system(const char *cmd)
     struct sigaction ignore, saveintr, savequit;
     sigset_t chldmask, savemask;
 
-    if (cmd == NULL)
-    {
+    if (cmd == NULL) {
         errno = EINVAL;
         return -1;
     }
@@ -54,8 +53,7 @@ int system(const char *cmd)
     if ((pid = fork()) < 0)
         status = -1;    /* probably out of process */
 
-    if (pid == 0) /* Child */
-    {
+    if (pid == 0) { /* Child */
         /* Restore previous signal actions & reset signal mask */
         sigaction(SIGINT, &saveintr, NULL);
         sigaction(SIGQUIT, &savequit, NULL);
@@ -70,10 +68,8 @@ int system(const char *cmd)
      * user handler that, in the worst case, can call the
      * waitpid beefore us.
      */
-    while (waitpid(pid, &status, 0) < 0)
-    {
-        if (errno != EINTR)
-        {
+    while (waitpid(pid, &status, 0) < 0) {
+        if (errno != EINTR) {
             status = -1;
             break;
         }
@@ -86,6 +82,5 @@ int system(const char *cmd)
         return -1;
     if (sigprocmask(SIG_SETMASK, &savemask, NULL) < 0)
         return -1;
-
     return status;
 }

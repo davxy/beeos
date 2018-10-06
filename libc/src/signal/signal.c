@@ -23,6 +23,7 @@
 sighandler_t signal(int signum, sighandler_t handler)
 {
     struct sigaction act, oact;
+
     act.sa_handler = handler;
     act.sa_mask = 1 << signum;
     act.sa_flags = 0;

@@ -22,77 +22,77 @@
 char *strerror(int errnum)
 {
     char *s;
-    switch (errnum)
-    {
-        case 0:
-            s = "Success";
-            break;
-        case EPERM:
-            s = "Operation not permitted";
-            break;
-        case ENOENT:
-            s = "No such file or directory";
-            break;
-        case ESRCH:
-            s = "No such process";
-            break;
-        case EINTR:
-            s = "Interrupted system call";
-            break;
-        case EIO:
-            s = "I/O error";
-            break;
-        case ENXIO:
-            s = "No such device or address";
-            break;
-        case E2BIG:
-            s = "Argument list too long";
-            break;
-        case ENOEXEC:
-            s = "Exec format error";
-            break;
-        case EBADF:
-            s = "Bad file number";
-            break;
-        case ECHILD:
-            s = "No child processes";
-            break;
-        case EAGAIN:
-            s = "Try again";
-            break;
-        case ENOMEM:
-            s = "Out of memory";
-            break;
-        case EACCES:
-            s = "Permission denied";
-            break;
-        case EFAULT:
-            s = "Bad address";
-            break;
-        case ENOTBLK:
-            s = "Block device required";
-            break;
-        case EBUSY:
-            s = "Device or resource busy";
-            break;
-        case EEXIST:
-            s = "File exists";
-            break;
-        case EXDEV:
-            s = "Cross-device link";
-            break;
-        case ENODEV:
-            s = "No such device";
-            break;
-        case ENOTDIR:
-            s = "Not a directory";
-            break;
-        case EISDIR:
-            s = "Is a directory";
-            break;
-        case EINVAL:
-            s = "Invalid argument";
-            break;
+
+    switch (errnum) {
+    case 0:
+        s = "Success";
+        break;
+    case EPERM:
+        s = "Operation not permitted";
+        break;
+    case ENOENT:
+        s = "No such file or directory";
+        break;
+    case ESRCH:
+        s = "No such process";
+        break;
+    case EINTR:
+        s = "Interrupted system call";
+        break;
+    case EIO:
+        s = "I/O error";
+        break;
+    case ENXIO:
+        s = "No such device or address";
+        break;
+    case E2BIG:
+        s = "Argument list too long";
+        break;
+    case ENOEXEC:
+        s = "Exec format error";
+        break;
+    case EBADF:
+        s = "Bad file number";
+        break;
+    case ECHILD:
+        s = "No child processes";
+        break;
+    case EAGAIN:
+        s = "Try again";
+        break;
+    case ENOMEM:
+        s = "Out of memory";
+        break;
+    case EACCES:
+        s = "Permission denied";
+        break;
+    case EFAULT:
+        s = "Bad address";
+        break;
+    case ENOTBLK:
+        s = "Block device required";
+        break;
+    case EBUSY:
+        s = "Device or resource busy";
+        break;
+    case EEXIST:
+        s = "File exists";
+        break;
+    case EXDEV:
+        s = "Cross-device link";
+        break;
+    case ENODEV:
+        s = "No such device";
+        break;
+    case ENOTDIR:
+        s = "Not a directory";
+        break;
+    case EISDIR:
+        s = "Is a directory";
+        break;
+    case EINVAL:
+        s = "Invalid argument";
+        break;
 #if 0
 #define ENFILE      23  /* File table overflow */
 #define EMFILE      24  /* Too many open files */
@@ -211,9 +211,9 @@ char *strerror(int errnum)
 #define EOWNERDEAD  130 /* Owner died */
 #define ENOTRECOVERABLE 131 /* State not recoverable */
 #endif
-        default:
-            s = "Unknown error";
-            break;
+    default:
+        s = "Unknown error";
+        break;
     }
     return s;
 }

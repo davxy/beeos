@@ -28,14 +28,12 @@ int unsetenv(const char *name)
     size_t i;
 
     namelen = strlen(name);
-    if (name == NULL || namelen == 0 || strchr(name, '=') != NULL)
-    {
+    if (name == NULL || namelen == 0 || strchr(name, '=') != NULL) {
         errno = EINVAL;
         return -1;
     }
 
-    for (i = 0; environ[i]; i++)
-    {
+    for (i = 0; environ[i]; i++) {
         if (strncmp(name, environ[i], namelen) == 0)
             break;
     }

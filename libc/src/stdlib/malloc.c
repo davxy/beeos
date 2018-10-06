@@ -17,7 +17,11 @@
  * License along with BeeOS; if not, see <http://www.gnu/licenses/>.
  */
 
-#include "malloc.h"
+/*
+ * Simple K&R allocator described by the "C programming language" book.
+ */
+
+#include <sys/types.h>
 #include <stdlib.h>
 #include <stddef.h>
 #include <stdint.h>
@@ -25,14 +29,21 @@
 #include <errno.h>
 #include <string.h>
 
+struct malloc_head {
+    struct malloc_head *next;   /* Next block if on free list */
+    size_t size;                /* Size of the block */
+};
+
 static struct malloc_head base;            /* empty list to get started */
 static struct malloc_head *freep = NULL;   /* start of free list */
 
 #define ALIGN           sizeof(void *)
 #define ALIGN_UP(val)   (((val) + ((ALIGN) - 1)) & ~((ALIGN) - 1))
 #define ALIGN_DOWN(val) ((val) & ~((ALIGN) - 1))
-#define TO_HEAD(ptr)    (struct malloc_head *)ALIGN_DOWN((uintptr_t)ptr - sizeof(struct malloc_head))
-#define TO_DATA(ptr)    (void *)ALIGN_UP((uintptr_t)ptr + sizeof(struct malloc_head))
+#define TO_HEAD(ptr) \
+    (struct malloc_head *)ALIGN_DOWN((uintptr_t)ptr - sizeof(struct malloc_head))
+#define TO_DATA(ptr) \
+    (void *)ALIGN_UP((uintptr_t)ptr + sizeof(struct malloc_head))
 
 #define NALLOC  (1024*ALIGN)
 
@@ -40,29 +51,28 @@ static struct malloc_head *freep = NULL;   /* start of free list */
 void free(void *ptr)
 {
     struct malloc_head *curr, *prev;
+
     curr = TO_HEAD(ptr);
     for (prev = freep; !(prev < curr && curr < prev->next);
-            prev = prev->next)
-        if (prev >= prev->next &&
-                (curr > prev || curr < prev->next))
+         prev = prev->next) {
+        if (prev >= prev->next && (curr > prev || curr < prev->next))
             break;  /* freed a block at start or end */
+    }
 
-    if ((char *)curr + curr->size == (char *)prev->next)
-    {
+    if ((char *)curr + curr->size == (char *)prev->next) {
         /* join to the upper */
         curr->size += prev->next->size;
         curr->next = prev->next->next;
-    }
-    else
+    } else {
         curr->next =prev->next;
+    }
 
-    if ((char *)prev + prev->size == (char *)curr)
-    {
+    if ((char *)prev + prev->size == (char *)curr) {
         prev->size += curr->size;
         prev->next = curr->next;
-    }
-    else
+    } else {
         prev->next = curr;
+    }
 
     freep = prev;
 }
@@ -75,8 +85,7 @@ static struct malloc_head *morecore(size_t size)
         size = NALLOC;
 
     p = (struct malloc_head *)sbrk(size);
-    if (p == (struct malloc_head *)-1)
-    {
+    if (p == (struct malloc_head *)-1) {
         errno = ENOMEM;
         return NULL;
     }
@@ -92,21 +101,17 @@ void *malloc(size_t size)
     /* size adjust */
     size = ALIGN_UP(size + sizeof(struct malloc_head));
 
-    if ((prev = freep) == NULL)
-    {
+    if ((prev = freep) == NULL) {
         /* first invocation */
         base.next = freep = prev = &base;
         base.size = 0;
     }
 
-    for (curr = freep->next; ; prev = curr, curr = curr->next)
-    {
-        if (curr->size >= size)
-        {
-            if (curr->size == size)
+    for (curr = freep->next; ; prev = curr, curr = curr->next) {
+        if (curr->size >= size) {
+            if (curr->size == size) {
                 prev->next = curr->next;
-            else
-            {
+            } else {
                 /* allocate tail end */
                 curr->size -= size;
                 curr = (struct malloc_head *)((char *)curr + curr->size);
@@ -115,8 +120,7 @@ void *malloc(size_t size)
             freep = prev;
             return TO_DATA(curr);
         }
-        if (curr == freep)
-        {
+        if (curr == freep) {
             /* frapped around free list */
             if ((curr = morecore(size)) == NULL)
                 return NULL;    /* none left */

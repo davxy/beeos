@@ -23,12 +23,11 @@
 void abort(void)
 {
     sighandler_t prev;
-    while (1)
-    {
+
+    while (1) {
         prev = signal(SIGABRT, SIG_DFL);
         if (prev != SIG_DFL && prev != SIG_IGN && prev != SIG_ERR)
             signal(SIGABRT, prev);
-
         raise(SIGABRT);
     }
 }

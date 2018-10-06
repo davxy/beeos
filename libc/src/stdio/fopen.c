@@ -32,23 +32,22 @@ FILE *fopen(const char *path, const char *mode)
     int flags;
 
     /* The 'b' letter is ignored on all POSIX conforming systems. */
-    if (!strcmp(mode, "r") || !strcmp(mode, "rb"))
+    if (strcmp(mode, "r") == 0 || strcmp(mode, "rb") == 0) {
         flags = O_RDONLY;
-    else if (!strcmp(mode, "r+") || !strcmp(mode, "r+b")
-            || !strcmp(mode, "rb+"))
+    } else if (strcmp(mode, "r+") == 0 || strcmp(mode, "r+b") == 0 ||
+               strcmp(mode, "rb+") == 0) {
         flags = O_RDWR;
-    else if (!strcmp(mode, "w") || !strcmp(mode, "wb"))
+    } else if (strcmp(mode, "w") == 0 || strcmp(mode, "wb") == 0) {
         flags = O_WRONLY | O_CREAT | O_TRUNC;
-    else if (!strcmp(mode, "w+") || !strcmp(mode, "w+b")
-            || !strcmp(mode, "wb+"))
+    } else if (strcmp(mode, "w+") == 0 || strcmp(mode, "w+b") == 0 ||
+               strcmp(mode, "wb+") == 0) {
         flags = O_RDWR | O_CREAT | O_TRUNC;
-    else if (!strcmp(mode, "a") || !strcmp(mode, "ab"))
+    } else if (strcmp(mode, "a") == 0 || strcmp(mode, "ab") == 0) {
         flags = O_WRONLY | O_CREAT | O_APPEND;
-    else if (!strcmp(mode, "a+") || !strcmp(mode, "a+b")
-            || !strcmp(mode, "ab+"))
+    } else if (strcmp(mode, "a+") == 0 || strcmp(mode, "a+b") == 0 ||
+               strcmp(mode, "ab+") == 0) {
         flags = O_RDWR | O_CREAT | O_APPEND;
-    else
-    {
+    } else {
         errno = EINVAL;
         return NULL;
     }
@@ -57,8 +56,7 @@ FILE *fopen(const char *path, const char *mode)
         return NULL;
 
     /* If O_CREAT is not specified then mode is ignored */
-    if ((fd = open(path, flags, 0666)) < 0)
-    {
+    if ((fd = open(path, flags, 0666)) < 0) {
         free(fp);
         return NULL;
     }

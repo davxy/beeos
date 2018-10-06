@@ -24,8 +24,7 @@
 
 struct dirent *readdir(DIR *dirp)
 {
-    if (dirp == NULL || dirp->fdn < 0)
-    {
+    if (dirp == NULL || dirp->fdn < 0) {
         errno = EBADF;
         return NULL;
     }
