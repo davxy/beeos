@@ -128,4 +128,3 @@ static inline uint32_t inl(uint16_t port)
 }
 
 #endif /* BEEOS_ARCH_X86_IO_H_ */
-

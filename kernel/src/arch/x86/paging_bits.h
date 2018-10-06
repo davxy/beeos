@@ -55,4 +55,3 @@
 #define PTE_MASK        0xFFFFF000      /* Page pysical address mask */
 
 #endif /* BEEOS_ARCH_X86_PAGING_BITS_H_ */
-

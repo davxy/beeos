@@ -88,4 +88,3 @@ void syscall_init(void)
 {
     isr_register_handler(ISR_SYSCALL, syscall_handler);
 }
-

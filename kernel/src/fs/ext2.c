@@ -276,7 +276,7 @@ static int ext2_readdir(struct inode *dir, unsigned int i,
     dirbuf = (struct ext2_disk_dirent *)kmalloc(dir->size, 0);
     if (dirbuf == NULL)
         return -ENOMEM;
-    
+
     ret = devfs_read(dir->sb->dev, dirbuf, dir->size,
                     ((struct ext2_inode *)dir)->blocks[0] * 1024);
     if (ret != dir->size) {
@@ -438,4 +438,3 @@ struct super_block *ext2_super_create(dev_t dev)
 
     return &sb->base;
 }
-

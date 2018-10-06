@@ -79,8 +79,7 @@
 /** @} */
 
 /** File stat structure */
-struct stat
-{
+struct stat {
     dev_t       st_dev;         /** Device containing the file */
     ino_t       st_ino;         /** inode number */
     mode_t      st_mode;        /** File type and permissions */

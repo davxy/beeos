@@ -53,7 +53,7 @@ int system(const char *cmd)
 
     if ((pid = fork()) < 0)
         status = -1;    /* probably out of process */
-    
+
     if (pid == 0) /* Child */
     {
         /* Restore previous signal actions & reset signal mask */
@@ -63,7 +63,7 @@ int system(const char *cmd)
         execlp("sh", "sh", "-c", cmd, NULL);
         _exit(127); /* exec error */
     }
-    
+
     /*
      * The SIGCHLD is blocked so that we are able to retrive
      * the status and not be overrun by an eventually SIGCHLD

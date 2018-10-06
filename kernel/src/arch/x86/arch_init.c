@@ -78,20 +78,20 @@ static void mm_init(const struct multiboot_info *mbi)
     size_t msize, lsize;
     int ret;
 
-    /* 
+    /*
      * Low mem zone (with respect to multiboot).
      * Instead of try to find out what parts of the low memory are
      * effectively usable just discard the first 1MB of mem.
      */
 
-    /* 
+    /*
      * High mem zone (with respect to multiboot).
      * Free the memory after the kernel space.
      */
 
     msize = mbi->mem_upper * 1024;
     lsize = MIN(msize, ZONE_LOW_TOP - MB_HIGH_MEM_START);
-    ret = frame_zone_add((char *)MB_HIGH_MEM_START, lsize, 
+    ret = frame_zone_add((char *)MB_HIGH_MEM_START, lsize,
                          PAGE_SIZE, ZONE_LOW);
     if (ret < 0)
         panic("error adding low mem zone");
@@ -102,7 +102,7 @@ static void mm_init(const struct multiboot_info *mbi)
         if (ret < 0)
             panic("Error adding high mem zone");
     }
-    
+
     /* Free the unused space (after the kernel brk) */
     kend = (char *)ALIGN_UP((uintptr_t)kmalloc(0,0), PAGE_SIZE); /* hack to get brk */
     kend = (char *)virt_to_phys(kend);
@@ -139,7 +139,7 @@ static void mod_load(const struct multiboot_info *mbi)
  */
 void arch_init(const struct multiboot_info *mbi)
 {
-    /* 
+    /*
      * Check for initrd.
      * To avoid corruption of the initrd content, this should be done
      * before any use of the memory allocator.
@@ -165,4 +165,3 @@ void arch_init(const struct multiboot_info *mbi)
     /* Initialize keyboard */
     kbd_init();
 }
-

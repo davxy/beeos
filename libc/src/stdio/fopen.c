@@ -64,5 +64,5 @@ FILE *fopen(const char *path, const char *mode)
     }
     fp->fd = fd;
     fp->flags = 0;
-    return fp; 
+    return fp;
 }

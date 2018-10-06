@@ -20,8 +20,8 @@
 /**
  * @file    stdio.h
  * @brief
- * @author 	Davide Galassi
- * @date  	Jul 15, 2014
+ * @author     Davide Galassi
+ * @date      Jul 15, 2014
  */
 
 #ifndef _STDIO_H_
@@ -33,10 +33,10 @@
 
 
 /** IO buffer size. */
-#define BUFSIZ			512
+#define BUFSIZ            512
 
 /** The End Of File character */
-#define EOF				(-1)
+#define EOF                (-1)
 
 /** Opaque FILE type */
 typedef struct _FILE FILE;
@@ -48,15 +48,15 @@ extern FILE *stderr;
 /**
  * Produce output for the stdout according to the format string.
  * @param format
- * 	Format string.
+ *     Format string.
  * @return
- * 	Number of characters printed (excluding the null byte used to end output
- * 	to strings).
+ *     Number of characters printed (excluding the null byte used to end output
+ *     to strings).
  */
 int printf(const char *format, ...);
 
 /**
- * 
+ *
  */
 int snprintf(char *str, size_t size, const char *fmt, ...);
 
@@ -122,7 +122,7 @@ char *fgets(char *str, int size, FILE *stream);
  * No check for buffer overrun is performed.
  *
  * @param str   Output buffer pointer.
- * @return      Retuns 'str' on success, and NULL on error or when end of 
+ * @return      Retuns 'str' on success, and NULL on error or when end of
  *              file occurs while no characters have been read.
  */
 char *gets(char *str);
@@ -130,7 +130,7 @@ char *gets(char *str);
 /**
  * Produces a message on standard error describing the last error encountered
  * during a call to a system or library function.
- * 
+ *
  * @param str   If str is not NULL or *str is not a null byte, the argument
  *              str is printed followed by a colon and a blank before the
  *              error description.
@@ -221,7 +221,7 @@ int pclose(FILE *stream);
 
 /**
  * Returns its integer file descriptor.
- * 
+ *
  * @param stream    Stream pointer.
  * @return          Integer file descriptor.
  */

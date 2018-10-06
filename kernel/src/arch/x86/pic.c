@@ -85,4 +85,3 @@ void pic_init(void)
     outb(PIC1_DATA, 0xFB);
     outb(PIC2_DATA, 0xFF);
 }
-

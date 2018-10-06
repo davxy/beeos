@@ -19,12 +19,12 @@
 
 /**
  * @file printf.c
- * 
+ *
  * @brief
- * 
- * @author 	Davide Galassi
- * @date  	Jul 15, 2014
- * 
+ *
+ * @author     Davide Galassi
+ * @date      Jul 15, 2014
+ *
  *
  */
 
@@ -34,9 +34,7 @@
 
 int printf(const char *format, ...)
 {
-	va_list ap;
-	va_start(ap, format);
-	return vprintf(format, ap);
+    va_list ap;
+    va_start(ap, format);
+    return vprintf(format, ap);
 }
-
-

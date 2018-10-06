@@ -72,4 +72,3 @@ void uart_init(void)
 
     outb(PORT + 1, 0x01);   /* Enable all interrupts */
 }
-

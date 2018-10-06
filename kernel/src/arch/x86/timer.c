@@ -48,15 +48,15 @@ void timer_arch_init(void)
 {
     uint8_t lo, hi;
 
-	outb(TIMER_IO_CMD, TIMER_OPMODE | TIMER_ACCESS);
+    outb(TIMER_IO_CMD, TIMER_OPMODE | TIMER_ACCESS);
 
-	/* Divisor has to be sent byte-wise, so split here into upper/lower bytes.*/
-	lo = (uint8_t) TIMER_DIVISOR;
-	hi = (uint8_t) (TIMER_DIVISOR >> 8 );
+    /* Divisor has to be sent byte-wise, so split here into upper/lower bytes.*/
+    lo = (uint8_t) TIMER_DIVISOR;
+    hi = (uint8_t) (TIMER_DIVISOR >> 8 );
 
-	/* Send the frequency divisor. */
-	outb(TIMER_IO_DAT, lo);
-	outb(TIMER_IO_DAT, hi);
+    /* Send the frequency divisor. */
+    outb(TIMER_IO_DAT, lo);
+    outb(TIMER_IO_DAT, hi);
 
     /* register the timer callback */
     isr_register_handler(ISR_TIMER, timer_handler);

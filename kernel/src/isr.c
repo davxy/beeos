@@ -38,15 +38,15 @@ void isr_handler(struct isr_frame *ifr)
     struct isr_frame *previfr;
     unsigned int num;
 
-    /* 
-     * Save the current ifr pointer in the stack. This allows nested 
+    /*
+     * Save the current ifr pointer in the stack. This allows nested
      * interrupts handling (e.g. manage a page fault in the kernel).
      * Thus if, after isr handling, we return back to the kernel
      * we have the correct 'ifr' value within the current_task struct.
      */
     previfr = current->arch.ifr;
     current->arch.ifr = ifr;
-    
+
     num = ifr->int_no;
     if (num == ISR_SYSCALL)
         num = 48;

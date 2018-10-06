@@ -96,4 +96,3 @@ static inline struct htable_link *htable_lookup(
 }
 
 #endif /* BEEOS_HTABLE_H_ */
-

@@ -143,4 +143,3 @@ void task_delete(struct task *tsk)
     task_deinit(tsk);
     kfree(tsk, sizeof(struct task));
 }
-

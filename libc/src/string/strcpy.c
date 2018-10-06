@@ -18,22 +18,22 @@
  */
 
 /**
- * @file	strcpy.c
+ * @file    strcpy.c
  *
- * @brief	
- * @author	dave
- * @date	Jul 20, 2014
+ * @brief
+ * @author    dave
+ * @date    Jul 20, 2014
  */
 
 #include <string.h>
 
 char *strcpy (char *dst, const char *src)
 {
-	size_t i;
+    size_t i;
 
     for (i = 0; src[i] != '\0'; i++)
     {
-    	dst[i] = src[i];
+        dst[i] = src[i];
     }
     dst[i] = '\0';
 

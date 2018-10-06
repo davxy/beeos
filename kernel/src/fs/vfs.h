@@ -280,4 +280,3 @@ void vfs_init(void);
 
 
 #endif /* BEEOS_FS_VFS_H_ */
-

@@ -101,5 +101,3 @@ void timer_init(void);
 void timer_update(void);
 
 #endif /* BEEOS_TIMER_H_ */
-
-

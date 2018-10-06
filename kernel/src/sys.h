@@ -106,4 +106,3 @@ void syscall_init(void);
 
 
 #endif /* BEEOS_SYS_H_ */
-

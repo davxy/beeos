@@ -95,7 +95,7 @@ struct elf_section_hdr {
     uint32_t addralign;
     uint32_t entsize;
 };
-  
+
 struct elf_symbol_hdr {
     uint32_t name;
     uint32_t value;
@@ -116,4 +116,3 @@ const char *elf_lookup_symbol(const struct elf_file *elf, uint32_t addr);
 
 
 #endif /* BEEOS_ELF_H_ */
-

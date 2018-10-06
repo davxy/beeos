@@ -59,4 +59,3 @@ static inline void *virt_to_phys(void *addr)
 #endif /* __ASSEMBLER__ */
 
 #endif /* BEEOS_ARCH_X86_VMEM_H_ */
-

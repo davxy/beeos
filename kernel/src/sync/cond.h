@@ -38,4 +38,3 @@ void cond_broadcast(struct cond *cv);
 
 
 #endif /* BEEOS_SYNC_COND_H_ */
-

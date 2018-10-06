@@ -23,14 +23,14 @@
  *
  * The Interrupt Descriptor Table (IDT) is data structure used by Intel x86
  * processors to implement an interrupt vector table.
- * The IDT is used by the processor to determine the correct response to 
+ * The IDT is used by the processor to determine the correct response to
  * interrupts and exceptions.
  * In protected mode, the IDT is an array of 256 8-byte descriptors stored
  * consecutively in memory and indexed by an interrupt vector.
  * The descriptors contains memory addresses and a segment selector of code
  * to execute when the relative event happens. The segment selector must
  * point to a valid GDT entry.
- * 
+ *
  *  63                              48 47            40 39             32
  * +----------------------------------+----------------+-----------------+
  * |            Base (16:31)          |      Flags     |      Zero       |
@@ -42,13 +42,13 @@
  *
  * Flags
  * -----
- * 
+ *
  *    7
  *  +---+-----+---+-----------+
  *  | P | DPL | S |     T     |
  *  +---+-----+---+-----------+
  *
- * P: Present. 
+ * P: Present.
  *  Set to 0 for unused interrupts
  * DPL: Privilege.
  *  Specifies the minimum privilege level for the calling descriptor.
@@ -57,7 +57,7 @@
  * T: Gate Type.
  *  0x0E for 32-bit interrupt gate
  *  0x0F for 32-bit trap gate
- * 
+ *
  *
  * The first 32 IDT elements are reserved for processor exceptions.
  *
@@ -96,11 +96,11 @@
 
 /** Interrupt descriptor table entry. */
 struct idt_entry {
-    uint16_t offset_lo;	/**< The lower 16 bits of the address to jump to. */
-    uint16_t selector;  /**< Kernel segment selector. */
-    uint8_t  zero;   	/**< This must always be zero. */
-    uint8_t  flags;     /**< More flags. See documentation. */
-    uint16_t offset_hi; /**< The upper 16 bits of the address to jump to. */
+    uint16_t offset_lo;  /**< The lower 16 bits of the address to jump to. */
+    uint16_t selector;   /**< Kernel segment selector. */
+    uint8_t  zero;       /**< This must always be zero. */
+    uint8_t  flags;      /**< More flags. See documentation. */
+    uint16_t offset_hi;  /**< The upper 16 bits of the address to jump to. */
 };
 
 
@@ -109,9 +109,9 @@ struct idt_entry {
  * This is in a format suitable for giving to 'lidt'.
  */
 struct idt_register {
-	uint16_t limit;
-	uint16_t base_lo;	/* The lower 16 bits of the first entry address. */
-	uint16_t base_hi;	/* The upper 16 bits of the first entry address. */
+    uint16_t limit;
+    uint16_t base_lo;    /* The lower 16 bits of the first entry address. */
+    uint16_t base_hi;    /* The upper 16 bits of the first entry address. */
 };
 
 
@@ -122,4 +122,3 @@ void idt_init(void);
 
 
 #endif /* BEEOS_ARCH_X86_IDT_H_ */
-

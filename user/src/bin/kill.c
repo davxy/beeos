@@ -29,8 +29,8 @@ void usage()
     exit(1);
 }
 
-const struct 
-{ 
+const struct
+{
     int signo;
     char *signame;
 } sigmap[] =

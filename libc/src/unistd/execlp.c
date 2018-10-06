@@ -40,4 +40,3 @@ int execlp(const char *path, const char *arg, ...)
     }
     return execvpe(path, argv, environ);
 }
-

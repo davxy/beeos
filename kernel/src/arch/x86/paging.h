@@ -76,4 +76,3 @@ uint32_t page_unmap(void *virt, int retain);
 void paging_init(void);
 
 #endif /* BEEOS_ARCH_X86_PAGING_H_ */
-

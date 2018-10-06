@@ -46,4 +46,3 @@ int sys_sigsuspend(const sigset_t *mask)
     memcpy(&current->sigmask, &omask, sizeof(sigset_t));
     return 0;
 }
-

@@ -45,4 +45,3 @@ int sys_dup2(int oldfd, int newfd)
     current->fds[newfd].fil->ref++;
     return newfd;
 }
-

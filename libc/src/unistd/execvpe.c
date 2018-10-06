@@ -59,7 +59,7 @@ static int namep(const char *name, char *path, size_t pathmax)
 int execvpe(const char *file, char *const argv[], char *const envp[])
 {
     char cmd[PATH_MAX];
-    /* 
+    /*
      * Check if the original command contains at least a '/'.
      * Otherwise a scan for the environment variable 'PATH' must
      * be done

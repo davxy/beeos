@@ -26,4 +26,3 @@
 void kbd_init(void);
 
 #endif /* BEEOS_ARCH_X86_KBD_H_ */
-

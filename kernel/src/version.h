@@ -27,4 +27,3 @@
 #define BEEOS_CODENAME    "BronzeAge"
 
 #endif /* BEEOS_VERSION_H_ */
-
