@@ -308,4 +308,3 @@ void tty_init(void)
                      timer_ticks + msecs_to_ticks(100));
     timer_event_add(&refresh_tm);
 }
-

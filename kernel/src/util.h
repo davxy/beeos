@@ -76,4 +76,3 @@ static inline unsigned int fnzb(unsigned long val)
 
 
 #endif /* BEEOS_UTIL_H_ */
-

@@ -64,5 +64,3 @@ void proc_dump(void);
 
 
 #endif /* BEEOS_PROC_H_ */
-
-

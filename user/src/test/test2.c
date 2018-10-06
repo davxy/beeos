@@ -62,7 +62,7 @@ int main(int argc, char *argv[])
     }
     else if (pid == 0)
         func1();
-    
+
     while (1)
     {
         if ((pid = fork()) < 0)

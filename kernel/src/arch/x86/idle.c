@@ -35,4 +35,3 @@ void idle(void)
         cli(); /* Disable interrupts in kernel code */
     } while (current->state == TASK_RUNNING);
 }
-

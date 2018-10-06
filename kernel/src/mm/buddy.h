@@ -98,4 +98,3 @@ void buddy_free(const struct buddy_sys *ctx, const struct frame *frm,
 void buddy_dump(const struct buddy_sys *ctx, char *base);
 
 #endif /* BEEOS_MM_BUDDY_H_ */
-

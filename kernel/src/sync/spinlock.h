@@ -32,4 +32,3 @@ void spinlock_unlock(struct spinlock *lock);
 
 
 #endif /* BEEOS_SYNC_SPINLOCK_H_ */
-

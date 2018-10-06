@@ -25,4 +25,3 @@
 #define hlt() asm volatile("hlt")
 
 #endif /* BEEOS_ARCH_X86_MISC_H_ */
-

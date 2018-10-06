@@ -221,7 +221,6 @@ int main(int argc, char *argv[])
         status = execute(argc-2, &argv[2]);
     else
         status = interactive();
-    
+
     return status;
 }
-

@@ -493,4 +493,3 @@ void vfs_init(void)
 
     list_init(&mounts);
 }
-

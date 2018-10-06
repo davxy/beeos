@@ -19,12 +19,12 @@
 
 /**
  * @file vsnprintf.c
- * 
+ *
  * @brief
- * 
- * @author 	Davide Galassi
- * @date  	Jul 15, 2014
- * 
+ *
+ * @author     Davide Galassi
+ * @date      Jul 15, 2014
+ *
  *
  */
 
@@ -34,331 +34,331 @@
 #include <string.h>
 
 
-#define SPECIFIER_NONE			0
-#define SPECIFIER_FLAGS			1
-#define SPECIFIER_WIDTH			2
-#define SPECIFIER_PRECISION		3
-#define SPECIFIER_TYPE			4
+#define SPECIFIER_NONE            0
+#define SPECIFIER_FLAGS            1
+#define SPECIFIER_WIDTH            2
+#define SPECIFIER_PRECISION        3
+#define SPECIFIER_TYPE            4
 
-#define FLAG_PLUS				(1 << 0)
-#define FLAG_MINUS				(1 << 1)
-#define FLAG_SPACE				(1 << 2)
-#define FLAG_ALTERNATE			(1 << 3)
-#define FLAG_ZERO				(1 << 4)
+#define FLAG_PLUS                (1 << 0)
+#define FLAG_MINUS                (1 << 1)
+#define FLAG_SPACE                (1 << 2)
+#define FLAG_ALTERNATE            (1 << 3)
+#define FLAG_ZERO                (1 << 4)
 
 
 
 static size_t uimaxtoa (uintmax_t integer, char *buffer, int base,
-		int uppercase, size_t size);
+        int uppercase, size_t size);
 
 static size_t imaxtoa (intmax_t integer, char *buffer, int base,
-		int uppercase, size_t size);
+        int uppercase, size_t size);
 
 static size_t simaxtoa (intmax_t integer, char *buffer, int base,
-		int uppercase, size_t size);
+        int uppercase, size_t size);
 
 static size_t uimaxtoa_fill (uintmax_t integer, char *buffer, int base,
-		int uppercase, int width, int filler, int max);
+        int uppercase, int width, int filler, int max);
 
 static size_t imaxtoa_fill (intmax_t integer, char *buffer, int base,
-		int uppercase, int width, int filler, int max);
+        int uppercase, int width, int filler, int max);
 
 static size_t simaxtoa_fill (intmax_t integer, char *buffer, int base,
-		int uppercase, int width, int filler, int max);
+        int uppercase, int width, int filler, int max);
 
 static size_t strtostr_fill (char *string, char *buffer, int width,
-		int filler, int max);
+        int filler, int max);
 
 
 int vsnprintf(char *str, size_t size, const char *format, va_list ap)
 {
-	// We produce at most 'size-1' characters, + '\0'.
-	// 'size' is used also as the max size for internal strings, but only if
-	// it is not too big.
+    // We produce at most 'size-1' characters, + '\0'.
+    // 'size' is used also as the max size for internal strings, but only if
+    // it is not too big.
 
-	int f = 0;
-	int s = 0;
-	int n;
-	int remain = size - 1;
+    int f = 0;
+    int s = 0;
+    int n;
+    int remain = size - 1;
 
-	int specifier = SPECIFIER_NONE;
-	int flags = 0;
+    int specifier = SPECIFIER_NONE;
+    int flags = 0;
 
-	int alignment;
-	int filler;
+    int alignment;
+    int filler;
 
-	signed long 	value_i;
-	unsigned long 	value_ui;
-	char *value_cp;
+    signed long     value_i;
+    unsigned long     value_ui;
+    char *value_cp;
 
-	size_t width;
-	size_t precision;
+    size_t width;
+    size_t precision;
 
-	size_t str_size = (size > (BUFSIZ / 2) ? (BUFSIZ / 2) : size);
-	char width_str[str_size];
-	char precision_str[str_size];
+    size_t str_size = (size > (BUFSIZ / 2) ? (BUFSIZ / 2) : size);
+    char width_str[str_size];
+    char precision_str[str_size];
 
-	int w;
-	int p;
+    int w;
+    int p;
 
-	width_str[0] = '\0';
-	precision_str[0] = '\0';
+    width_str[0] = '\0';
+    precision_str[0] = '\0';
 
-	while (format[f] != 0 && s < (size-1))
-	{
-		switch (specifier)
-		{
-			case SPECIFIER_NONE:
-				if (format[f] != '%')
-				{
-					str[s++] = format[f++];
-					remain--;
-				}
-				else  if (format[f+1] == '%')
-				{
-					f+=2;
-					str[s++] = '%';
-					remain--;
-				}
-				else
-				{
-					f++;
-					specifier = SPECIFIER_FLAGS;
-				}
-				continue;
+    while (format[f] != 0 && s < (size-1))
+    {
+        switch (specifier)
+        {
+            case SPECIFIER_NONE:
+                if (format[f] != '%')
+                {
+                    str[s++] = format[f++];
+                    remain--;
+                }
+                else  if (format[f+1] == '%')
+                {
+                    f+=2;
+                    str[s++] = '%';
+                    remain--;
+                }
+                else
+                {
+                    f++;
+                    specifier = SPECIFIER_FLAGS;
+                }
+                continue;
 
-			case SPECIFIER_FLAGS:
-				switch (format[f++])
-				{
-					case '+':
-						flags |= FLAG_PLUS;
-				    	break;
+            case SPECIFIER_FLAGS:
+                switch (format[f++])
+                {
+                    case '+':
+                        flags |= FLAG_PLUS;
+                        break;
 
-					case '-':
-						flags |= FLAG_MINUS;
-				    	break;
+                    case '-':
+                        flags |= FLAG_MINUS;
+                        break;
 
-					case ' ':
-						flags |= FLAG_SPACE;
-				    	break;
+                    case ' ':
+                        flags |= FLAG_SPACE;
+                        break;
 
-					case '#':
-						flags |= FLAG_ALTERNATE;
-				    	break;
+                    case '#':
+                        flags |= FLAG_ALTERNATE;
+                        break;
 
-					case '0':
-						flags |= FLAG_ZERO;
-					    break;
+                    case '0':
+                        flags |= FLAG_ZERO;
+                        break;
 
-					default:
-						f--;
-						specifier = SPECIFIER_WIDTH;
-					    break;
-				}
-		    	break;
+                    default:
+                        f--;
+                        specifier = SPECIFIER_WIDTH;
+                        break;
+                }
+                break;
 
-			case SPECIFIER_WIDTH:
-				w = 0;
-				while ('0' <= format[f] && format[f] <= '9' && w < str_size)
-				{
-					width_str[w++] = format[f++];
-				}
-				width_str[w] = '\0';
+            case SPECIFIER_WIDTH:
+                w = 0;
+                while ('0' <= format[f] && format[f] <= '9' && w < str_size)
+                {
+                    width_str[w++] = format[f++];
+                }
+                width_str[w] = '\0';
 
-				if (format[f] == '.')
-				{
-					f++;
-					specifier = SPECIFIER_PRECISION;
-				}
-				else
-				{
-					specifier = SPECIFIER_TYPE;
-				}
-		    	break;
+                if (format[f] == '.')
+                {
+                    f++;
+                    specifier = SPECIFIER_PRECISION;
+                }
+                else
+                {
+                    specifier = SPECIFIER_TYPE;
+                }
+                break;
 
-			case SPECIFIER_PRECISION:
-				p = 0;
-				while ('0' <= format[f] && format[f] <= '9' && p < str_size)
-				{
-					precision_str[p++] = format[f++];
-				}
-				precision_str[p] = '\0';
-				specifier = SPECIFIER_TYPE;
-			    break;
+            case SPECIFIER_PRECISION:
+                p = 0;
+                while ('0' <= format[f] && format[f] <= '9' && p < str_size)
+                {
+                    precision_str[p++] = format[f++];
+                }
+                precision_str[p] = '\0';
+                specifier = SPECIFIER_TYPE;
+                break;
 
-			case SPECIFIER_TYPE:
-				n = 0;
-				width = atoi(width_str);
-				precision = atoi(precision_str);
-				filler = (flags & FLAG_ZERO) ? '0' : ' ';
-				if (flags & FLAG_SPACE) filler = ' ';
-				alignment = width;
-				if (flags & FLAG_MINUS)
-				{
-					alignment = -alignment;
-					filler = ' '; // The filler cannot be zero, so it is black
-				}
+            case SPECIFIER_TYPE:
+                n = 0;
+                width = atoi(width_str);
+                precision = atoi(precision_str);
+                filler = (flags & FLAG_ZERO) ? '0' : ' ';
+                if (flags & FLAG_SPACE) filler = ' ';
+                alignment = width;
+                if (flags & FLAG_MINUS)
+                {
+                    alignment = -alignment;
+                    filler = ' '; // The filler cannot be zero, so it is black
+                }
 
-				switch (format[f++])
-				{
+                switch (format[f++])
+                {
                     case 'p':
                         alignment = 2*sizeof(void *);
                         filler = '0';
-					case 'x':
-						value_ui = va_arg (ap, unsigned int);
-						n = uimaxtoa_fill(value_ui, &str[s], 16, 0,
-									alignment, filler, remain);
-					    break;
+                    case 'x':
+                        value_ui = va_arg (ap, unsigned int);
+                        n = uimaxtoa_fill(value_ui, &str[s], 16, 0,
+                                    alignment, filler, remain);
+                        break;
 
-					case 'X':
-						value_ui = va_arg (ap, unsigned int);
-						n = uimaxtoa_fill(value_ui, &str[s], 16, 1,
-									alignment, filler, remain);
-					    break;
+                    case 'X':
+                        value_ui = va_arg (ap, unsigned int);
+                        n = uimaxtoa_fill(value_ui, &str[s], 16, 1,
+                                    alignment, filler, remain);
+                        break;
 
-					case 'd':
-					case 'i':
-						/* signed int base 10. */
-						value_i = va_arg (ap, int);
-						if (flags & FLAG_PLUS)
-						{
-							n = simaxtoa_fill(value_i, &str[s], 10, 0,
-										alignment, filler, remain);
-						}
-						else
-						{
-							n = imaxtoa_fill(value_i, &str[s], 10, 0,
-										alignment, filler, remain);
-						}
-						break;
+                    case 'd':
+                    case 'i':
+                        /* signed int base 10. */
+                        value_i = va_arg (ap, int);
+                        if (flags & FLAG_PLUS)
+                        {
+                            n = simaxtoa_fill(value_i, &str[s], 10, 0,
+                                        alignment, filler, remain);
+                        }
+                        else
+                        {
+                            n = imaxtoa_fill(value_i, &str[s], 10, 0,
+                                        alignment, filler, remain);
+                        }
+                        break;
 
-					case 'u':
-						 /* unsigned int base 10. */
-						value_ui = va_arg (ap, unsigned int);
-						n = uimaxtoa_fill (value_ui, &str[s], 10, 0,
-								alignment, filler, remain);
-				    	break;
+                    case 'u':
+                         /* unsigned int base 10. */
+                        value_ui = va_arg (ap, unsigned int);
+                        n = uimaxtoa_fill (value_ui, &str[s], 10, 0,
+                                alignment, filler, remain);
+                        break;
 
-					case 'h':
-						switch (format[f++])
-						{
-							case 'h':
-								switch (format[f++])
-								{
-									case 'd':
-									case 'i':
-										/* signed char, base 10. */
-										value_i = va_arg (ap, int);
-										if (flags & FLAG_PLUS)
-										{
-											n = simaxtoa_fill(value_i, &str[s],
-												10, 0, alignment, filler, remain);
-										}
-										else
-										{
-											n = imaxtoa_fill(value_i, &str[s],
-												10, 0, alignment, filler, remain);
-										}
-									    break;
+                    case 'h':
+                        switch (format[f++])
+                        {
+                            case 'h':
+                                switch (format[f++])
+                                {
+                                    case 'd':
+                                    case 'i':
+                                        /* signed char, base 10. */
+                                        value_i = va_arg (ap, int);
+                                        if (flags & FLAG_PLUS)
+                                        {
+                                            n = simaxtoa_fill(value_i, &str[s],
+                                                10, 0, alignment, filler, remain);
+                                        }
+                                        else
+                                        {
+                                            n = imaxtoa_fill(value_i, &str[s],
+                                                10, 0, alignment, filler, remain);
+                                        }
+                                        break;
 
-									case 'u':
-										/* unsigned char, base 10. */
-										value_ui = va_arg (ap, unsigned int);
-										n = uimaxtoa_fill(value_ui, &str[s], 10, 0,
-												alignment, filler, remain);
-									    break;
+                                    case 'u':
+                                        /* unsigned char, base 10. */
+                                        value_ui = va_arg (ap, unsigned int);
+                                        n = uimaxtoa_fill(value_ui, &str[s], 10, 0,
+                                                alignment, filler, remain);
+                                        break;
 
-									case 'o':
-										/* unsigned char, base 8. */
-										value_ui = va_arg (ap, unsigned int);
-										n = uimaxtoa_fill(value_ui, &str[s], 8, 0,
-												alignment, filler, remain);
-								    	break;
+                                    case 'o':
+                                        /* unsigned char, base 8. */
+                                        value_ui = va_arg (ap, unsigned int);
+                                        n = uimaxtoa_fill(value_ui, &str[s], 8, 0,
+                                                alignment, filler, remain);
+                                        break;
 
-									case 'x':
-										/* unsigned char, base 16. */
-										value_ui = va_arg (ap, unsigned int);
-										n = uimaxtoa_fill(value_ui, &str[s], 16, 0,
-												alignment, filler, remain);
-								    	break;
+                                    case 'x':
+                                        /* unsigned char, base 16. */
+                                        value_ui = va_arg (ap, unsigned int);
+                                        n = uimaxtoa_fill(value_ui, &str[s], 16, 0,
+                                                alignment, filler, remain);
+                                        break;
 
-									case 'X':
-										/* unsigned char, base 16. */
-										value_ui = va_arg (ap, unsigned int);
-										n = uimaxtoa_fill(value_ui, &str[s], 16, 1,
-												alignment, filler, remain);
-									    break;
+                                    case 'X':
+                                        /* unsigned char, base 16. */
+                                        value_ui = va_arg (ap, unsigned int);
+                                        n = uimaxtoa_fill(value_ui, &str[s], 16, 1,
+                                                alignment, filler, remain);
+                                        break;
 
-									case 'b':
-										/* base 2 (extension) */
-										value_ui = va_arg (ap, unsigned int);
-										n = uimaxtoa_fill (value_ui, &str[s], 2, 0,
-												alignment, filler, remain);
-								    	break;
+                                    case 'b':
+                                        /* base 2 (extension) */
+                                        value_ui = va_arg (ap, unsigned int);
+                                        n = uimaxtoa_fill (value_ui, &str[s], 2, 0,
+                                                alignment, filler, remain);
+                                        break;
 
-									default:
-										/* unknown specifier */
-									    break;
-								} /* end switch format[f+2] */
-							    break;
+                                    default:
+                                        /* unknown specifier */
+                                        break;
+                                } /* end switch format[f+2] */
+                                break;
 
-							default:
-						    	break;
-						} /* end switch format[f+1] */
-					    break;
+                            default:
+                                break;
+                        } /* end switch format[f+1] */
+                        break;
 
-					case 's':
-						value_cp = va_arg(ap, char *);
-						filler = ' ';
-						n = strtostr_fill(value_cp, &str[s],
-								alignment, filler, remain);
-					    break;
+                    case 's':
+                        value_cp = va_arg(ap, char *);
+                        filler = ' ';
+                        n = strtostr_fill(value_cp, &str[s],
+                                alignment, filler, remain);
+                        break;
 
                     case 'c':
                         value_ui = va_arg(ap, unsigned int);
                         str[s++] = (char)value_ui;
                         break;
-					
+
                     default:
-					    break;
-				} /* end switch format[f] */
+                        break;
+                } /* end switch format[f] */
 
-				specifier = SPECIFIER_NONE;
-				s += n;
-				remain -= n;
-			break;
+                specifier = SPECIFIER_NONE;
+                s += n;
+                remain -= n;
+            break;
 
-			default:
-			break;
-		} /* end switch specifier */
-	}
-	str[s] = '\0';
-	return s;
+            default:
+            break;
+        } /* end switch specifier */
+    }
+    str[s] = '\0';
+    return s;
 }
 
 /** Convert a maximum rank integer into a string. */
 static size_t uimaxtoa(uintmax_t integer, char *buffer, int base,
-		int uppercase, size_t size)
+        int uppercase, size_t size)
 {
-	uintmax_t  integer_copy = integer;
+    uintmax_t  integer_copy = integer;
     size_t  digits;
     int  b;
     unsigned char  remainder;
 
-	for (digits = 0; integer_copy > 0; digits++)
-	{
-		integer_copy = integer_copy / base;
-	}
+    for (digits = 0; integer_copy > 0; digits++)
+    {
+        integer_copy = integer_copy / base;
+    }
 
     if (buffer == NULL && integer == 0) return 1;
     if (buffer == NULL && integer > 0)  return digits;
 
     if (integer == 0)
-	{
-		buffer[0] = '0';
-		//buffer[1] = '\0';
-		return 1;
-	}
+    {
+        buffer[0] = '0';
+        //buffer[1] = '\0';
+        return 1;
+    }
 
     // Fix the maximum number of digits.
     if (size > 0 && digits > size) digits = size;
@@ -366,26 +366,26 @@ static size_t uimaxtoa(uintmax_t integer, char *buffer, int base,
     //buffer[digits] = '\0';            // End of string.
 
     for (b = digits - 1; integer != 0 && b >= 0; b--)
-	{
-		remainder = integer % base;
-		integer   = integer / base;
+    {
+        remainder = integer % base;
+        integer   = integer / base;
 
-		if (remainder <= 9)
-		{
-			*(buffer + b) = remainder + '0';
-		}
-		else
-		{
-			if (uppercase)
-			{
-				*(buffer + b) = remainder - 10 + 'A';
-			}
-			else
-			{
-				*(buffer + b) = remainder - 10 + 'a';
-			}
-		}
-	}
+        if (remainder <= 9)
+        {
+            *(buffer + b) = remainder + '0';
+        }
+        else
+        {
+            if (uppercase)
+            {
+                *(buffer + b) = remainder - 10 + 'A';
+            }
+            else
+            {
+                *(buffer + b) = remainder - 10 + 'a';
+            }
+        }
+    }
 
     return digits;
 }
@@ -394,29 +394,29 @@ static size_t uimaxtoa(uintmax_t integer, char *buffer, int base,
 
 /** Convert a maximum rank integer with sign into a string. */
 static size_t imaxtoa(intmax_t integer, char *buffer, int base,
-		int uppercase, size_t size)
+        int uppercase, size_t size)
 {
-	if (integer >= 0)
-	{
-		return uimaxtoa(integer, buffer, base, uppercase, size);
-	}
+    if (integer >= 0)
+    {
+        return uimaxtoa(integer, buffer, base, uppercase, size);
+    }
 
-	// At this point, there is a negative number, less than zero.
-	if (buffer == NULL)
-	{
-		return uimaxtoa(-integer, NULL, base, uppercase, size) + 1;
-	}
+    // At this point, there is a negative number, less than zero.
+    if (buffer == NULL)
+    {
+        return uimaxtoa(-integer, NULL, base, uppercase, size) + 1;
+    }
 
-	*buffer = '-';        // The minus sign is needed at the beginning.
-	if (size == 1)
-	{
-		//*(buffer + 1) = '\0';
-		return 1;
-	}
-	else
-	{
-		return uimaxtoa(-integer, buffer+1, base, uppercase, size-1) + 1;
-	}
+    *buffer = '-';        // The minus sign is needed at the beginning.
+    if (size == 1)
+    {
+        //*(buffer + 1) = '\0';
+        return 1;
+    }
+    else
+    {
+        return uimaxtoa(-integer, buffer+1, base, uppercase, size-1) + 1;
+    }
 }
 
 /**
@@ -424,42 +424,42 @@ static size_t imaxtoa(intmax_t integer, char *buffer, int base,
  * also if it is positive.
  */
 static size_t simaxtoa(intmax_t integer, char *buffer, int base,
-		int uppercase, size_t size)
+        int uppercase, size_t size)
 {
-	if (buffer == NULL && integer >= 0)
-	{
-		return uimaxtoa(integer, NULL, base, uppercase, size) + 1;
-	}
+    if (buffer == NULL && integer >= 0)
+    {
+        return uimaxtoa(integer, NULL, base, uppercase, size) + 1;
+    }
 
-	if (buffer == NULL && integer < 0)
-	{
-		return uimaxtoa(-integer, NULL, base, uppercase, size) + 1;
-	}
+    if (buffer == NULL && integer < 0)
+    {
+        return uimaxtoa(-integer, NULL, base, uppercase, size) + 1;
+    }
 
-	// At this point, `buffer' is different from NULL.
-	if (integer >= 0)
-	{
-		*buffer = '+';
-	}
-	else
-	{
-		*buffer = '-';
-	}
+    // At this point, `buffer' is different from NULL.
+    if (integer >= 0)
+    {
+        *buffer = '+';
+    }
+    else
+    {
+        *buffer = '-';
+    }
 
-	if (size == 1)
-	{
-		//*(buffer + 1) = '\0';
-		return 1;
-	}
+    if (size == 1)
+    {
+        //*(buffer + 1) = '\0';
+        return 1;
+    }
 
-	if (integer >= 0)
-	{
-		return uimaxtoa(integer, buffer+1, base, uppercase, size-1) + 1;
-	}
-	else
-	{
-		return uimaxtoa(-integer, buffer+1, base, uppercase, size-1) + 1;
-	}
+    if (integer >= 0)
+    {
+        return uimaxtoa(integer, buffer+1, base, uppercase, size-1) + 1;
+    }
+    else
+    {
+        return uimaxtoa(-integer, buffer+1, base, uppercase, size-1) + 1;
+    }
 }
 
 /**
@@ -467,56 +467,56 @@ static size_t simaxtoa(intmax_t integer, char *buffer, int base,
  * the alignment.
  */
 static size_t uimaxtoa_fill (uintmax_t integer, char *buffer, int base,
-		int uppercase, int width, int filler, int max)
+        int uppercase, int width, int filler, int max)
 {
-	size_t size_i;
-	size_t size_f;
+    size_t size_i;
+    size_t size_f;
 
-	if (max < 0)
-		return 0;   // "max" must be a positive value
+    if (max < 0)
+        return 0;   // "max" must be a positive value
 
-	size_i = uimaxtoa(integer, NULL, base, uppercase, 0);
+    size_i = uimaxtoa(integer, NULL, base, uppercase, 0);
 
-	if (width > 0 && max > 0 && width > max)
-		width = max;
-	if (width < 0 && -max < 0 && width < -max)
-		width = -max;
+    if (width > 0 && max > 0 && width > max)
+        width = max;
+    if (width < 0 && -max < 0 && width < -max)
+        width = -max;
 
-	if (size_i > abs(width))
-	{
-		return uimaxtoa(integer, buffer, base, uppercase, abs(width));
-	}
+    if (size_i > abs(width))
+    {
+        return uimaxtoa(integer, buffer, base, uppercase, abs(width));
+    }
 
-	if (width == 0 && max > 0)
-	{
-		return uimaxtoa(integer, buffer, base, uppercase, max);
-	}
+    if (width == 0 && max > 0)
+    {
+        return uimaxtoa(integer, buffer, base, uppercase, max);
+    }
 
-	if (width == 0)
-	{
-		return uimaxtoa(integer, buffer, base, uppercase, abs(width));
-	}
+    if (width == 0)
+    {
+        return uimaxtoa(integer, buffer, base, uppercase, abs(width));
+    }
 
-	// size_i <= abs(width).
+    // size_i <= abs(width).
 
-	size_f = abs(width) - size_i;
+    size_f = abs(width) - size_i;
 
-	if (width < 0)
-	{
-		// Left alignment.
-		uimaxtoa(integer, buffer, base, uppercase, 0);
-		memset(buffer + size_i, filler, size_f);
-	}
-	else
-	{
-		// Right alignment.
-		memset(buffer, filler, size_f);
-		uimaxtoa(integer, buffer + size_f, base, uppercase, 0);
-	}
+    if (width < 0)
+    {
+        // Left alignment.
+        uimaxtoa(integer, buffer, base, uppercase, 0);
+        memset(buffer + size_i, filler, size_f);
+    }
+    else
+    {
+        // Right alignment.
+        memset(buffer, filler, size_f);
+        uimaxtoa(integer, buffer + size_f, base, uppercase, 0);
+    }
 
-	//buffer[abs(width)] = '\0';
+    //buffer[abs(width)] = '\0';
 
-	return abs(width);
+    return abs(width);
 }
 
 /**
@@ -524,54 +524,54 @@ static size_t uimaxtoa_fill (uintmax_t integer, char *buffer, int base,
  * alignment.
  */
 static size_t imaxtoa_fill (intmax_t integer, char *buffer, int base,
-		int uppercase, int width, int filler, int max)
+        int uppercase, int width, int filler, int max)
 {
-	size_t size_i;
-	size_t size_f;
+    size_t size_i;
+    size_t size_f;
 
-	//int abs_width;
+    //int abs_width;
 
-	if (max < 0) return 0; // `max' must be a positive value.
+    if (max < 0) return 0; // `max' must be a positive value.
 
-	size_i = imaxtoa(integer, NULL, base, uppercase, 0);
+    size_i = imaxtoa(integer, NULL, base, uppercase, 0);
 
-	if (width > 0 &&  max > 0 && width >  max) width =  max;
-	if (width < 0 && -max < 0 && width < -max) width = -max;
+    if (width > 0 &&  max > 0 && width >  max) width =  max;
+    if (width < 0 && -max < 0 && width < -max) width = -max;
 
-	if (size_i > abs(width))
-	{
-		return imaxtoa(integer, buffer, base, uppercase, abs (width));
-	}
+    if (size_i > abs(width))
+    {
+        return imaxtoa(integer, buffer, base, uppercase, abs (width));
+    }
 
-	if (width == 0 && max > 0)
-	{
-		return imaxtoa(integer, buffer, base, uppercase, max);
-	}
+    if (width == 0 && max > 0)
+    {
+        return imaxtoa(integer, buffer, base, uppercase, max);
+    }
 
-	if (width == 0)
-	{
-		return imaxtoa(integer, buffer, base, uppercase, abs (width));
-	}
+    if (width == 0)
+    {
+        return imaxtoa(integer, buffer, base, uppercase, abs (width));
+    }
 
-	// size_i <= abs(width).
+    // size_i <= abs(width).
 
-	size_f = abs(width) - size_i;
+    size_f = abs(width) - size_i;
 
-	if (width < 0)
-	{
-		// Left alignment.
-		imaxtoa(integer, buffer, base, uppercase, 0);
-		memset(buffer + size_i, filler, size_f);
-	}
-	else
-	{
-		// Right alignment.
-		memset(buffer, filler, size_f);
-		imaxtoa(integer, buffer + size_f, base, uppercase, 0);
-	}
-	//buffer[abs(width)] = '\0';
+    if (width < 0)
+    {
+        // Left alignment.
+        imaxtoa(integer, buffer, base, uppercase, 0);
+        memset(buffer + size_i, filler, size_f);
+    }
+    else
+    {
+        // Right alignment.
+        memset(buffer, filler, size_f);
+        imaxtoa(integer, buffer + size_f, base, uppercase, 0);
+    }
+    //buffer[abs(width)] = '\0';
 
-	return abs(width);
+    return abs(width);
 }
 
 /**
@@ -579,9 +579,9 @@ static size_t imaxtoa_fill (intmax_t integer, char *buffer, int base,
  * also if it is positive and taking care of the alignment.
  */
 static size_t simaxtoa_fill (intmax_t integer, char *buffer, int base,
-		int uppercase, int width, int filler, int max)
+        int uppercase, int width, int filler, int max)
 {
-	size_t size_i;
+    size_t size_i;
     size_t size_f;
 
     if (max < 0) return 0; // `max' must be a positive value.
@@ -592,19 +592,19 @@ static size_t simaxtoa_fill (intmax_t integer, char *buffer, int base,
     if (width < 0 && -max < 0 && width < -max) width = -max;
 
     if (size_i > abs (width))
-	{
-    	return simaxtoa(integer, buffer, base, uppercase, abs (width));
-	}
+    {
+        return simaxtoa(integer, buffer, base, uppercase, abs (width));
+    }
 
     if (width == 0 && max > 0)
-	{
-    	return simaxtoa(integer, buffer, base, uppercase, max);
-	}
+    {
+        return simaxtoa(integer, buffer, base, uppercase, max);
+    }
 
     if (width == 0)
-	{
-    	return simaxtoa(integer, buffer, base, uppercase, abs (width));
-	}
+    {
+        return simaxtoa(integer, buffer, base, uppercase, abs (width));
+    }
 
     // size_i <= abs(width).
     size_f = abs(width) - size_i;
@@ -628,12 +628,12 @@ static size_t simaxtoa_fill (intmax_t integer, char *buffer, int base,
 
 /** Transfer a string with care for the alignment. */
 static size_t strtostr_fill (char *string, char *buffer, int width,
-		int filler, int max)
+        int filler, int max)
 {
     size_t size_s;
     size_t size_f;
 
-    if (max < 0) return 0; 		// `max' must be a positive value.
+    if (max < 0) return 0;         // `max' must be a positive value.
 
     size_s = strlen(string);
 
@@ -682,4 +682,3 @@ static size_t strtostr_fill (char *string, char *buffer, int width,
 
     return abs(width);
 }
-

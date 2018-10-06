@@ -19,12 +19,12 @@
 
 /**
  * @file memset.c
- * 
+ *
  * @brief
- * 
- * @author 	Davide Galassi
- * @date  	Jul 15, 2014
- * 
+ *
+ * @author     Davide Galassi
+ * @date      Jul 15, 2014
+ *
  *
  */
 
@@ -34,11 +34,11 @@
 
 void *memset(void *s, int c, size_t n)
 {
-	char *d = (char *) s;
-	int i;
-	for (i=0; i < n; i++)
-	{
-		d[i] = c;
-	}
-	return s;
+    char *d = (char *) s;
+    int i;
+    for (i=0; i < n; i++)
+    {
+        d[i] = c;
+    }
+    return s;
 }

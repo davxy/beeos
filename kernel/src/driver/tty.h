@@ -59,4 +59,3 @@ void tty_put(dev_t dev);
 
 
 #endif /* BEEOS_DRIVER_TTY_H_ */
-

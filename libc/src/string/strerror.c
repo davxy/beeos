@@ -27,7 +27,7 @@ char *strerror(int errnum)
         case 0:
             s = "Success";
             break;
-        case EPERM: 
+        case EPERM:
             s = "Operation not permitted";
             break;
         case ENOENT:

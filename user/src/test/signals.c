@@ -22,7 +22,7 @@
 
 void handler(int signo)
 {
-    printf("SIG %d handler\n", signo); 
+    printf("SIG %d handler\n", signo);
 }
 
 
@@ -30,7 +30,7 @@ int main(void)
 {
     sigset_t set;
     int status;
-    
+
     status = sigemptyset(&set);
     if (status < 0)
         printf("error: sigemptyset\n");

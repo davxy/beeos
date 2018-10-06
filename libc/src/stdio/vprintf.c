@@ -19,12 +19,12 @@
 
 /**
  * @file vprintf.c
- * 
+ *
  * @brief
- * 
- * @author 	Davide Galassi
- * @date  	Jul 15, 2014
- * 
+ *
+ * @author     Davide Galassi
+ * @date      Jul 15, 2014
+ *
  *
  */
 
@@ -34,24 +34,23 @@
 
 int vprintf(const char *format, va_list ap)
 {
-	int written;
-	int	tot;
-	int rtot;
-	char buf[BUFSIZ];
-	char *ptr = buf;
+    int written;
+    int    tot;
+    int rtot;
+    char buf[BUFSIZ];
+    char *ptr = buf;
 
-	rtot = vsnprintf(buf, BUFSIZ, format, ap);
-	tot = rtot;
-	while (tot > 0)
-	{
-		written = write(1, ptr, tot);
-//		written = write(STDOUT_FILENO, ptr, tot);
-		if (written < 0)
-			break;
-		tot -= written;
-		ptr += written;
-	}
+    rtot = vsnprintf(buf, BUFSIZ, format, ap);
+    tot = rtot;
+    while (tot > 0)
+    {
+        written = write(1, ptr, tot);
+//        written = write(STDOUT_FILENO, ptr, tot);
+        if (written < 0)
+            break;
+        tot -= written;
+        ptr += written;
+    }
 
-	return rtot;
+    return rtot;
 }
-

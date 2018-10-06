@@ -222,4 +222,3 @@ void buddy_dump(const struct buddy_sys *ctx, char *base)
     }
     kprintf("free: %u\n", freemem);
 }
-

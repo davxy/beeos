@@ -44,12 +44,12 @@ struct slab_cache {
 void slab_init(void);
 
 struct slab_cache *slab_cache_create(const char *name,
-        size_t size, unsigned int align, unsigned int flags, 
+        size_t size, unsigned int align, unsigned int flags,
         slab_obj_ctor_t ctor, slab_obj_dtor_t dtor);
 
 void slab_cache_delete(struct slab_cache *cache);
 
-void slab_cache_init(struct slab_cache *cache, const char *name, 
+void slab_cache_init(struct slab_cache *cache, const char *name,
         size_t objsize, unsigned int align, unsigned int flags,
         slab_obj_ctor_t ctor, slab_obj_dtor_t dtor);
 
@@ -61,4 +61,3 @@ void slab_cache_free(struct slab_cache *cache, void *obj);
 
 
 #endif /* BEEOS_MM_SLAB_H_ */
-

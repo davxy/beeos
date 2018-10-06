@@ -26,7 +26,7 @@ int unsetenv(const char *name)
 {
     size_t namelen;
     size_t i;
-    
+
     namelen = strlen(name);
     if (name == NULL || namelen == 0 || strchr(name, '=') != NULL)
     {

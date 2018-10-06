@@ -18,10 +18,10 @@
  */
 
 /**
- * @file	stddef.h
- * @brief	
- * @author	Davide Galassi
- * @date	Jul 12, 2014
+ * @file    stddef.h
+ * @brief
+ * @author  Davide Galassi
+ * @date    Jul 12, 2014
  */
 
 #ifndef _STDDEF_H_

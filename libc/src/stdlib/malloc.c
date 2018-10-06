@@ -70,7 +70,7 @@ void free(void *ptr)
 static struct malloc_head *morecore(size_t size)
 {
     struct malloc_head *p;
-    
+
     if (size < NALLOC)
         size = NALLOC;
 
@@ -88,10 +88,10 @@ static struct malloc_head *morecore(size_t size)
 void *malloc(size_t size)
 {
     struct malloc_head *curr, *prev;
-    
+
     /* size adjust */
     size = ALIGN_UP(size + sizeof(struct malloc_head));
-    
+
     if ((prev = freep) == NULL)
     {
         /* first invocation */
@@ -118,7 +118,7 @@ void *malloc(size_t size)
         if (curr == freep)
         {
             /* frapped around free list */
-            if ((curr = morecore(size)) == NULL)   
+            if ((curr = morecore(size)) == NULL)
                 return NULL;    /* none left */
         }
     }
@@ -137,7 +137,7 @@ void *realloc(void *ptr, size_t size)
 
     head = TO_HEAD(ptr);
     old_size = head->size - ((char *)ptr - (char *)head);
-    
+
     if (old_size < size)
         memcpy(new_ptr, ptr, old_size);
     else
@@ -150,7 +150,7 @@ void *calloc(size_t nmemb, size_t size)
 {
     void *ptr;
     size_t totsiz;
-    
+
     totsiz = nmemb * size;
     ptr = malloc(totsiz);
     if (ptr != NULL)

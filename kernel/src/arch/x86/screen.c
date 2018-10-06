@@ -55,4 +55,3 @@ void screen_update(struct screen *scr)
 
     scr->dirty = 0;
 }
-

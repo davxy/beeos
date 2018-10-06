@@ -44,4 +44,3 @@ pid_t sys_getpgid(pid_t pid)
     } while (curr != current);
     return (t != NULL) ? t->pgid : -ESRCH;
 }
-

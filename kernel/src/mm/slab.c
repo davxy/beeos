@@ -439,4 +439,3 @@ void slab_init(void)
     if (slab_bufctl_cache == NULL)
         panic("slab_bufctl_cache creation error");
 }
-

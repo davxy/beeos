@@ -22,9 +22,9 @@
 
 #include <stdint.h>
 
-/** 
+/**
  * Registers to be saved, by the called, across function calls according
- * to the cdecl calling convention. The registers EAX,ECX and EDX are 
+ * to the cdecl calling convention. The registers EAX,ECX and EDX are
  * caller-saved.
  */
 struct jmp_buf_arch

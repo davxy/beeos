@@ -123,4 +123,3 @@ static inline void list_merge(struct list_link *list1,
 
 
 #endif /* BEEOS_LIST_H_ */
-

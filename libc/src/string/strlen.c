@@ -18,12 +18,12 @@
  */
 
 /**
- * @file	strlen.c
+ * @file    strlen.c
  *
- * @brief	
- * 
- * @author	dave
- * @date	Jul 12, 2014
+ * @brief
+ *
+ * @author    dave
+ * @date    Jul 12, 2014
  */
 
 #include <string.h>

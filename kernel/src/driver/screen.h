@@ -64,4 +64,3 @@ void screen_update(struct screen *scr);
 
 
 #endif /* BEEOS_DRIVER_SCREEN_H_ */
-

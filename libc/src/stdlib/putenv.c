@@ -64,7 +64,7 @@ static int environ_relocate(int envlen)
     static int inheap = 0;
     char **envp;
     size_t newsiz;
-    
+
     /* +2, one for the NULL and one for the new env variable */
     newsiz = (2 + envlen) * sizeof(char *);
     if (!inheap)

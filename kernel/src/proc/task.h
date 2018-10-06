@@ -90,4 +90,3 @@ void task_arch_switch(struct task_arch *curr, const struct task_arch *next);
 
 
 #endif /* BEEOS_PROC_TASK_H_ */
-

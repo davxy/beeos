@@ -27,4 +27,3 @@ void kprintf(const char *fmt, ...);
 void kvprintf(const char *fmt, va_list arg);
 
 #endif /* BEEOS_KPRINTF_H_ */
-

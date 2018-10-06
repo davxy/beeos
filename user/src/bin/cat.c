@@ -30,7 +30,7 @@ int main(int argc, char *argv[])
     char buf[BUFSIZ];
     int n, i;
     int fd = 0;
-    
+
     for (i = 1; i < argc; i++)
     {
 
@@ -53,10 +53,10 @@ int main(int argc, char *argv[])
             perror("cat");
             continue;
         }
-        
+
         while ((n = read(fd, buf, BUFSIZ)) > 0)
             write(1, buf, n);
-    
+
         close(fd);
     }
 

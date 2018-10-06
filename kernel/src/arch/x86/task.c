@@ -90,4 +90,3 @@ void task_arch_switch(struct task_arch *curr, const struct task_arch *next)
     /* Execute this as the last statement. Can throw us in another place */
     swtch(&curr->ctx, next->ctx);
 }
-

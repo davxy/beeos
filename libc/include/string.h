@@ -18,10 +18,10 @@
  */
 
 /**
- * @file	string.h
- * @brief	
- * @author	Davide Galassi
- * @date	Jul 12, 2014
+ * @file    string.h
+ * @brief
+ * @author    Davide Galassi
+ * @date    Jul 12, 2014
  */
 
 #ifndef _STRING_H_
@@ -55,11 +55,11 @@ int memcmp(const void *s1, const void *s2, size_t n);
  * must not overlap. Use memmove if the memory areas do overlap.
  *
  * @param dst
- * 	Destination memory pointer.
+ *     Destination memory pointer.
  * @param src
- * 	Source memory pointer.
+ *     Source memory pointer.
  * @param n
- * 	Number of bytes to copy.
+ *     Number of bytes to copy.
  * @return
  *  Pointer to dst.
  */
@@ -75,14 +75,14 @@ void *memcpy(void *dst, const void *src, size_t n);
  * @param n
  *  Number of bytes to move.
  * @return
- * 	A pointer to dst.
+ *     A pointer to dst.
  */
 void *memmove(void *dst, const void *src, size_t n);
 
 /**
  * Calculates the length of the string s, excluding the terminating null byte.
  * @param s
- * 	Input string.
+ *     Input string.
  * @return
  *  Number of bytes in the string s.
  */
@@ -91,13 +91,13 @@ size_t strlen(const char *s);
 /**
  * Fills memory with a constant byte
  * @param s
- * 	Pointero to the destination memory area.
+ *     Pointero to the destination memory area.
  * @param c
- * 	Constant byte.
+ *     Constant byte.
  * @param n
- * 	Number of bytes to set.
+ *     Number of bytes to set.
  * @return
- * 	A pointer to the memory area s.
+ *     A pointer to the memory area s.
  */
 void *memset(void *s, int c, size_t n);
 
@@ -128,9 +128,9 @@ int strncmp(const char *s1, const char *s2, size_t n);
  * @param dst
  * Destination string.
  * @param src
- * 	Source string.
+ *     Source string.
  * @return
- * 	A pointer to the destination string dst.
+ *     A pointer to the destination string dst.
  */
 char *strcpy(char *dst, const char *src);
 
@@ -139,13 +139,13 @@ char *strcpy(char *dst, const char *src);
  * copied. Warning: If there is no null byte among the first n bytes of src,
  * the string placed in dst will not be null-terminated.
  * @param dst
- * 	Destination string.
+ *     Destination string.
  * @param src
- * 	Source string.
+ *     Source string.
  * @param n
- * 	Number of bytes to copy.
+ *     Number of bytes to copy.
  * @return
- * 	A pointer to the destination string dst.
+ *     A pointer to the destination string dst.
  */
 char *strncpy(char *dst, const char *src, size_t n);
 

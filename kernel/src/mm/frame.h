@@ -25,7 +25,7 @@
 
 /**
  * Allocate a physical memory page.
- * 
+ *
  * @param order Frame order.
  * @param flags Allocation flags.
  * @return      Memory physical address.
@@ -58,4 +58,3 @@ void frame_dump(void);
 
 
 #endif /* BEEOS_MM_FRAME_H_ */
-

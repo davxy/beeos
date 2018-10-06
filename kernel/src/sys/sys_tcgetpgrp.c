@@ -25,4 +25,3 @@ pid_t sys_tcgetpgrp(int fd)
 {
     return tty_getpgrp();
 }
-

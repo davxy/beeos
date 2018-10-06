@@ -97,4 +97,3 @@ struct task_arch {
 };
 
 #endif /* BEEOS_ARCH_X86_TASK_H_ */
-
