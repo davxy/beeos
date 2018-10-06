@@ -38,9 +38,9 @@ void pic_mask(unsigned int n)
     uint8_t val;
     uint16_t port;
 
-    if (n < 8)
+    if (n < 8) {
         port = PIC1_DATA;
-    else {
+    } else {
         port = PIC2_DATA;
         n -= 8;
     }
@@ -56,9 +56,9 @@ void pic_unmask(unsigned int n)
     uint8_t val;
     uint16_t port;
 
-    if (n < 8)
+    if (n < 8) {
         port = PIC1_DATA;
-    else {
+    } else {
         port = PIC2_DATA;
         n -= 8;
     }

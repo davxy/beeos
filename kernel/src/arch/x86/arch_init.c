@@ -41,8 +41,7 @@
  * Boot device is valid if flags[1] == 1.
  * Syms present if flags[4] or flags[5] is set.
  */
-struct multiboot_info
-{
+struct multiboot_info {
     uint32_t flags;         /**< Various flags (see multiboot specification) */
     uint32_t mem_lower;     /**< Memory in KB starting from 0x0 */
     uint32_t mem_upper;     /**< Memory in KB starting from 0x100000 */
@@ -108,8 +107,7 @@ static void mm_init(const struct multiboot_info *mbi)
     kend = (char *)ALIGN_UP((uintptr_t)kmalloc(0,0), PAGE_SIZE); /* hack to get brk */
     kend = (char *)virt_to_phys(kend);
     mend = (char *)MB_HIGH_MEM_START + msize;
-    while (kend < mend)
-    {
+    while (kend < mend) {
         frame_free(kend, 0);
         kend += PAGE_SIZE;
     }

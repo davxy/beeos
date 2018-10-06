@@ -37,8 +37,7 @@
 #define SIGNALS_NUM     (SIGUNUSED+1)
 
 /** Process structure. */
-struct task
-{
+struct task {
     struct task_arch    arch;           /**< Architecture specific data. */
     pid_t               pid;            /**< Process ID. */
     pid_t               pgid;           /**< Process group ID */

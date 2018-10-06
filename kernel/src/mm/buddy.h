@@ -23,8 +23,7 @@
 #include "list.h"
 
 /** Physical memory frame structure. */
-struct frame
-{
+struct frame {
     /** Free list link. */
     struct list_link    link;
     /** Number of references. */
@@ -37,8 +36,7 @@ struct frame
 };
 
 /** List of free frames with the same order. */
-struct free_list
-{
+struct free_list {
     /** Free frames list node. */
     struct list_link    list;
     /** Bitmap used to keep track of the state of each couple of buddies. */
@@ -49,8 +47,7 @@ struct free_list
  * Buddy system context.
  * Allows to have a separate buddy allocator for each memory zone.
  */
-struct buddy_sys
-{
+struct buddy_sys {
     /** Log_2(frame_size). Frame size is passed to the init. */
     unsigned int        order_bit;
     /** Maximum frame order. Max frame size is 2^(order_bit+order_max). */
@@ -70,7 +67,7 @@ struct buddy_sys
  * @return              Zero on success. A value less than zero on failure.
  */
 int buddy_init(struct buddy_sys *ctx, unsigned int frames_num,
-        unsigned int frame_size);
+               unsigned int frame_size);
 
 /**
  * Allocate a chunk of memory of the specified order.

@@ -39,14 +39,10 @@ pid_t sys_waitpid(pid_t pid, int *wstatus, int options)
         havekids = 0;
 
         t = struct_ptr(current->tasks.next, struct task, tasks);
-        while (t != current)
-        {
-            if (t->pptr == current
-                && (pid == t->pid || pid == -1))
-            {
+        while (t != current) {
+            if (t->pptr == current && (pid == t->pid || pid == -1)) {
                 havekids = 1;
-                if (t->state == TASK_ZOMBIE)
-                {
+                if (t->state == TASK_ZOMBIE) {
                     /* found one */
                     pid = t->pid;
                     if (wstatus != NULL)
@@ -62,25 +58,18 @@ pid_t sys_waitpid(pid_t pid, int *wstatus, int options)
             t = struct_ptr(t->tasks.next, struct task, tasks);
         }
 
-        if (t == current)
-        {
+        if (t == current) {
             /* We've not found any terminated children */
-            if (havekids != 0)
-            {
+            if (havekids != 0) {
                 /* There are not terminated children around */
-                if ((options & WNOHANG) == 0)
-                {
+                if ((options & WNOHANG) == 0) {
                     /* WNOHANG flag not specified, wait for a child */
                     cond_wait(&current->chld_exit);
                     retry = 1;
-                }
-                else
-                {
+                } else {
                     pid = 0;
                 }
-            }
-            else
-            {
+            } else {
                 pid = -1;
             }
         }

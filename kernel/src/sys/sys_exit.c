@@ -91,7 +91,8 @@ static void children_give(struct task *child)
          * This may happen if the process is waiting on a pipe that has
          * been closed on the other side.
          */
-        curr_task = list_container(curr_task->sibling.next, struct task, sibling);
+        curr_task = list_container(curr_task->sibling.next,
+                                   struct task, sibling);
     } while (curr_task != child);
 
     list_merge(&init_child->sibling, &child->sibling);
@@ -112,8 +113,7 @@ void sys_exit(int status)
         panic("init exiting");
 
     /* Flush the timer event queue */
-    while (!list_empty(&current->timers))
-    {
+    while (!list_empty(&current->timers)) {
         lnk = current->timers.next;
         list_delete(lnk);    /* Remove from current process timers */
         tm = list_container(lnk, struct timer_event, plink);

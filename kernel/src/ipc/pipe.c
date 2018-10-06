@@ -35,8 +35,7 @@
 
 
 /* Implemented as a ring-buffer */
-struct pipe_inode
-{
+struct pipe_inode {
     struct inode base;
     struct cond  queue;
     int nrp;                /**< Next read position */
@@ -62,7 +61,7 @@ struct pipe_inode
  * Normally, however, there is a single reader and a single writer for a pipe.
  */
 static int pipe_read(struct inode *inod, void *buf,
-        size_t count, size_t off)
+                     size_t count, size_t off)
 {
     int n, left;
     char *ptr = (char *)buf;
@@ -87,7 +86,7 @@ static int pipe_read(struct inode *inod, void *buf,
 
             /* TODO: if BLOCKING allowed */
             pnode->queued_readers++;
-            if (pnode->queued_writers > 0)      /* if there are pending writers */
+            if (pnode->queued_writers > 0)  /* if there are pending writers */
                 cond_broadcast(&pnode->queue);  /* wakeup them before sleep */
             cond_wait(&pnode->queue);
             pnode->queued_readers--;
@@ -129,19 +128,16 @@ static int pipe_write(struct inode *inod, const void *buf,
 
     left = count;
     spinlock_lock(&pnode->queue.lock);
-    while (left > 0)
-    {
+    while (left > 0) {
         /* Check if full */
-        while (pnode->nwp+1 == pnode->nrp
-         || (pnode->nwp+1 == DATA_SIZE && pnode->nrp == 0))
-        {
+        while (pnode->nwp+1 == pnode->nrp ||
+              (pnode->nwp+1 == DATA_SIZE && pnode->nrp == 0)) {
             /*
              * No more readers.
              * WARNING: in case of multiple writers this condition never
              * holds and there is deadlock risk.
              */
-            if (pnode->base.ref == 1)
-            {
+            if (pnode->base.ref == 1) {
                 spinlock_unlock(&pnode->queue.lock);
                 task_signal(current, SIGPIPE);
                 scheduler();
@@ -159,14 +155,13 @@ static int pipe_write(struct inode *inod, const void *buf,
 
         }
 
-        if (pnode->nrp <= pnode->nwp)
-        {
+        if (pnode->nrp <= pnode->nwp) {
             n = MIN(left, DATA_SIZE - pnode->nwp);
             if (pnode->nwp + n == DATA_SIZE && pnode->nrp == 0)
                 n--;
-        }
-        else
+        } else {
             n = MIN(left, pnode->nrp - pnode->nwp - 1);
+        }
 
         memcpy(&pnode->data[pnode->nwp], ptr, n);
         ptr += n;
@@ -183,8 +178,7 @@ static int pipe_write(struct inode *inod, const void *buf,
     return n;
 }
 
-static const struct inode_ops pipe_ops =
-{
+static const struct inode_ops pipe_ops = {
     .read = pipe_read,
     .write = pipe_write
 };
@@ -195,7 +189,7 @@ static struct inode *pipe_inode_create(void)
 
     /* TODO... set a pipe sb here to allow correct inode release */
     pnode = (struct pipe_inode *)kmalloc(sizeof(struct pipe_inode), 0);
-    if (!pnode)
+    if (pnode == NULL)
         return NULL;
     memset(pnode, 0, sizeof(*pnode));
     pnode->base.mode = S_IFIFO | S_IRWXU | S_IRWXG | S_IRWXO;
@@ -214,23 +208,25 @@ int pipe_create(int pipefd[2])
     struct dentry *dent;
     struct file *file0, *file1;
 
-    for (fd0 = 0; fd0 < OPEN_MAX; fd0++)
+    for (fd0 = 0; fd0 < OPEN_MAX; fd0++) {
         if (current->fds[fd0].fil == NULL)
             break;
-    for (fd1 = fd0 + 1; fd1 < OPEN_MAX; fd1++)
+    }
+    for (fd1 = fd0 + 1; fd1 < OPEN_MAX; fd1++) {
         if (current->fds[fd1].fil == NULL)
             break;
+    }
     if (fd1 >= OPEN_MAX)
         return -EMFILE; /* Too many open files */
 
     inod = pipe_inode_create();
-    if (!inod)
+    if (inod == NULL)
         return -1;
 
     /* Inode allocated */
     file0 = fs_file_alloc();
     file1 = fs_file_alloc();
-    if (!file0 || !file1)
+    if (file0 == NULL || file1 == NULL)
         return -1;
 
     dent = dentry_create("", NULL, NULL);

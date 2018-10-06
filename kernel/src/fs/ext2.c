@@ -162,13 +162,11 @@ static int offset_to_block(size_t offset, const struct ext2_inode *inod,
     dbl = offset >> 8;
     tpl = offset >> 16;
 
-    if (tpl != 0) {
+    if (tpl != 0)
         panic("ext2: required triple block %d", triple_block);
-    }
 
-    if (dbl != 0) {
+    if (dbl != 0)
         panic("ext2: required double block %d", double_block);
-    }
 
     if (devfs_read(sb->base.dev, buf, sb->block_size,
                    indirect_block*sb->block_size) != sb->block_size)
@@ -240,8 +238,7 @@ static struct inode *ext2_lookup(struct inode *dir, const char *name)
     while(count >= sizeof(struct ext2_disk_dirent)) {
         /* dirent->name is not null terminated */
         if(strlen(name) == (size_t)curr->name_len &&
-           memcmp(name, curr->name, curr->name_len) == 0)
-        {
+           memcmp(name, curr->name, curr->name_len) == 0) {
             inod = iget(dir->sb, curr->ino);
             if (inod != NULL)
                 inod->ref--; /* iget incremented the counter... release it */
@@ -252,7 +249,6 @@ static struct inode *ext2_lookup(struct inode *dir, const char *name)
         count -= curr->rec_len;
         curr = (struct ext2_disk_dirent *)((char *)curr + curr->rec_len);
     }
-
 end:
     kfree(dirbuf, dir->size);
     return inod;
@@ -353,10 +349,8 @@ static int ext2_super_inode_read(struct inode *inod)
     int n;
     struct ext2_disk_inode disk_inod;
     const struct ext2_super_block *sb = (struct ext2_super_block *) inod->sb;
-
     int group = ((inod->ino - 1) / sb->inodes_per_group);
     const struct ext2_group_desc *gd = &sb->gd_table[group];
-
     int table_index = (inod->ino - 1 ) % sb->inodes_per_group;
     int blockno = ((table_index * 128) / 1024 ) + gd->inode_table;
     int ind = table_index % (1024 /128);

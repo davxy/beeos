@@ -27,15 +27,11 @@ void screen_putchar(struct screen *scr, char c)
 {
 	unsigned int i;
 
-	if (' ' <= c && c <= '~')
-	{
+	if (' ' <= c && c <= '~') {
 		scr->buf[scr->pos_y * SCREEN_WIDTH + scr->pos_x] = c;
 		scr->pos_x++;
-	}
-	else
-	{
-		switch (c)
-		{
+	} else {
+		switch (c) {
         case '\b':  /* backspace */
             if (scr->pos_x != 0)
                 scr->pos_x--;
@@ -55,15 +51,13 @@ void screen_putchar(struct screen *scr, char c)
 		}
 	}
 
-	if (scr->pos_x >= SCREEN_WIDTH)
-	{
+	if (scr->pos_x >= SCREEN_WIDTH) {
 		/* Go to a new line */
 		scr->pos_x = 0;
 		scr->pos_y++;
 	}
 
-	if (scr->pos_y >= SCREEN_HEIGHT)
-	{
+	if (scr->pos_y >= SCREEN_HEIGHT) {
 		/* Scroll the screen */
 
 		/* move every line up by one */

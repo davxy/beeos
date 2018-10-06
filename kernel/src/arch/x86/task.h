@@ -35,8 +35,7 @@ extern uint8_t kstack[KSTACK_SIZE];
  * We just need two entries that defines the stack pointer and the stack
  * segment when we switch to kernel mode. All the other entries are unused
  */
-struct tss_struct
-{
+struct tss_struct {
     uint32_t prev;
     uint32_t esp0;  /* Stack pointer when we change to kernel mode */
     uint32_t ss0;   /* Stack segment when we change to kernel mode */
@@ -82,8 +81,7 @@ extern struct tss_struct    tss;
  * at the "Switch stacks" comment. Switch doesn't save eip explicitly,
  * but it is on the stack and task_alloc() manipulates it.
  */
-struct context
-{
+struct context {
     uint32_t    edi;
     uint32_t    esi;
     uint32_t    ebx;
@@ -91,8 +89,7 @@ struct context
     uint32_t    eip;
 };
 
-struct task_arch
-{
+struct task_arch {
     uint32_t            pgdir;  /**< Page directory physical address */
     struct context      *ctx;   /**< Task state context */
     struct isr_frame    *ifr;   /**< Interrupt frame */

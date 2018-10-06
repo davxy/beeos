@@ -46,12 +46,12 @@ static char *push_all(uintptr_t *base, char *sp, const char * const str[],
 {
     int n;
 
-    for (n = 0; str[n] != NULL; n++);
+    for (n = 0; str[n] != NULL; n++)
+        ;
     if (nout != NULL)
         *nout = n;
     base[n] = 0;
-    while (n-- > 0)
-    {
+    while (n-- > 0) {
         sp = push(sp, str[n]);
         base[n] = (uintptr_t)sp + delta;
     }
@@ -103,9 +103,8 @@ static int segment_init(const struct elf_prog_hdr *ph, struct inode *inod)
     int ret = 0;
     uint32_t vaddr;
 
-    if (ph->memsz < ph->filesz || KVBASE <= ph->vaddr + ph->memsz) {
+    if (ph->memsz < ph->filesz || KVBASE <= ph->vaddr + ph->memsz)
         return -ENOEXEC;
-    }
 
     /* Look for program brk (temporary... not very elegant) */
     if ((ph->flags & ELF_PROG_FLAG_READ) != 0 &&
@@ -157,8 +156,8 @@ int sys_execve(const char *path, const char *const argv[],
         return -ENOENT;
     inod = dent->inod;
 
-    if (vfs_read(inod, &eh, sizeof(eh), 0) != sizeof(eh)
-        || eh.magic != ELF_MAGIC) {
+    if (vfs_read(inod, &eh, sizeof(eh), 0) != sizeof(eh) ||
+            eh.magic != ELF_MAGIC) {
         dput(dent);
         return -ENOEXEC;
     }
@@ -181,9 +180,8 @@ int sys_execve(const char *path, const char *const argv[],
     /* TODO: Create user stack only if we where in user space
      * Otherwise esp is not in the frame */
     /* Minimal user stack */
-    if ((ret = (int)page_map((char *)KVBASE-PAGE_SIZE, -1)) < 0) {
+    if ((ret = (int)page_map((char *)KVBASE-PAGE_SIZE, -1)) < 0)
         goto bad;
-    }
     memcpy((char *)KVBASE-ARG_MAX, ustack, ARG_MAX);
 
     /* Release user stack copy */
@@ -194,9 +192,7 @@ int sys_execve(const char *path, const char *const argv[],
 
     off = eh.phoff;
     for (i = 0, off = eh.phoff; i < eh.phnum; i++) {
-
         ret = vfs_read(inod, &ph, sizeof(ph), off);
-
         if (ret != sizeof(ph)) {
             if (ret >= 0)
                 ret = -EIO;
@@ -237,10 +233,8 @@ int sys_execve(const char *path, const char *const argv[],
      * POSIX1. All signals are set to their default action unless the process
      * that calls exec is ignoring the signal.
      */
-    for (i = 0; i < SIGNALS_NUM; i++)
-    {
-        if (current->signals[i].sa_handler != SIG_IGN)
-        {
+    for (i = 0; i < SIGNALS_NUM; i++) {
+        if (current->signals[i].sa_handler != SIG_IGN) {
             memset(&current->signals[i], 0, sizeof(struct sigaction));
             current->signals[i].sa_handler = SIG_DFL;
         }

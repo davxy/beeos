@@ -42,8 +42,7 @@ extern unsigned long timer_ticks;
 typedef void (timer_event_t)(void *data);
 
 /** Timer event structure. Represents an asynchrounous event. */
-struct timer_event
-{
+struct timer_event {
     struct list_link link;      /**< Link used when in the global queue. */
     struct list_link plink;     /**< Link for timers within the same process */
     timer_event_t    *func;     /**< Timer event function callback. */

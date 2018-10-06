@@ -28,8 +28,7 @@
  * others are pushed by the dispatching code for preservation or
  * for later reference.
  */
-struct isr_frame
-{
+struct isr_frame {
     uint32_t    ds;         /* data segment selector */
     uint32_t    edi;        /* pushed by pusha */
     uint32_t    esi;        /* pushed by pusha */

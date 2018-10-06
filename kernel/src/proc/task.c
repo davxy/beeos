@@ -66,8 +66,7 @@ int task_init(struct task *tsk, task_entry_t entry)
 
     /* duplicate valid file descriptors */
     memset(tsk->fds, 0, sizeof(tsk->fds));
-    for (i = 0; i < OPEN_MAX; i++)
-    {
+    for (i = 0; i < OPEN_MAX; i++) {
         if (current->fds[i].fil != NULL) {
             tsk->fds[i] = current->fds[i];
             tsk->fds[i].fil->ref++;

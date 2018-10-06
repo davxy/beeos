@@ -20,8 +20,7 @@
 #ifndef BEEOS_SYNC_SPINLOCK_H_
 #define BEEOS_SYNC_SPINLOCK_H_
 
-struct spinlock
-{
+struct spinlock {
     int value;
 };
 

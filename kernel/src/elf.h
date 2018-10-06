@@ -39,8 +39,7 @@
 
 
 /** ELF file header. */
-struct elf_hdr 
-{
+struct elf_hdr {
     uint32_t magic;         /**< Magic number. */
     uint8_t  elf[12];       /**< Other(?) information. */
     uint16_t type;          /**< Object file type. */
@@ -70,8 +69,7 @@ struct elf_hdr
 
 
 /** ELF programe segment header. */
-struct elf_prog_hdr
-{
+struct elf_prog_hdr {
     uint32_t type;          /**< Segment type. */
     uint32_t offset;        /**< Segment file offset. */
     uint32_t vaddr;         /**< Segment virtual address. */
@@ -85,8 +83,7 @@ struct elf_prog_hdr
 #define ELF_SECT_TYPE_NOBITS    8   /**< Not present in file (bss) */
 
 /** ELF section header */
-struct elf_section_hdr
-{
+struct elf_section_hdr {
     uint32_t name;
     uint32_t type;
     uint32_t flags;
@@ -99,8 +96,7 @@ struct elf_section_hdr
     uint32_t entsize;
 };
   
-struct elf_symbol_hdr
-{
+struct elf_symbol_hdr {
     uint32_t name;
     uint32_t value;
     uint32_t size;
@@ -109,12 +105,11 @@ struct elf_symbol_hdr
     uint16_t shndx;
 };
 
-struct elf_file
-{
-    struct elf_symbol_hdr   *symtab;
-    uint32_t                symtabsz;
-    const char              *strtab;
-    uint32_t                strtabsz;
+struct elf_file {
+    struct elf_symbol_hdr *symtab;
+    uint32_t              symtabsz;
+    const char            *strtab;
+    uint32_t              strtabsz;
 };
 
 const char *elf_lookup_symbol(const struct elf_file *elf, uint32_t addr);

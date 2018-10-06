@@ -37,8 +37,7 @@ void timer_event_add(struct timer_event *tm)
     struct list_link *curr;
 
     curr = timer_events.next;
-    while (curr != &timer_events)
-    {
+    while (curr != &timer_events) {
         e = list_container(curr, struct timer_event, link);
         if (e->expires > tm->expires)
             break;
@@ -73,12 +72,10 @@ void timer_update(void)
     struct timer_event *tm;
     struct list_link *curr = timer_events.next;
 
-    while (curr != &timer_events)
-    {
+    while (curr != &timer_events) {
         tm = list_container(curr, struct timer_event, link);
         curr = curr->next;
-        if (tm->expires <= timer_ticks)
-        {
+        if (tm->expires <= timer_ticks) {
             list_delete(&tm->link);
             tm->func(tm->data);
         }

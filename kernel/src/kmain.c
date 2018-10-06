@@ -75,18 +75,12 @@ static void mount_root(void)
 
 void kmain(void)
 {
-    /*
-     * Core
-     */
-
+    /* Core */
     slab_init();
     kmalloc_init();
     isr_init();
 
-    /*
-     * Primary
-     */
-
+    /* Primary */
     timer_init();
     vfs_init();
     scheduler_init();
@@ -99,15 +93,11 @@ void kmain(void)
     /* Mount root filesystem */
     mount_root();
 
-    /*
-     * Start the init process
-     */
+    /* Start the init process */
     if (task_create(init) == NULL)
         panic("Unable to start init task");
 
-    /*
-     * Process 0 continues with the idle procedure
-     */
+    /* Process 0 continues with the idle procedure */
     idle();
     /* Should never happen */
     panic("Idle task exited");

@@ -95,8 +95,7 @@
 #include <stdint.h>
 
 /** Interrupt descriptor table entry. */
-struct idt_entry
-{
+struct idt_entry {
     uint16_t offset_lo;	/**< The lower 16 bits of the address to jump to. */
     uint16_t selector;  /**< Kernel segment selector. */
     uint8_t  zero;   	/**< This must always be zero. */
@@ -109,8 +108,7 @@ struct idt_entry
  * A struct describing a pointer to an array of interrupt handlers.
  * This is in a format suitable for giving to 'lidt'.
  */
-struct idt_register
-{
+struct idt_register {
 	uint16_t limit;
 	uint16_t base_lo;	/* The lower 16 bits of the first entry address. */
 	uint16_t base_hi;	/* The upper 16 bits of the first entry address. */

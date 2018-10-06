@@ -29,7 +29,6 @@ struct tss_struct tss;
 void swtch(struct context **old, struct context *new);
 
 
-
 /*
  * TODO : implement as clone syscall
  */
@@ -41,8 +40,7 @@ int task_arch_init(struct task_arch *tsk, task_entry_t entry)
     tsk->ifr = NULL;
     tsk->sfr = NULL;
 
-    if (tsk == &ktask.arch)
-    {
+    if (tsk == &ktask.arch) {
         /* The task 0 does not need complete initialization */
         tsk->pgdir = (uint32_t)virt_to_phys(kpage_dir);
         tsk->ctx = NULL;
@@ -59,8 +57,7 @@ int task_arch_init(struct task_arch *tsk, task_entry_t entry)
 
     sp = (uint32_t *)ALIGN_DOWN((uintptr_t)ti + KSTACK_SIZE, sizeof(uint32_t));
 
-    if (current->arch.ifr != NULL)
-    {
+    if (current->arch.ifr != NULL) {
         struct isr_frame *ifr2 = ((struct isr_frame *)sp) - 1;
 
         sp = (uint32_t *)ifr2; /* Safe... ifr2 should be aligned to uint32_t */

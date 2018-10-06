@@ -33,7 +33,7 @@
 
 #define FS_LIST_LEN 2
 
-static struct vfs_type fs_list[FS_LIST_LEN] = {
+static const struct vfs_type fs_list[FS_LIST_LEN] = {
     { "ext2", ext2_super_create },
     { "dev",  devfs_super_create }
 };
@@ -52,10 +52,8 @@ struct super_block *vfs_super_create(dev_t dev, const char *name)
     int i;
     struct super_block *sb = NULL;
 
-    for (i = 0; i < FS_LIST_LEN; i++)
-    {
-        if (strcmp(name, fs_list[i].name) == 0)
-        {
+    for (i = 0; i < FS_LIST_LEN; i++) {
+        if (strcmp(name, fs_list[i].name) == 0) {
             sb = fs_list[i].create(dev);
             break;
         }
@@ -90,13 +88,10 @@ static struct inode *inode_lookup(dev_t dev, ino_t ino)
     struct htable_link *lnk;
 
     lnk = htable_lookup(inode_htable, KEY(dev,ino), INODE_HTABLE_BITS);
-    while (lnk != NULL)
-    {
+    while (lnk != NULL) {
         ip = struct_ptr(lnk, struct inode, hlink);
         if (ip->ref > 0 && ip->sb->dev == dev && ip->ino == ino)
-        {
             return ip;
-        }
         lnk = lnk->next;
     }
     return NULL;
@@ -118,7 +113,7 @@ static void inode_init(struct inode *inod, struct super_block *sb,
      * This is just a quick and dirty solution for MISRA compliance
      */
     if (sb->ops->inode_read != NULL)
-        (void)sb->ops->inode_read(inod);
+        sb->ops->inode_read(inod);
 
     htable_insert(inode_htable, &inod->hlink,
                   KEY(inod->sb->dev, inod->ino), INODE_HTABLE_BITS);
@@ -158,9 +153,8 @@ void iput(struct inode *inod)
     if (inod->ref < 0)
         kprintf("WARNING iref < 0\n");
 #endif
-    if (inod->ref == 0) {
+    if (inod->ref == 0)
         inode_delete(inod);
-    }
 }
 
 struct inode *iget(struct super_block *sb, ino_t ino)
@@ -168,8 +162,7 @@ struct inode *iget(struct super_block *sb, ino_t ino)
     struct inode *inod;
 
     inod = inode_lookup(sb->dev, ino);
-    if (inod == NULL)
-    {
+    if (inod == NULL) {
         inod = inode_create(sb, ino, 0, sb->root->inod->ops);
         if (inod == NULL)
             return NULL;
@@ -209,10 +202,9 @@ static const char *skipelem(const char *path, char *name)
     while(*path != '/' && *path != 0)
         path++;
     len = path - s;
-    if(len >= NAME_MAX)
+    if(len >= NAME_MAX) {
         memmove(name, s, NAME_MAX);
-    else
-    {
+    } else {
         memmove(name, s, len);
         name[len] = 0;
     }
@@ -229,7 +221,7 @@ struct dentry *dentry_create(const char *name, struct dentry *parent,
     struct dentry *de;
 
     de = (struct dentry *)kmalloc(sizeof(*de), 0);
-    if (!de)
+    if (de == NULL)
         return NULL;
     strcpy(de->name, name);
     de->ref = 0;
@@ -379,8 +371,7 @@ static struct dentry *follow_up(struct dentry *root)
     curr = mounts.next;
     while (curr != &mounts) {
         mnt = list_container(curr, struct vfsmount, link);
-        if (mnt->root == res)
-        {
+        if (mnt->root == res) {
             dput(mnt->mntpt);
             res = ddup(mnt->mntpt);
             /* Reiterate to see if this is a also mount point */
@@ -402,8 +393,7 @@ static struct dentry *follow_down(struct dentry *mntpt)
     curr = mounts.next;
     while (curr != &mounts) {
         mnt = list_container(curr, struct vfsmount, link);
-        if (mnt->mntpt == res)
-        {
+        if (mnt->mntpt == res) {
             dput(res);
             res = ddup(mnt->root);
             /* Reiterate to see if this is a also mount point */
@@ -428,8 +418,7 @@ struct dentry *named(const char *path)
 
     dent = ddup((*path == '/') ? current->root : current->cwd);
 
-    while ((path = skipelem(path, name)) != NULL)
-    {
+    while ((path = skipelem(path, name)) != NULL) {
         if (!S_ISDIR(dent->inod->mode))
             return NULL;
 

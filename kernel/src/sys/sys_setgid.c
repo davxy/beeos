@@ -24,21 +24,15 @@
 
 int sys_setgid(gid_t gid)
 {
-    if (current->egid == 0)
-    {
+    if (current->egid == 0) {
         /* If gid is not root then, after this, it will be
          * impossible for the program to regain root privileges. */
         current->gid  = gid;
         current->egid = gid;
         current->sgid = gid;
-    }
-    else if (current->gid == gid
-          || current->sgid == gid)
-    {
+    } else if (current->gid == gid || current->sgid == gid) {
         current->egid = gid;
-    }
-    else
-    {
+    } else {
         errno = EPERM;
         return -1;
     }

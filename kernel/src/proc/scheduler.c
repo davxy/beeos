@@ -34,9 +34,10 @@ static int sigpop(sigset_t *sigpend, const sigset_t *sigmask)
     int sig;
 
     /* find first non blocked signal */
-    for (sig = 0; sig < SIGNALS_NUM; sig++)
+    for (sig = 0; sig < SIGNALS_NUM; sig++) {
         if (sigismember(sigpend, sig) == 1 && sigismember(sigmask, sig) <= 0)
             break;
+    }
     if (sig == SIGNALS_NUM)
         return -1;
     sigdelset(sigpend, sig);
@@ -56,8 +57,7 @@ int do_signal(void)
     ifr = current->arch.ifr;
     act = &current->signals[sig - 1];
 
-    if (act->sa_handler == SIG_DFL)
-    {
+    if (act->sa_handler == SIG_DFL) {
         if (sig == SIGCHLD || sig == SIGURG)
             return 0; /* Ignore */
         else if (sig == SIGSTOP || sig == SIGTSTP ||
@@ -70,11 +70,9 @@ int do_signal(void)
     if (act->sa_restorer == NULL || act->sa_handler == SIG_IGN)
         return 0; /* No way to return from signal handlers or ignore */
 
-    if (!current->arch.sfr)
-    {
+    if (!current->arch.sfr) {
         current->arch.sfr = (struct isr_frame *)kmalloc(sizeof(*ifr), 0);
-        if (!current->arch.sfr)
-        {
+        if (!current->arch.sfr) {
             kprintf("[warn] no memory to handle signal (%d)\n", sig);
             return 0;
         }
@@ -95,12 +93,10 @@ void scheduler(void)
     next = list_container(current->tasks.next,
             struct task, tasks);
 
-    while (next->state != TASK_RUNNING && next != current) {
+    while (next->state != TASK_RUNNING && next != current)
         next = list_container(next->tasks.next, struct task, tasks);
-    }
 
-    if (next == current)
-    {
+    if (next == current) {
         /* Nothing to run... run the idle() task */
         ktask.state = TASK_RUNNING;
         next = &ktask;
@@ -138,8 +134,7 @@ void scheduler_init(void)
 
     sigemptyset(&ktask.sigmask);
     sigemptyset(&ktask.sigpend);
-    for (i = 0; i < SIGNALS_NUM; i++)
-    {
+    for (i = 0; i < SIGNALS_NUM; i++) {
         memset(&ktask.signals[i], 0, sizeof(struct sigaction));
         ktask.signals[i].sa_handler = SIG_DFL;
     }
@@ -149,8 +144,7 @@ static void task_dump(const struct task *t)
 {
     char state;
 
-    switch (t->state)
-    {
+    switch (t->state) {
     case TASK_RUNNING:
         state = 'R';
         break;
@@ -180,9 +174,8 @@ static void proc_dump_p(struct task *t, int level,
     task_dump(t);
     kprintf("\n");
     s = struct_ptr(t->sibling.next, struct task, sibling);
-    if (s != fs) {
+    if (s != fs)
         proc_dump_p(s, level, fs, s);
-    }
     t = struct_ptr(t->children.next, struct task, children);
     if (t != fp)
         proc_dump_p(t, level + 1, t, fp);

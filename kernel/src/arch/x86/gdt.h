@@ -114,8 +114,7 @@
 /**
  * GDT entry structure
  */
-struct gdt_entry
-{
+struct gdt_entry {
 	uint16_t	limit_lo;	/**< The lower 16 bits of the limit (15..0). */
 	uint16_t	base_lo;	/**< The lowers 16 bits of the base (15..0). */
 	uint8_t		base_mi;	/**< The next 8 bits of the base (23..16). */
@@ -128,8 +127,7 @@ struct gdt_entry
  * This struct describes a GDT pointer. It points to the start of our array of
  * GDT entries, and is in the format required by the lgdt instruction.
  */
-struct gdt_register
-{
+struct gdt_register {
 	uint16_t	limit;		/**< Size of gdt table minus one. */
 	uint16_t	base_lo;	/**< The lower 16 bits of the table address. */
 	uint16_t	base_hi;	/**< The higher 16 bits of the table address. */

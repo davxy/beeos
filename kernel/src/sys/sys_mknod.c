@@ -43,8 +43,7 @@ static void split_path(const char *filepath, char *parent, char *name)
         parent[i++] = '/';
         if (filepath[i] != '\0') {
             strcpy(name, filepath + i);
-        }
-        else {
+        } else {
             name[0] = '.';
             name[1] = '\0';
         }
@@ -62,8 +61,7 @@ int sys_mknod(const char *pathname, mode_t mode, dev_t dev)
     char name[NAME_MAX];
 
     dent = named(pathname);
-    if (dent != NULL)
-    {
+    if (dent != NULL) {
         dput(dent);
         return -EEXIST;
     }
@@ -79,8 +77,7 @@ int sys_mknod(const char *pathname, mode_t mode, dev_t dev)
     /*
      * Create a dentry and keep a reference to it.
      */
-    if (res == 0)
-    {
+    if (res == 0) {
         dnew = dget(dent, name);
         if (dnew == NULL)
             res = -1;

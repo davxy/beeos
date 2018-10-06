@@ -33,8 +33,7 @@
 #define ZONE_LOW    1
 
 /** Zone descriptor */
-struct zone_st 
-{
+struct zone_st {
     char            *addr;       /**< Zone (physical) address */
     size_t           size;       /**< Zone size */
     size_t           frame_size; /**< Size of a single frame */
@@ -57,7 +56,7 @@ struct zone_st
  * @return              On error -1 is returned.
  */
 int zone_init(struct zone_st *ctx, void *addr, size_t size,
-        size_t frame_size, int flags);
+              size_t frame_size, int flags);
 
 /**
  * Allocate a memory segment from a zone.

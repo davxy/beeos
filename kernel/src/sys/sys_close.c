@@ -38,8 +38,7 @@ int sys_close(int fd)
     current->fds[fd].flags = 0;
 
     fil->ref--;
-    if (fil->ref == 0)
-    {
+    if (fil->ref == 0) {
         /* Wake up the other end, to allow EOF recv in user space */
         if (S_ISFIFO(fil->dent->inod->mode))
             (void)vfs_write(fil->dent->inod, NULL, 0, 0);

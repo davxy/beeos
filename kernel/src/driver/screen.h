@@ -23,8 +23,7 @@
 #define SCREEN_WIDTH    80
 #define SCREEN_HEIGHT   25
 
-struct screen
-{
+struct screen {
     unsigned int  pos_x;
     unsigned int  pos_y;
     unsigned char dirty;
