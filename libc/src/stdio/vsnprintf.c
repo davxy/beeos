@@ -48,22 +48,22 @@
 
 
 
-static size_t uimaxtoa(uintmax_t integer, char *buffer, int base,
+static size_t uimaxtoa(unsigned long integer, char *buffer, int base,
                        int uppercase, size_t size);
 
-static size_t imaxtoa(intmax_t integer, char *buffer, int base,
+static size_t imaxtoa(long integer, char *buffer, int base,
                       int uppercase, size_t size);
 
-static size_t simaxtoa(intmax_t integer, char *buffer, int base,
+static size_t simaxtoa(long integer, char *buffer, int base,
                        int uppercase, size_t size);
 
-static size_t uimaxtoa_fill(uintmax_t integer, char *buffer, int base,
+static size_t uimaxtoa_fill(unsigned long integer, char *buffer, int base,
                             int uppercase, int width, int filler, int max);
 
-static size_t imaxtoa_fill(intmax_t integer, char *buffer, int base,
+static size_t imaxtoa_fill(long integer, char *buffer, int base,
                            int uppercase, int width, int filler, int max);
 
-static size_t simaxtoa_fill(intmax_t integer, char *buffer, int base,
+static size_t simaxtoa_fill(long integer, char *buffer, int base,
                             int uppercase, int width, int filler, int max);
 
 static size_t strtostr_fill(char *string, char *buffer, int width,
@@ -286,10 +286,10 @@ int vsnprintf(char *str, size_t size, const char *format, va_list ap)
 }
 
 /* Convert a maximum rank integer into a string. */
-static size_t uimaxtoa(uintmax_t integer, char *buffer, int base,
+static size_t uimaxtoa(unsigned long integer, char *buffer, int base,
                        int uppercase, size_t size)
 {
-    uintmax_t  integer_copy = integer;
+    unsigned long  integer_copy = integer;
     size_t  digits;
     int  b;
     unsigned char  remainder;
@@ -334,7 +334,7 @@ static size_t uimaxtoa(uintmax_t integer, char *buffer, int base,
 
 
 /* Convert a maximum rank integer with sign into a string. */
-static size_t imaxtoa(intmax_t integer, char *buffer, int base,
+static size_t imaxtoa(long integer, char *buffer, int base,
                       int uppercase, size_t size)
 {
     if (integer >= 0)
@@ -357,7 +357,7 @@ static size_t imaxtoa(intmax_t integer, char *buffer, int base,
  * Convert a maximum rank integer with sign into a string, placing the sign
  * also if it is positive.
  */
-static size_t simaxtoa(intmax_t integer, char *buffer, int base,
+static size_t simaxtoa(long integer, char *buffer, int base,
                        int uppercase, size_t size)
 {
     if (buffer == NULL && integer >= 0)
@@ -387,7 +387,7 @@ static size_t simaxtoa(intmax_t integer, char *buffer, int base,
  * Convert a maximum rank integer without sign into a string, taking care of
  * the alignment.
  */
-static size_t uimaxtoa_fill(uintmax_t integer, char *buffer, int base,
+static size_t uimaxtoa_fill(unsigned long integer, char *buffer, int base,
                             int uppercase, int width, int filler, int max)
 {
     size_t size_i;
@@ -435,7 +435,7 @@ static size_t uimaxtoa_fill(uintmax_t integer, char *buffer, int base,
  * Convert a maximum rank integer with sign into a string, takeing care of the
  * alignment.
  */
-static size_t imaxtoa_fill(intmax_t integer, char *buffer, int base,
+static size_t imaxtoa_fill(long integer, char *buffer, int base,
                            int uppercase, int width, int filler, int max)
 {
     size_t size_i;
@@ -484,7 +484,7 @@ static size_t imaxtoa_fill(intmax_t integer, char *buffer, int base,
  * Convert a maximum rank integer with sign into a string, placing the sign
  * also if it is positive and taking care of the alignment.
  */
-static size_t simaxtoa_fill(intmax_t integer, char *buffer, int base,
+static size_t simaxtoa_fill(long integer, char *buffer, int base,
                             int uppercase, int width, int filler, int max)
 {
     size_t size_i;
