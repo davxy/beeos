@@ -156,6 +156,8 @@ int execl(const char *path, const char *arg, ... /* (char *)NULL */);
 
 int execlp(const char *path, const char *arg, ... /* (char *)NULL */);
 
+int execv(const char *path, char *const argv[]);
+
 int execvpe(const char *file, char *const argv[], char *const envp[]);
 
 static inline char *getcwd(char *buf, size_t size)
