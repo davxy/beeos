@@ -5,7 +5,8 @@ dirs += dirent \
 		string \
 		unistd \
 		signal \
-		sys
+		sys \
+		stdint
 
 ifeq ($(ARCH),x86)
 dirs += arch/x86
