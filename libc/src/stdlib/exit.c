@@ -19,14 +19,17 @@
 
 
 #include <stdlib.h>
+#include <stddef.h>
 
-#define ATEXIT_MAX  1
+extern void (* _atexit_tab[ATEXIT_MAX])(void);
 
 void exit(int status)
 {
     int i;
 
-    for (i = ATEXIT_MAX-1; i >= 0; i--)
-        ;
+    for (i = ATEXIT_MAX-1; i >= 0; i--) {
+        if (_atexit_tab[i] != NULL)
+            _atexit_tab[i]();
+    }
     _Exit(status);
 }

@@ -3,6 +3,7 @@ local_sources := _Exit.c \
 				 atoi.c \
 				 atol.c \
 				 exit.c \
+				 atexit.c \
 				 malloc.c \
 				 getenv.c \
 				 setenv.c \

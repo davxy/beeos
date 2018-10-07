@@ -29,32 +29,30 @@
 
 #include <sys/types.h>
 
+#define ATEXIT_MAX  32
+
 /**
  * Converts the initial portion of the string pointed to by str to int.
- * @param str
- *     Pointer to the string to convert.
- * @return
- *     The converted value.
+ *
+ * @param str   Pointer to the string to convert.
+ * @return      The converted value.
  */
 int atoi(const char *str);
 
 /**
  * Behaves the same as atoi(), except that they convert the initial portion of
  * the string to their return type of long.
- * @param str
- *     Pointer to the string to convert.
- * @return
- *     The converted value.
+ *
+ * @param str   Pointer to the string to convert.
+ * @return      The converted value.
  */
 long atol(const char *str);
 
 /**
  * Computes the absolute value of its integer operand, i.
  * If the result cannot be represented, the behavior is undefined.
- * @param i
- *     Integer value value.
- * @return
- *     The absolute value of i.
+ * @param i     Integer value value.
+ * @return      The absolute value of i.
  */
 int abs(int i);
 
@@ -70,6 +68,30 @@ int abs(int i);
  */
 void exit(int status);
 
+/**
+ * Registers the given function to be called at normal process termination,
+ * either via exit(3) or via return from the program's main().  Functions
+ * so registered are called in the reverse order of their registration;
+ * no arguments are passed.
+ * The same function may be registered multiple times: it is  called  once
+ * for each registration.
+ * When a child process is created via fork(2), it inherits copies of its
+ * parent registrations. Upon a successful call to one of the exec functions
+ * all registrations are removed.
+ *
+ * @param func      Pointer the function to register.
+ * @return          Zero on success.
+ */
+int atexit(void (* func)(void));
+
+/**
+ * Terminates the calling process "immediately".
+ * Any open file descriptors belonging to the process are closed.
+ * Any children of the process are inherited by init().
+ * The process's parent is asent a SIGCHLD signal.
+ *
+ * @param status    Exit status value.
+ */
 void _Exit(int status);
 
 void *malloc(size_t size);
