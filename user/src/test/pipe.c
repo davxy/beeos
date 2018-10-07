@@ -30,20 +30,17 @@ int main(int argc, char *argv[])
     pid_t pid;
     char line[MAXLINE];
 
-    if (pipe(fd) < 0)
-    {
+    if (pipe(fd) < 0) {
         printf("pipe error\n");
         return 1;
     }
 
-    if ((pid = fork()) < 0)
-    {
+    if ((pid = fork()) < 0) {
         printf("fork error\n");
         return 1;
     }
 
-    if (pid > 0)
-    {
+    if (pid > 0) {
         printf("[parent] pid: %d, pgrp: %d\n", getpid(), getpgid(0));
         printf("[parent] Sleep for 5 seconds\n");
         sleep(5);
@@ -56,9 +53,7 @@ int main(int argc, char *argv[])
         printf("[parent] Wait for child to exit\n");
         wait(NULL);
         printf("[parent] Exiting\n");
-    }
-    else
-    {
+    } else {
         /* child */
         printf("[child] pid: %d, pgrp: %d\n", getpid(), getpgid(0));
         printf("[child] Close write-end (fd[1])\n");

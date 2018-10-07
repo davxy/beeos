@@ -26,9 +26,7 @@
 static void func2(void)
 {
     while (1)
-    {
         printf("2");
-    }
 }
 
 static void func1(void)
@@ -41,9 +39,7 @@ static void func1(void)
         func2();
 
     while (1)
-    {
         printf("1");
-    }
 }
 
 
@@ -52,13 +48,13 @@ int main(int argc, char *argv[])
     pid_t pid;
     int status;
 
-    if ((pid = fork()) < 0)
-    {
+    if ((pid = fork()) < 0) {
         perror("fork error");
         return 1;
     }
-    else if (pid == 0)
+    else if (pid == 0) {
         func1();
+    }
 
     printf("wait child (%d)\n", pid);
     pid = wait(&status);

@@ -29,6 +29,7 @@ void handler(int signo)
 int main(void)
 {
     sigset_t set;
+    struct sigaction act, oact;
     int status;
 
     status = sigemptyset(&set);
@@ -49,7 +50,6 @@ int main(void)
     if (status < 0)
         printf("error: sigfillset\n");
 
-    struct sigaction act, oact;
     act.sa_handler = handler;
     act.sa_mask = 0;
     act.sa_flags = 0;

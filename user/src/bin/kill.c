@@ -33,8 +33,7 @@ const struct
 {
     int signo;
     char *signame;
-} sigmap[] =
-{
+} sigmap[] = {
     { SIGHUP,    "HUP"  },
     { SIGINT,    "INT"  },
     { SIGQUIT,   "QUIT" },
@@ -83,24 +82,19 @@ int main(int argc, char *argv[])
     signo = SIGTERM;
 
     i = 1;
-    if (strcmp(argv[i], "-s") == 0)
-    {
+    if (strcmp(argv[i], "-s") == 0) {
         if (argc == 2)
             usage();
-        for (i = 0; i < MAPSIZE; i++)
-        {
-            if (strcmp(sigmap[i].signame, argv[2]) == 0)
-            {
+        for (i = 0; i < MAPSIZE; i++) {
+            if (strcmp(sigmap[i].signame, argv[2]) == 0) {
                 signo = sigmap[i].signo;
                 break;
             }
         }
-            i = 3;
+        i = 3;
     }
     pid = atol(argv[i]);
-
     if (kill(pid, signo) < 0)
         perror("kill");
-
     return 0;
 }

@@ -34,21 +34,16 @@ int main(int argc, char *argv[])
     if ((dirp = opendir(dirname)) == NULL)
         return -1;
 
-
     i = 0;
-    while ((entry = readdir(dirp)) != NULL)
-    {
+    while ((entry = readdir(dirp)) != NULL) {
         printf("%-10s ", entry->d_name);
-        if (++i == 7)
-        {
+        if (++i == 7) {
             printf("\n");
             i = 0;
         }
     }
     if (i != 0)
         printf("\n");
-
     closedir(dirp);
-
     return 0;
 }

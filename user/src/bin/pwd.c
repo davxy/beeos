@@ -25,8 +25,7 @@ char buf[PATH_MAX];
 
 int main(int argc, char *argv[])
 {
-    if (getcwd(buf, PATH_MAX) < 0)
-    {
+    if (getcwd(buf, PATH_MAX) < 0) {
         perror("unexpected getcwd error");
         return 1;
     }

@@ -29,49 +29,44 @@ void user_test()
 void kernel_test()
 {
     pid_t pid;
-    while (1)
-    {
+
+    while (1) {
         syscall(__NR_info);
         pid = fork();
-        if (pid < 0)
-        {
+        if (pid < 0) {
             printf("fork error\n");
             return;
-        }
-        else if (pid == 0)
-        {
+        } else if (pid == 0) {
             struct timespec ts;
             printf("child %d forked by %d\n", getpid(), getppid());
             ts.tv_sec = 0;
             ts.tv_nsec = 200000000;
             nanosleep(&ts, NULL);
-        }
-        else
+        } else {
             wait(NULL);
+        }
     }
 }
 
 int main(int argc, char *argv[])
 {
-    if (argc < 2)
-    {
+    if (argc < 2) {
         printf("%s n\n"
                "  - 1 user memory\n"
                "  - 2 kernel memory\n", argv[0]);
         return 1;
     }
 
-    switch(atoi(argv[1]))
-    {
-        case 1:
-            user_test();
-            break;
-        case 2:
-            kernel_test();
-            break;
-        default:
-            printf("not a valid test\n");
-            break;
+    switch(atoi(argv[1])) {
+    case 1:
+        user_test();
+        break;
+    case 2:
+        kernel_test();
+        break;
+    default:
+        printf("not a valid test\n");
+        break;
     }
 
     return 0;

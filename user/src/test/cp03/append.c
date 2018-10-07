@@ -27,6 +27,7 @@ char buf[BUFSIZ];
 int main(int argc, char **argv)
 {
     int fd;
+
     /*
      * With O_APPEND, before every WRITE the file offset is positioned
      * to the end. The [seek,write] are executed as an atomic operation.

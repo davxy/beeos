@@ -22,8 +22,7 @@
 
 int main(void)
 {
-    while (1)
-    {
+    while (1) {
         printf("Hello from %d\n", getpid());
         sleep(3);
     }

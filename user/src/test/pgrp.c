@@ -31,7 +31,5 @@ int main(int argc, char *argv[])
     if ((res = setpgid(0, 0)) < 0)
         perror("setpgid");
     printf("<pid: %d, pgid: %d>\n", getpid(), getpgid(0));
-
-
     return 0;
 }

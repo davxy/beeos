@@ -30,6 +30,5 @@ int main(int argc, char *argv[])
     i = 0;
     while (environ[i] != NULL)
         printf("%s\n", environ[i++]);
-
     return 0;
 }

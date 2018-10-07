@@ -25,12 +25,13 @@
 static const char *basenam(const char *path)
 {
     char *name;
+
     return (name = strrchr(path, '/')) ? name+1 : path;
 }
 
 int main(int argc, char *argv[])
 {
-    char buf[64];
+    char *buf;
     uint32_t nfiles = argc-1;
     char **names = &argv[1];
     size_t off = sizeof(struct initrd_header)
@@ -38,13 +39,11 @@ int main(int argc, char *argv[])
     struct initrd_file_header *headers = 
         malloc(nfiles*sizeof(struct initrd_file_header));
     FILE *fpr, *fpw;
-    
     int i, j = 0;
-    for (i = 0; i < nfiles; i++)
-    {
+
+    for (i = 0; i < nfiles; i++) {
         fpr = fopen(names[i], "r");
-        if (fpr == NULL)
-        {
+        if (fpr == NULL) {
             printf("Error: file not found: %s\n", names[i]);
             continue;
         }
@@ -62,9 +61,8 @@ int main(int argc, char *argv[])
     fwrite(&nfiles, sizeof(uint32_t), 1, fpw);
     fwrite(headers, sizeof(struct initrd_file_header), nfiles, fpw);
 
-    for (i = 0; i < nfiles; i++)
-    {
-        char *buf = malloc(headers[i].length);
+    for (i = 0; i < nfiles; i++) {
+        buf = malloc(headers[i].length);
         printf("%-2d %-10s offset = %8d, size = %8d\n", i, headers[i].name,
                 headers[i].offset, headers[i].length);
         fpr = fopen(names[i], "r");
