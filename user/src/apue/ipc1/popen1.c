@@ -32,9 +32,7 @@ int main(void)
 
     if ((fpin = popen("/test/hello", "r")) == NULL)
         err_sys("popen error");
-
-    for (; ;)
-    {
+    while (1) {
         fputs("prompt> ", stdout);
         fflush(stdout);
         if (fgets(line, MAXLINE, fpin) == NULL)

@@ -41,8 +41,7 @@ int main(int argc, char *argv[])
     int seconds;
     unsigned int left;
 
-    if (argc < 2)
-    {
+    if (argc < 2) {
         printf("usage: sleep1 <seconds>\n");
         return 1;
     }

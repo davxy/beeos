@@ -32,13 +32,13 @@
  * On most modern Operating Systems segments are initialized to cover the
  * entire addressable memory, which make segment-relative addressing
  * transparent to the user.
- * Also note that to implement memory protection, segmentation has been 
+ * Also note that to implement memory protection, segmentation has been
  * replaced by paging.
  *
  * To reference a segment, a program must use its index inside the GDT.
  * Such an index is called a *segment selector*. The selector must be loaded
  * into a *segment register* to be used.
- * Every machine instruction referencing memory has an implicit segment 
+ * Every machine instruction referencing memory has an implicit segment
  * register. The segment register can be explicitly overwritten by adding a
  * segment prefix before the instruction.
  *
@@ -65,45 +65,45 @@
  * +---+---+---+---+---+----+----+---+
  * | P |  DPL  | S | E | DC | RW | A |
  * +---+---+---+---+---+----+----+---+
- * 
+ *
  * P: Present bit.
- * 	This must be 1 for all valid selectors.
+ *     This must be 1 for all valid selectors.
  * DPL: Privilege.
  *  Contains the ring level, 0 = highest, 3 = lowest.
  * E: Executable bit.
  *  If 1 code in this segment can be executed.
  * DC: Direction/Conforming bit.
- * 	For data selectors:  tells the direction. 0 the segment grows up. 1 the
- * 	segment grows down, i.e. the offset has to be greater than the limit
- *	For code selectors: if 1 code in this segment can be executed from an
- *	equal or lower privilege level. The DPL-bits represent the highest
- *	privilege level that is allowed to execute the segment.
- *	Note that the privilege level remains the same, i.e. a far-jump form ring
- *	3 to a dpl 2 segment remains in ring 3 after the jump.
- *	If 0 code in this segment can only be executed from the ring set in dpl.
+ *     For data selectors:  tells the direction. 0 the segment grows up. 1 the
+ *     segment grows down, i.e. the offset has to be greater than the limit
+ *    For code selectors: if 1 code in this segment can be executed from an
+ *    equal or lower privilege level. The DPL-bits represent the highest
+ *    privilege level that is allowed to execute the segment.
+ *    Note that the privilege level remains the same, i.e. a far-jump form ring
+ *    3 to a dpl 2 segment remains in ring 3 after the jump.
+ *    If 0 code in this segment can only be executed from the ring set in dpl.
  * RW: Readable/Writable bit.
  *  Readable bit for code selectors: Whether read access for this segment is
  *  allowed. Write access is never allowed for code segments.
  *  Writable bit for data selectors: Whether write access for this segment is
  *  allowed. Read access is always allowed for data segments.
  * A: Accessed bit.
- * 	The CPU sets this to 1 when the segment is accessed.
+ *     The CPU sets this to 1 when the segment is accessed.
  *
  * Flags
  * -----
  *
  *   7                              0
  * +----+----+----+----+----+----+----+----+
- * | Gr | Sz |         | 	Limit High     |
+ * | Gr | Sz |         |     Limit High     |
  * +----+----+----+----+----+----+----+----+
  *
  * Gr: Granularity bit.
- *	If 0 the limit is in 1B blocks (byte granularity).
- * 	If 1 the limit is in 4KB blocks (page granularity).
+ *    If 0 the limit is in 1B blocks (byte granularity).
+ *     If 1 the limit is in 4KB blocks (page granularity).
  * Sz: Size bit.
- * 	If 0 the selector defines 16 bit protected mode.
- * 	If 1 it defines 32 bit protected mode. You can have both 16 bit and 32 bit
- * 	selectors at once.
+ *     If 0 the selector defines 16 bit protected mode.
+ *     If 1 it defines 32 bit protected mode. You can have both 16 bit and 32 bit
+ *     selectors at once.
  */
 
 #ifndef BEEOS_ARCH_X86_GDT_H_
@@ -114,25 +114,23 @@
 /**
  * GDT entry structure
  */
-struct gdt_entry
-{
-	uint16_t	limit_lo;	/**< The lower 16 bits of the limit (15..0). */
-	uint16_t	base_lo;	/**< The lowers 16 bits of the base (15..0). */
-	uint8_t		base_mi;	/**< The next 8 bits of the base (23..16). */
-	uint8_t		access;		/**< Pr, DPL, S, Ex, DC, RW, Ac. */
-	uint8_t		flags;		/**< Gr, Sz, Limit High (19..16). */
-	uint8_t		base_hi;	/**< The last 8 bits of the base (31..24). */
+struct gdt_entry {
+    uint16_t    limit_lo;   /**< The lower 16 bits of the limit (15..0). */
+    uint16_t    base_lo;    /**< The lowers 16 bits of the base (15..0). */
+    uint8_t     base_mi;    /**< The next 8 bits of the base (23..16). */
+    uint8_t     access;     /**< Pr, DPL, S, Ex, DC, RW, Ac. */
+    uint8_t     flags;      /**< Gr, Sz, Limit High (19..16). */
+    uint8_t     base_hi;    /**< The last 8 bits of the base (31..24). */
 };
 
 /**
  * This struct describes a GDT pointer. It points to the start of our array of
  * GDT entries, and is in the format required by the lgdt instruction.
  */
-struct gdt_register
-{
-	uint16_t	limit;		/**< Size of gdt table minus one. */
-	uint16_t	base_lo;	/**< The lower 16 bits of the table address. */
-	uint16_t	base_hi;	/**< The higher 16 bits of the table address. */
+struct gdt_register {
+    uint16_t    limit;      /**< Size of gdt table minus one. */
+    uint16_t    base_lo;    /**< The lower 16 bits of the table address. */
+    uint16_t    base_hi;    /**< The higher 16 bits of the table address. */
 };
 
 /**
@@ -142,4 +140,3 @@ void gdt_init(void);
 
 
 #endif /* BEEOS_ARCH_X86_GDT_H_ */
-

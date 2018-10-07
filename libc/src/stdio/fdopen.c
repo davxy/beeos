@@ -27,6 +27,7 @@
 FILE *fdopen(int fd, const char *mode)
 {
     FILE *fp;
+
 #if 0
     int flags;
 
@@ -46,12 +47,12 @@ FILE *fdopen(int fd, const char *mode)
     else if (!strcmp(mode, "a+") || !strcmp(mode, "a+b")
             || !strcmp(mode, "ab+"))
         flags = O_RDWR | O_CREAT | O_APPEND;
-    else
-    {
+    else {
         errno = EINVAL;
         return NULL;
     }
 #endif
+
     /* TODO: check if fd flags are compatible with flags (fcntl) ? */
 
     if ((fp = malloc(sizeof(*fp))) == NULL)

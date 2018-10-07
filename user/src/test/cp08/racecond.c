@@ -29,8 +29,8 @@ static void charatatime(char *str)
 {
     char *ptr;
     int c;
-    for (ptr = str; (c = *ptr++) != 0; )
-    {
+
+    for (ptr = str; (c = *ptr++) != 0; ) {
         putc(c, stdout);
         usleep(100000);
     }
@@ -41,20 +41,17 @@ int main(void)
     pid_t pid;
 
     sync_enter();
-    
-    if ((pid = fork()) < 0)
+
+    if ((pid = fork()) < 0) {
         err_sys("fork error");
-    else if (pid == 0)
-    {
+    } else if (pid == 0) {
         printf("[child] wait parent\n");
         sync_wait();
         printf("[child] continue\n");
         charatatime("OUTPUT FROM CHILD\n");
         sleep(3);
         sync_tell(getppid());
-    }
-    else
-    {
+    } else {
         sleep(3);
         charatatime("OUTPUT FROM PARENT\n");
         printf("[parent] wakeup child\n");

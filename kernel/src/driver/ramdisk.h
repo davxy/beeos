@@ -31,4 +31,3 @@ ssize_t ramdisk_write(const void *buf, size_t size, size_t off);
 
 
 #endif /* BEEOS_DRIVER_RAMDISK_H_ */
-

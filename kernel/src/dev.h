@@ -62,4 +62,3 @@
 /** @} */
 
 #endif /* BEEOS_DEV_H_ */
-

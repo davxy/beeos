@@ -134,8 +134,7 @@ static int tty_read_wait(dev_t dev, int couldblock)
 
     spinlock_lock(&tty->rcond.lock);
 
-    while (tty->rpos >= tty->wpos && couldblock != 0)
-    {
+    while (tty->rpos >= tty->wpos && couldblock != 0) {
         tty->rpos = tty->wpos = 0;
         /* TODO: If BLOCKING file */
         cond_wait(&tty->rcond);
@@ -155,25 +154,23 @@ ssize_t tty_read(dev_t dev, void *buf, size_t size)
     int key;
     unsigned char *p = (unsigned char *)buf;
 
-    while (n < size)
-    {
+    while (n < size) {
         key = tty_read_wait(dev, (n == 0));
-        if (key == 0 && n == 0)
-        {
+        if (key == 0 && n == 0) {
             /*
              * A single line contains zero: this is made by a VEOF
              * character (^D), that is, the input is closed.
              */
             break;
-        }
-        else if (key < 0 && n == 0)
+        } else if (key < 0 && n == 0) {
             /* At the moment, there is just nothing to read. */
             return -EAGAIN;
-        else if (key < -0 && n > 0)
+        } else if (key < -0 && n > 0) {
             /* Finished to read */
             break;
-        else
+        } else {
             p[n] = key;
+        }
         n++;
     }
     return n;
@@ -231,24 +228,17 @@ void tty_update(char c)
     if (tty->rpos > tty->wpos)
         tty->rpos = tty->wpos = 0;
 
-    if (c == '\b')
-    {
-        if (tty->wpos > tty->rpos)
-        {
+    if (c == '\b') {
+        if (tty->wpos > tty->rpos) {
             tty->wpos--;    /* will be eventually adjusted below */
             echo_buf = "\b \b";
             echo_siz = 3;
-        }
-        else
-        {
+        } else {
             echo_siz = 0;
         }
-    }
-    else
-    {
+    } else {
         tty->rbuf[tty->wpos++] = c;
-        if (c == '\0' || c == '\n')
-        {
+        if (c == '\0' || c == '\n') {
             /* Wakeup all the processes waiting on this device */
             cond_signal(&tty->rcond);
         }
@@ -257,7 +247,7 @@ void tty_update(char c)
     spinlock_unlock(&tty->rcond.lock);
 
     if ((tty->attr.c_lflag & ECHO) != 0 && echo_siz != 0)
-        (void)tty_write(tty->dev, echo_buf, echo_siz);
+        tty_write(tty->dev, echo_buf, echo_siz);
 }
 
 
@@ -318,4 +308,3 @@ void tty_init(void)
                      timer_ticks + msecs_to_ticks(100));
     timer_event_add(&refresh_tm);
 }
-

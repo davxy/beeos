@@ -17,10 +17,13 @@
  * License along with BeeOS; if not, see <http://www.gnu/licenses/>.
  */
 
-#include <sys/types.h>
+#ifndef BEEOS_VERSION_H_
+#define BEEOS_VERSION_H_
 
-struct malloc_head
-{
-    struct malloc_head *next;   /* Next block if on free list */
-    size_t size;                /* Size of the block */
-};
+#define BEEOS_MAJOR       0
+#define BEEOS_MINOR       2
+#define BEEOS_PATCH       0
+
+#define BEEOS_CODENAME    "BronzeAge"
+
+#endif /* BEEOS_VERSION_H_ */

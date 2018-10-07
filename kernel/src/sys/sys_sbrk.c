@@ -26,6 +26,7 @@
 void *sys_sbrk(intptr_t incr)
 {
     uintptr_t addr;
+
     addr = current->brk;
     current->brk += incr;
     return (void *)addr;

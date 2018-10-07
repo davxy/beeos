@@ -38,15 +38,15 @@ void isr_handler(struct isr_frame *ifr)
     struct isr_frame *previfr;
     unsigned int num;
 
-    /* 
-     * Save the current ifr pointer in the stack. This allows nested 
+    /*
+     * Save the current ifr pointer in the stack. This allows nested
      * interrupts handling (e.g. manage a page fault in the kernel).
      * Thus if, after isr handling, we return back to the kernel
      * we have the correct 'ifr' value within the current_task struct.
      */
     previfr = current->arch.ifr;
     current->arch.ifr = ifr;
-    
+
     num = ifr->int_no;
     if (num == ISR_SYSCALL)
         num = 48;
@@ -60,8 +60,7 @@ void isr_handler(struct isr_frame *ifr)
     if (32 <= num && num <= 47)
         pic_eoi(num);
 
-    if (need_resched != 0)
-    {
+    if (need_resched != 0) {
         need_resched = 0;
         scheduler();
     }
@@ -73,7 +72,7 @@ void isr_handler(struct isr_frame *ifr)
      */
     if (!sigisemptyset(&current->sigpend) &&
             current->arch.sfr == NULL && (ifr->cs & 0x3) == 0x3)
-        (void)do_signal();
+        do_signal();
 
     /* Eventually restore the previous ifr */
     current->arch.ifr = previfr;
@@ -91,8 +90,7 @@ void isr_register_handler(unsigned int num, isr_handler_t func)
         /* TODO: the following is ARCH specific code */
         if (32 <= num && num <= 47)
             pic_unmask(num - 32);
-    }
-    else {
+    } else {
         panic("error: isr num (%d) out of range\n", num);
     }
 }

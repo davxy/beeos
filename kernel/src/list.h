@@ -25,8 +25,7 @@
 
 
 /** Circularly double linked list data structure. */
-struct list_link
-{
+struct list_link {
     /** Previous element. */
     struct list_link    *prev;
     /** Next element. */
@@ -46,7 +45,7 @@ static inline void list_init(struct list_link *list)
 }
 
 static inline void list_insert_after(struct list_link *list,
-        struct list_link *node)
+                                     struct list_link *node)
 {
     node->next = list->next;
     node->prev = list;
@@ -55,7 +54,7 @@ static inline void list_insert_after(struct list_link *list,
 }
 
 static inline void list_insert_before(struct list_link *list,
-        struct list_link *node)
+                                      struct list_link *node)
 {
     node->next = list;
     node->prev = list->prev;
@@ -82,7 +81,8 @@ static inline void list_delete(struct list_link *link)
  *
  * @param list1
  */
-static inline void list_merge(struct list_link *list1, struct list_link *list2)
+static inline void list_merge(struct list_link *list1,
+                              struct list_link *list2)
 {
     struct list_link *tmp;
     list1->prev->next = list2;
@@ -123,4 +123,3 @@ static inline void list_merge(struct list_link *list1, struct list_link *list2)
 
 
 #endif /* BEEOS_LIST_H_ */
-

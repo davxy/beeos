@@ -37,14 +37,12 @@ FILE *popen(const char *command, const char *type)
     FILE    *fp;
 
     /* only allow "r" or "w" */
-    if ((type[0] != 'r' && type[0] != 'w') || type[1] != 0)
-    {
+    if ((type[0] != 'r' && type[0] != 'w') || type[1] != 0) {
         errno = EINVAL; /* required by POSIX */
         return NULL;
     }
 
-    if (popen_childs == NULL) /* first time through */
-    {
+    if (popen_childs == NULL) { /* first time through */
         /* allocate zeroed out array for child pids */
         if ((popen_childs = calloc(OPEN_MAX, sizeof(pid_t))) == NULL)
             return NULL;
@@ -53,34 +51,29 @@ FILE *popen(const char *command, const char *type)
     if (pipe(pfd) < 0)
         return NULL;    /* errno set by pipe() */
 
-    if ((pid = fork()) < 0)
+    if ((pid = fork()) < 0) {
         return NULL;    /* errno set by fork() */
-    else if (pid == 0)
-    {
+    } else if (pid == 0) {
         /* child */
-        if (*type == 'r')
-        {
+        if (*type == 'r') {
             close(pfd[0]);
-            if (pfd[1] != STDOUT_FILENO)
-            {
+            if (pfd[1] != STDOUT_FILENO) {
                 dup2(pfd[1], STDOUT_FILENO);
                 close(pfd[1]);
             }
-        }
-        else
-        {
+        } else {
             close(pfd[1]);
-            if (pfd[0] != STDIN_FILENO)
-            {
+            if (pfd[0] != STDIN_FILENO) {
                 dup2(pfd[0], STDIN_FILENO);
                 close(pfd[0]);
             }
         }
 
         /* close all descriptors in chldpid[] */
-        for (i = 0; i < OPEN_MAX; i++)
+        for (i = 0; i < OPEN_MAX; i++) {
             if (popen_childs[i] > 0)
                 close(i);
+        }
 
         execl("/bin/sh", "sh", "-c", command, NULL);
         _exit(127);
@@ -88,14 +81,11 @@ FILE *popen(const char *command, const char *type)
 
     /* parent continues... */
 
-    if (*type == 'r')
-    {
+    if (*type == 'r') {
         close(pfd[1]);
         if ((fp = fdopen(pfd[0], type)) == NULL)
             return NULL;
-    }
-    else
-    {
+    } else {
         close(pfd[0]);
         if ((fp = fdopen(pfd[1], type)) == NULL)
             return NULL;

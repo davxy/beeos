@@ -52,8 +52,7 @@ void buddy_free(const struct buddy_sys *ctx, const struct frame *frm,
     unsigned int block_idx, buddy_idx;
 
     block_idx = frm - ctx->frames;
-    while (order != ctx->order_max)
-    {
+    while (order != ctx->order_max) {
         /* Check if there is any buddy in the list of the same order */
         buddy_idx = block_idx ^ (1 << order);
         /*
@@ -87,12 +86,10 @@ struct frame *buddy_alloc(const struct buddy_sys *ctx, unsigned int order)
     int left_idx, right_idx;
     unsigned int i;
 
-    for (i = order; i <= ctx->order_max; i++)
-    {
-        if (!list_empty(&ctx->free_area[i].list))
-        {
+    for (i = order; i <= ctx->order_max; i++) {
+        if (!list_empty(&ctx->free_area[i].list)) {
             frm = list_container(ctx->free_area[i].list.next,
-                    struct frame, link);
+                                 struct frame, link);
             list_delete(&frm->link);
             left_idx = frm - ctx->frames;
             break;
@@ -102,16 +99,15 @@ struct frame *buddy_alloc(const struct buddy_sys *ctx, unsigned int order)
         return NULL;
 
     if (i != ctx->order_max) /* Order max does't have any buddy */
-        (void)toggle_bit(ctx, left_idx, i);
+        toggle_bit(ctx, left_idx, i);
 
     /* Eventually split */
-    while (i > order)
-    {
+    while (i > order) {
         i--;
         right_idx = left_idx + (1 << i);
         list_insert_before(&ctx->free_area[i].list,
                 &ctx->frames[right_idx].link);
-        (void)toggle_bit(ctx, right_idx, i);
+        toggle_bit(ctx, right_idx, i);
     }
     return frm;
 }
@@ -139,8 +135,7 @@ int buddy_init(struct buddy_sys *ctx, unsigned int frames_num,
     ctx->frames = (struct frame *)kmalloc(frames_num * sizeof(struct frame), 0);
     if (ctx->frames == NULL)
         goto e0;
-    for (i = 0; i < frames_num; i++)
-    {
+    for (i = 0; i < frames_num; i++) {
         list_init(&ctx->frames[i].link);
         ctx->frames[i].refs = 1;
     }
@@ -160,8 +155,7 @@ int buddy_init(struct buddy_sys *ctx, unsigned int frames_num,
      * Initialize free frames table row for each order.
      */
 
-    for (i = 0; i < ctx->order_max; i++)
-    {
+    for (i = 0; i < ctx->order_max; i++) {
         /* Num of buddies of order i. Divide number of blocks by 2^(i+1)  */
         count = (frames_num >> (i+1));
         /* Compute the required number of unsigned longs to hold the bitmap */
@@ -216,8 +210,7 @@ void buddy_dump(const struct buddy_sys *ctx, char *base)
             kprintf("\n");
             for (frame_link = ctx->free_area[i].list.next;
                  frame_link != &ctx->free_area[i].list;
-                 frame_link = frame_link->next)
-            {
+                 frame_link = frame_link->next) {
                 frm = list_container_const(frame_link, struct frame, link);
                 frame_idx = frm - ctx->frames;
                 frame_ptr = base + (frame_idx << ctx->order_bit);
@@ -229,4 +222,3 @@ void buddy_dump(const struct buddy_sys *ctx, char *base)
     }
     kprintf("free: %u\n", freemem);
 }
-

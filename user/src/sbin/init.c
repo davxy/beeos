@@ -31,7 +31,8 @@
 
 #define NTTY    4
 
-#define DEFAULT_HOSTNAME    "localhost"
+#define DEFAULT_HOST        "localhost"
+#define DEFAULT_USER        "guest"
 #define SHELL               "/bin/sh"
 #define PATH                "/bin:/sbin"
 
@@ -65,7 +66,6 @@ void dev_init(void)
         perror("mount of dev fs failure");
         return;
     }
-
     for (i = 0; i < NDEVS; i++) {
         if (mknod(devs[i].name, devs[i].type, devs[i].dev) < 0)
             printf("mknod %s error: %s", devs[i].name, strerror(errno));
@@ -80,9 +80,8 @@ void env_init(void)
 
     if (gethostname(host, sizeof(host)) < 0) {
         perror("gethostname");
-        strcpy(host, DEFAULT_HOSTNAME);
+        strcpy(host, DEFAULT_HOST);
     }
-
     if (setenv("HOSTNAME", host, 1) < 0)
         perror("setenv: HOSTNAME");
 }
@@ -93,13 +92,14 @@ void env_update(int i)
     char tty[32];
 
     snprintf(tty, sizeof(tty), "/dev/tty%d", i);
-
     if (setenv("SHELL", SHELL, 1) < 0)
         perror("setenv: SHELL");
     if (setenv("PATH", PATH, 1) < 0)
         perror("setenv: PATH");
     if (setenv("TTY", tty, 1) < 0)
         perror("setenv: TTY");
+    if (setenv("USER", DEFAULT_USER,1 ) < 0)
+        perror("setenv: USER");
 }
 
 pid_t spawn_shell(int i)
@@ -109,7 +109,6 @@ pid_t spawn_shell(int i)
     pid = fork();
     if (pid == 0) {
         env_update(i);
-
         if (execl(SHELL, SHELL, NULL) < 0)
             return -1;
     }
@@ -127,14 +126,11 @@ void sigchld(int signo)
 
     if (signo != SIGCHLD)
         return;
-
-    while (1)
-    {
+    while (1) {
         pid = waitpid(-1, &status, WNOHANG);
-        if (pid > 0)
+        if (pid > 0) {
             printf("[init-sig] Child %d exit status : %d\n", pid, status);
-        else
-        {
+        } else {
             if (pid < 0)
                 printf("[init-sig] SIGCHLD with no childs\n");
             else

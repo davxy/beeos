@@ -26,12 +26,10 @@ int main(int argc, char *argv[])
     int res;
 
     printf("Create a process group\n");
-    
+
     printf("<pid: %d, pgid: %d>\n", getpid(), getpgid(0));
     if ((res = setpgid(0, 0)) < 0)
         perror("setpgid");
     printf("<pid: %d, pgid: %d>\n", getpid(), getpgid(0));
-
-
     return 0;
 }

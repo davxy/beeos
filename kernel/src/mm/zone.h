@@ -23,7 +23,7 @@
 #include "buddy.h"
 #include "list.h"
 
-/** 
+/**
  * Low memory is used to allocate buffers that must be identity mapped
  * to physical memory. That is we can pass from the physical address to
  * the virtual address by adding the kernel virtual address base.
@@ -33,8 +33,7 @@
 #define ZONE_LOW    1
 
 /** Zone descriptor */
-struct zone_st 
-{
+struct zone_st {
     char            *addr;       /**< Zone (physical) address */
     size_t           size;       /**< Zone size */
     size_t           frame_size; /**< Size of a single frame */
@@ -57,7 +56,7 @@ struct zone_st
  * @return              On error -1 is returned.
  */
 int zone_init(struct zone_st *ctx, void *addr, size_t size,
-        size_t frame_size, int flags);
+              size_t frame_size, int flags);
 
 /**
  * Allocate a memory segment from a zone.
@@ -88,4 +87,3 @@ void zone_free(const struct zone_st *ctx, const void *ptr, int order);
 void zone_dump(const struct zone_st *ctx);
 
 #endif /* BEEOS_MM_ZONE_H_ */
-

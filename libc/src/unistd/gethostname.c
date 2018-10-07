@@ -24,8 +24,7 @@ int gethostname(char *name, size_t len)
     int res = -1;
     FILE *fp;
 
-    if ((fp = fopen("/etc/hostname", "r")) != NULL)
-    {
+    if ((fp = fopen("/etc/hostname", "r")) != NULL) {
         if (fgets(name, len, fp) != NULL)
             res = 0;
         fclose(fp);

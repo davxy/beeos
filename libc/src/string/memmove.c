@@ -18,12 +18,12 @@
  */
 
 /**
- * @file	memmove.c
+ * @file    memmove.c
  *
- * @brief	
- * 
- * @author	dave
- * @date	Jul 12, 2014
+ * @brief
+ *
+ * @author    dave
+ * @date    Jul 12, 2014
  */
 
 #include <string.h>
@@ -39,19 +39,13 @@ void *memmove(void *dst, const void *src, size_t n)
      * Depending on the memory start locations, copy may be direct or
      * reverse, to avoid overwriting before the relocation is done.
      */
-    if (d < s)
-    {
-    	for (i = 0; i < n; i++)
-        {
-    		d[i] = s[i];
-        }
-    }
-    else /* s <= d */
-    {
+    if (d < s) {
+        for (i = 0; i < n; i++)
+            d[i] = s[i];
+    } else { /* s <= d */
         i = n;
         while (i-- > 0)
             d[i] = s[i];
     }
-
     return dst;
 }

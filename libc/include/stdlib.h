@@ -20,8 +20,8 @@
 /**
  * @file    stdlib.h
  * @brief
- * @author 	Davide Galassi
- * @date  	Jul 18, 2014
+ * @author     Davide Galassi
+ * @date      Jul 18, 2014
  */
 
 #ifndef _STDLIB_H_
@@ -32,9 +32,9 @@
 /**
  * Converts the initial portion of the string pointed to by str to int.
  * @param str
- * 	Pointer to the string to convert.
+ *     Pointer to the string to convert.
  * @return
- * 	The converted value.
+ *     The converted value.
  */
 int atoi(const char *str);
 
@@ -42,9 +42,9 @@ int atoi(const char *str);
  * Behaves the same as atoi(), except that they convert the initial portion of
  * the string to their return type of long.
  * @param str
- * 	Pointer to the string to convert.
+ *     Pointer to the string to convert.
  * @return
- * 	The converted value.
+ *     The converted value.
  */
 long atol(const char *str);
 
@@ -52,9 +52,9 @@ long atol(const char *str);
  * Computes the absolute value of its integer operand, i.
  * If the result cannot be represented, the behavior is undefined.
  * @param i
- * 	Integer value value.
+ *     Integer value value.
  * @return
- * 	The absolute value of i.
+ *     The absolute value of i.
  */
 int abs(int i);
 
@@ -64,7 +64,7 @@ int abs(int i);
  * All functions registered with atexit(3) are called, in the reverse
  * order of their registration.
  * All open stdio(3) stream are flushed and closed.
- * 
+ *
  * @param status    Exit status value.
  * @return          The function does not return.
  */

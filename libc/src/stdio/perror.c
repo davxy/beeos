@@ -26,7 +26,7 @@ void perror(const char *str)
     /* Show the string if there is one */
     if (str != NULL && strlen(str) > 0)
         printf("%s: ", str);
-    
+
     /* Show translated error */
     printf("%s\n", strerror(errno));
 }

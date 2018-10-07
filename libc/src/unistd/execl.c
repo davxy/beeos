@@ -31,8 +31,7 @@ int execl(const char *path, const char *arg, ...)
 
     va_start(ap, arg);
     next_arg = (char *)arg;
-    for (argc = 0; argc < ARG_MAX; argc++)
-    {
+    for (argc = 0; argc < ARG_MAX; argc++) {
         argv[argc] = next_arg;
         if (argv[argc] == NULL)
             break;

@@ -27,6 +27,7 @@ char buf[BUFSIZ];
 int main(int argc, char **argv)
 {
     int fd;
+
     /*
      * With O_APPEND, before every WRITE the file offset is positioned
      * to the end. The [seek,write] are executed as an atomic operation.
@@ -41,11 +42,11 @@ int main(int argc, char **argv)
     lseek(fd, 0, SEEK_SET);     /* position the offset to the beginning */
     if (read(fd, buf, 4) != 4)  /* reads four bytes from the beginning */
         err_sys("read error");
-    
+
     /* reposition offset to the end before write */
-    if (write(fd, "World", 5) != 5) 
+    if (write(fd, "World", 5) != 5)
         err_sys("write error");
-  
+
     if (read(fd, buf, 4) != 0)   /* returns 0 */
         err_sys("read error");
 

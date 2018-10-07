@@ -33,26 +33,21 @@ int main(int argc, char *argv[])
     int status;
     int i = 0;
     struct timespec ts;
+
     ts.tv_sec = 0;
     ts.tv_nsec = 100000;
-    while (1)
-    {
+    while (1) {
         printf("==================\nloop begin\n");
-        if ((pid = fork()) < 0)
-        {
+        if ((pid = fork()) < 0) {
             perror("fork error");
             break;
-        }
-        else if (pid == 0)
-        {
+        } else if (pid == 0) {
             exit(0);
             status = execve(cargv[0], cargv, NULL);
             if (status < 0)
                 perror("execve error");
             exit(1);
-        }
-        else
-        {
+        } else {
             printf("wait child (%d)\n", pid);
             pid = waitpid(pid, &status, 0);
             printf("child (%d) exit status %d\n", pid, status);
@@ -61,8 +56,7 @@ int main(int argc, char *argv[])
         }
 
         printf("%d - goto sleep\n", i++);
-        if (nanosleep(&ts, NULL) < 0)
-        {
+        if (nanosleep(&ts, NULL) < 0) {
             perror("nanosleep error");
             break;
         }

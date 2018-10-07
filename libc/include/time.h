@@ -22,8 +22,7 @@
 
 typedef long long int time_t;
 
-struct timespec
-{
+struct timespec {
     time_t  tv_sec;     /**> Seconds */
     long    tv_nsec;    /**> Nanoseconds */
 };

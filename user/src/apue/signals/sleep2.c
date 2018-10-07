@@ -34,8 +34,7 @@ unsigned int sleep2(unsigned int seconds)
 {
     if (signal(SIGALRM, sig_alrm) == SIG_ERR)
         return seconds;
-    if (setjmp(env_alrm) == 0)
-    {
+    if (setjmp(env_alrm) == 0) {
         alarm(seconds); /* Start the timer */
         pause();    /* Next caught signal wakes us up */
     }
@@ -47,8 +46,7 @@ int main(int argc, char *argv[])
     int seconds;
     unsigned int left;
 
-    if (argc < 2)
-    {
+    if (argc < 2) {
         printf("usage: sleep <seconds>\n");
         return 1;
     }

@@ -122,10 +122,12 @@ uint32_t page_map(void *virt, uint32_t phys)
                 return (uint32_t)-ENOMEM;
         }
         tab[ti] = pag_phys | flags;
-    } else if (!(tab[ti] & PTE_W)) /* read only page (cow) */
+    } else if (!(tab[ti] & PTE_W)) {
+        /* read only page (cow) */
         panic("COW not implemented yet");
-    else
+    } else {
         panic("already mapped");
+    }
 
     flush_tlb(); /* Is this really required? */
     return pag_phys;

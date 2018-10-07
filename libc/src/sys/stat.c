@@ -24,6 +24,7 @@
 int stat(const char *path, struct stat *buf)
 {
     int fd;
+
     if ((fd = open(path, O_RDONLY, 0)) < 0)
         return -1;
     return fstat(fd, buf);

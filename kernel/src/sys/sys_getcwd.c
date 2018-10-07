@@ -26,8 +26,6 @@
 
 int sys_getcwd(char *buf, size_t size)
 {
-    int res = 0;
-
     if (buf == NULL)
         return -EINVAL;
 

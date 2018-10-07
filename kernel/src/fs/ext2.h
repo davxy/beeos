@@ -25,4 +25,3 @@
 struct super_block *ext2_super_create(dev_t dev);
 
 #endif /* BEEOS_FS_EXT2_H_ */
-

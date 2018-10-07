@@ -25,17 +25,13 @@
  */
 void screen_putchar(struct screen *scr, char c)
 {
-	unsigned int i;
+    unsigned int i;
 
-	if (' ' <= c && c <= '~')
-	{
-		scr->buf[scr->pos_y * SCREEN_WIDTH + scr->pos_x] = c;
-		scr->pos_x++;
-	}
-	else
-	{
-		switch (c)
-		{
+    if (' ' <= c && c <= '~') {
+        scr->buf[scr->pos_y * SCREEN_WIDTH + scr->pos_x] = c;
+        scr->pos_x++;
+    } else {
+        switch (c) {
         case '\b':  /* backspace */
             if (scr->pos_x != 0)
                 scr->pos_x--;
@@ -52,28 +48,26 @@ void screen_putchar(struct screen *scr, char c)
             break;
         default:
             break;
-		}
-	}
+        }
+    }
 
-	if (scr->pos_x >= SCREEN_WIDTH)
-	{
-		/* Go to a new line */
-		scr->pos_x = 0;
-		scr->pos_y++;
-	}
+    if (scr->pos_x >= SCREEN_WIDTH) {
+        /* Go to a new line */
+        scr->pos_x = 0;
+        scr->pos_y++;
+    }
 
-	if (scr->pos_y >= SCREEN_HEIGHT)
-	{
-		/* Scroll the screen */
+    if (scr->pos_y >= SCREEN_HEIGHT) {
+        /* Scroll the screen */
 
-		/* move every line up by one */
-		for (i = 0; i < SCREEN_WIDTH * (SCREEN_HEIGHT - 1); i++)
-			scr->buf[i] = scr->buf[i + SCREEN_WIDTH];
-		/* clear the last line */
-		for (; i < SCREEN_WIDTH * SCREEN_HEIGHT; i++)
-			scr->buf[i] = ' ';
-		scr->pos_y = SCREEN_HEIGHT - 1;
-	}
+        /* move every line up by one */
+        for (i = 0; i < SCREEN_WIDTH * (SCREEN_HEIGHT - 1); i++)
+            scr->buf[i] = scr->buf[i + SCREEN_WIDTH];
+        /* clear the last line */
+        for (; i < SCREEN_WIDTH * SCREEN_HEIGHT; i++)
+            scr->buf[i] = ' ';
+        scr->pos_y = SCREEN_HEIGHT - 1;
+    }
 
     /* Set the dirty flag */
     scr->dirty = 1;
@@ -84,10 +78,10 @@ void screen_putchar(struct screen *scr, char c)
  */
 void screen_write(struct screen *scr, const char *buf, unsigned int n)
 {
-	unsigned int i;
+    unsigned int i;
 
-	for (i = 0; i < n; i++)
-		screen_putchar(scr, buf[i]);
+    for (i = 0; i < n; i++)
+        screen_putchar(scr, buf[i]);
 }
 
 /*
@@ -96,7 +90,6 @@ void screen_write(struct screen *scr, const char *buf, unsigned int n)
 void screen_init(struct screen *scr)
 {
     memset(scr->buf, ' ', sizeof(scr->buf));
-	scr->pos_x = scr->pos_y = 0;
+    scr->pos_x = scr->pos_y = 0;
     scr->dirty = 1;
 }
-

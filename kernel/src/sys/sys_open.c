@@ -47,14 +47,15 @@ int sys_open(const char *pathname, int flags, mode_t mode)
             return -EBUSY;
     }
 
-    for (fdn = 0; fdn < OPEN_MAX; fdn++)
+    for (fdn = 0; fdn < OPEN_MAX; fdn++) {
         if (current->fds[fdn].fil == NULL)
             break;
+    }
     if (fdn == OPEN_MAX)
         return -EMFILE; /* Too many open files. */
 
     fil = fs_file_alloc();
-    if (!fil)
+    if (fil == NULL)
         return -ENOMEM;
 
     fil->ref = 1;

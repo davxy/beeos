@@ -25,8 +25,7 @@
 
 static void func2(void)
 {
-    while (1)
-    {
+    while (1) {
         printf("2");
         sleep(2);
     }
@@ -41,8 +40,7 @@ static void func1(void)
     else if (pid == 0)
         func2();
 
-    while (1)
-    {
+    while (1) {
         printf("1");
         sleep(1);
     }
@@ -55,30 +53,23 @@ int main(int argc, char *argv[])
     char *cargv[2] = { "/test/dump", NULL };
     int status;
 
-    if ((pid = fork()) < 0)
-    {
+    if ((pid = fork()) < 0) {
         perror("fork error");
         return 1;
-    }
-    else if (pid == 0)
+    } else if (pid == 0) {
         func1();
-    
-    while (1)
-    {
-        if ((pid = fork()) < 0)
-        {
+    }
+
+    while (1) {
+        if ((pid = fork()) < 0) {
             perror("fork error");
             return 1;
-        }
-        else if (pid == 0)
-        {
+        } else if (pid == 0) {
             status = execve(cargv[0], cargv, NULL);
             if (status < 0)
                 perror("execve error");
             exit(1);
-        }
-        else
-        {
+        } else {
             printf("wait child (%d)\n", pid);
             pid = wait(&status);
             printf("child (%d) exit status %d\n", pid, status);

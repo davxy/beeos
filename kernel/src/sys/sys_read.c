@@ -37,22 +37,22 @@ ssize_t sys_read(int fd, void *buf, size_t count)
     fil = current->fds[fd].fil;
 
     switch (fil->dent->inod->mode & S_IFMT) {
-        case S_IFBLK:
-        case S_IFCHR:
-        case S_IFREG:
-        case S_IFIFO:
-        case S_IFSOCK:
-            n = vfs_read(fil->dent->inod, buf, count, fil->off);
-            break;
-        case S_IFDIR:
-            n = fil->off/sizeof(struct dirent);
-            n = vfs_readdir(fil->dent, n, (struct dirent *)buf);
-            if (n == 0)
-                n = sizeof(struct dirent);
-            break;
-        default:
-            n = -1;
-            break;
+    case S_IFBLK:
+    case S_IFCHR:
+    case S_IFREG:
+    case S_IFIFO:
+    case S_IFSOCK:
+        n = vfs_read(fil->dent->inod, buf, count, fil->off);
+        break;
+    case S_IFDIR:
+        n = fil->off/sizeof(struct dirent);
+        n = vfs_readdir(fil->dent, n, (struct dirent *)buf);
+        if (n == 0)
+            n = sizeof(struct dirent);
+        break;
+    default:
+        n = -1;
+        break;
     }
 
     if (n > 0)

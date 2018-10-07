@@ -122,4 +122,3 @@ void kmalloc_init(void)
     }
     kmalloc_initialized = 1;
 }
-

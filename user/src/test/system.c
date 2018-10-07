@@ -23,13 +23,13 @@
 int main(int argc, char *argv[])
 {
     int i;
-    if (argc < 2)
-    {
+
+    if (argc < 2) {
         printf("usage: %s <shell command(s)>\n", argv[0]);
         return 1;
     }
-    for (i = 1; i < argc; i++)
-    {
+
+    for (i = 1; i < argc; i++) {
         if (system(argv[i]) != 0)
             printf("Error executing %s\n", argv[i]);
     }

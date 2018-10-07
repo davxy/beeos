@@ -19,12 +19,12 @@
 
 /**
  * @file vsprintf.c
- * 
+ *
  * @brief
- * 
- * @author 	Davide Galassi
- * @date  	Jul 15, 2014
- * 
+ *
+ * @author     Davide Galassi
+ * @date      Jul 15, 2014
+ *
  *
  */
 
@@ -33,5 +33,5 @@
 
 int vsprintf(char *str, const char *format, va_list arg)
 {
-	return vsnprintf(str, BUFSIZ, format, arg);
+    return vsnprintf(str, BUFSIZ, format, arg);
 }

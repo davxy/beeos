@@ -34,8 +34,8 @@ void kvprintf(const char *fmt, va_list arg)
     int n;
 
     n = vsnprintf(str, KPRINTF_BUFSIZ, fmt, arg);
-    if (n > 0) 
-        (void)tty_write(DEV_CONSOLE, str, n);
+    if (n > 0)
+        tty_write(DEV_CONSOLE, str, n);
 }
 
 void kprintf(const char *fmt, ...)
@@ -46,4 +46,3 @@ void kprintf(const char *fmt, ...)
     kvprintf(fmt, ap);
     va_end(ap);
 }
-

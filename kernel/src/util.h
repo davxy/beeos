@@ -41,11 +41,26 @@ static inline unsigned int fnzb(unsigned long val)
     unsigned int n = 0;
     unsigned long v = val;
 
-    if ((v >> 16) != 0) { v >>= 16; n += 16;}
-    if ((v >> 8)  != 0) { v >>= 8;  n += 8;}
-    if ((v >> 4)  != 0) { v >>= 4;  n += 4;}
-    if ((v >> 2)  != 0) { v >>= 2;  n += 2;}
-    if ((v >> 1)  != 0) { v >>= 1;  n += 1;}
+    if ((v >> 16) != 0) {
+        v >>= 16;
+        n += 16;
+    }
+    if ((v >> 8) != 0) {
+        v >>= 8;
+        n += 8;
+    }
+    if ((v >> 4) != 0) {
+        v >>= 4;
+        n += 4;
+    }
+    if ((v >> 2) != 0) {
+        v >>= 2;
+        n += 2;
+    }
+    if ((v >> 1) != 0) {
+        v >>= 1;
+        n += 1;
+    }
     return n;
 }
 
@@ -61,4 +76,3 @@ static inline unsigned int fnzb(unsigned long val)
 
 
 #endif /* BEEOS_UTIL_H_ */
-

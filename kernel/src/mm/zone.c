@@ -27,7 +27,7 @@ void *zone_alloc(const struct zone_st *ctx, int order)
     struct frame *frm;
 
     frm = buddy_alloc(&ctx->buddy, order);
-    if (!frm)
+    if (frm == NULL)
         return NULL;
     frm->refs++;
     return (ctx->addr + ctx->frame_size*(frm-ctx->buddy.frames));
@@ -40,8 +40,7 @@ void zone_free(const struct zone_st *ctx, const void *ptr, int order)
 
     i = ((const char *) ptr - ctx->addr) / ctx->frame_size;
     frm = &ctx->buddy.frames[i];
-    if (frm->refs > 0)
-    {
+    if (frm->refs > 0) {
         frm->refs--;
         if (frm->refs == 0)
             buddy_free(&ctx->buddy, frm, order);

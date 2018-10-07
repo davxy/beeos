@@ -29,8 +29,7 @@ int closedir(DIR *dirp)
     int ret;
 
     /** Check for argument validity */
-    if (dirp == NULL || dirp->fdn < 0)
-    {
+    if (dirp == NULL || dirp->fdn < 0) {
         errno = EBADF;
         return -1;
     }

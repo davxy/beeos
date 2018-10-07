@@ -29,27 +29,21 @@ int setenv(const char *name, const char *value, int overwrite)
     char *var;
 
     namelen = strlen(name);
-    if (name == NULL || namelen == 0 || strchr(name, '=') != NULL)
-    {
+    if (name == NULL || namelen == 0 || strchr(name, '=') != NULL) {
         errno = EINVAL;
         return -1;
     }
 
     oldval = getenv(name);
-    if (oldval != NULL)
-    {
-        if (!overwrite)
-        {
+    if (oldval != NULL) {
+        if (!overwrite) {
             errno = EINVAL;
             return -1;
         }
-        if (strlen(value) <= strlen(oldval))
-        {
+        if (strlen(value) <= strlen(oldval)) {
             strcpy(oldval, value);
             return 0;
-        }
-        else
-        {
+        } else {
             /* It doesn't fit we must remove the old variable */
             if (unsetenv(name) < 0)
                 return -1;
@@ -64,8 +58,7 @@ int setenv(const char *name, const char *value, int overwrite)
     strcat(var, "=");
     strcat(var, value);
 
-    if (putenv(var) != 0)
-    {
+    if (putenv(var) != 0) {
         free(var);
         return -1;
     }

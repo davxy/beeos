@@ -23,9 +23,8 @@
 char *fgets(char *str, int size, FILE *fp)
 {
     int i; /* index inside string buffer. */
-    
-    for (i = 0; i < (size-1); i++)
-    {
+
+    for (i = 0; i < (size-1); i++) {
         str[i] = fgetc(fp);
         if (str[i] == EOF || str[i] == '\n')
             break;
@@ -34,7 +33,7 @@ char *fgets(char *str, int size, FILE *fp)
     /* if `i` is zero, nothing was read and `NULL` is returned. */
     if (i == 0)
         return NULL;
-    
+
     str[i] = '\0'; /* replace EOF or '\n' with null terminator */
     return str;
 }

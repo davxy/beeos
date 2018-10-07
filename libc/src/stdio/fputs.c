@@ -23,8 +23,8 @@
 int fputs(const char *str, FILE *stream)
 {
     int i, status;
-    for (i = 0; i < strlen(str); i++)
-    {
+
+    for (i = 0; i < strlen(str); i++) {
         status = fputc(str[i], stream);
         if (status == EOF)
             break;

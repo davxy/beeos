@@ -18,10 +18,10 @@
  */
 
 /**
- * @file	types.h
- * @brief	
- * @author	Davide Galassi
- * @date	Jul 12, 2014
+ * @file    types.h
+ * @brief
+ * @author    Davide Galassi
+ * @date    Jul 12, 2014
  */
 
 #ifndef _SYS_TYPES_H_
@@ -29,11 +29,11 @@
 
 #include <stdint.h>
 
-typedef unsigned int	size_t;
-typedef int	    		ssize_t;
+typedef unsigned int    size_t;
+typedef int             ssize_t;
 
-typedef int    	    	pid_t;
-typedef uint16_t	    dev_t;
+typedef int             pid_t;
+typedef uint16_t        dev_t;
 typedef uint16_t        ino_t;
 typedef uint16_t        mode_t;
 typedef unsigned int    nlink_t;

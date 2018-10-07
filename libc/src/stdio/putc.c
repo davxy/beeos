@@ -24,8 +24,8 @@
 int fputc(int c, FILE *stream)
 {
     char character = (char) c;
-    if (write(stream->fd, &character, 1) != 1)
-    {
+
+    if (write(stream->fd, &character, 1) != 1) {
         fp->flags |= FILE_FLAG_EOF;
         return EOF;
     }

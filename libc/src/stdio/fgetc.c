@@ -25,8 +25,8 @@ int fgetc(FILE *stream)
 {
     char character;
     ssize_t n;
-    if ((n = read(stream->fd, &character, 1)) != 1)
-    {
+
+    if ((n = read(stream->fd, &character, 1)) != 1) {
         if (n == 0)
             stream->flags |= FILE_FLAG_EOF;
         else

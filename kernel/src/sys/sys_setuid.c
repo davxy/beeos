@@ -24,21 +24,15 @@
 
 int sys_setuid(uid_t uid)
 {
-    if (current->euid == 0)
-    {
+    if (current->euid == 0) {
         /* If uid is not root then, after this, it will be
          * impossible for the program to regain root privileges. */
         current->uid  = uid;
         current->euid = uid;
         current->suid = uid;
-    }
-    else if (current->uid == uid
-          || current->suid == uid)
-    {
+    } else if (current->uid == uid || current->suid == uid) {
         current->euid = uid;
-    }
-    else
-    {
+    } else {
         errno = EPERM;
         return -1;
     }

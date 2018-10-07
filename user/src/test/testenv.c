@@ -24,6 +24,7 @@
 void printenv(const char *msg)
 {
     int i;
+
     printf("------------------------------\n");
     printf("%s\n", msg);
     printf("environ @ %p\n", environ);
@@ -36,29 +37,25 @@ int main(void)
 {
     printenv("Start status");
 
-    if (unsetenv("USER") < 0)
-    {
+    if (unsetenv("USER") < 0) {
         perror("unsetenv USER");
         return 1;
     }
     printenv("After 'unsetenv' of USER (existing)");
 
-    if (setenv("FOO", "bar", 1) < 0)
-    {
+    if (setenv("FOO", "bar", 1) < 0) {
         perror("setenv");
         return 1;
     }
     printenv("After 'setenv' FOO (unexisting)");
 
-    if (setenv("HOME", "/home/zz", 1) < 0)
-    {
+    if (setenv("HOME", "/home/zz", 1) < 0) {
         perror("setenv HOME");
         return 1;
     }
     printenv("After 'setenv' HOME (existing, shorter)");
 
-    if (setenv("HOME", "/home/Hikr", 1) < 0)
-    {
+    if (setenv("HOME", "/home/Hikr", 1) < 0) {
         perror("setenv HOME");
         return 1;
     }

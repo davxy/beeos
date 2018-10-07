@@ -33,4 +33,3 @@ struct super_block *devfs_sb_get(void);
 
 
 #endif /* BEEOS_FS_DEVFS_H_ */
-

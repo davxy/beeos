@@ -18,5 +18,3 @@
  */
 
 #include <dirent.h>
-
-

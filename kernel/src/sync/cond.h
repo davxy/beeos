@@ -23,8 +23,7 @@
 #include "spinlock.h"
 #include "list.h"
 
-struct cond
-{
+struct cond {
     struct spinlock     lock;
     struct list_link    queue;
 };
@@ -39,4 +38,3 @@ void cond_broadcast(struct cond *cv);
 
 
 #endif /* BEEOS_SYNC_COND_H_ */
-

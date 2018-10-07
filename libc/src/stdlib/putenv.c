@@ -32,18 +32,15 @@ int putenv(char *string)
     int i;
 
     stringlen = strlen(string);
-    if (string == NULL || stringlen == 0 || (p = strchr(string, '=')) == NULL)
-    {
+    if (string == NULL || stringlen == 0 || (p = strchr(string, '=')) == NULL) {
         errno = EINVAL;
         return -1;
     }
 
     namelen = p - string;
     /* space for: environ null terminator, new string pointer and data */
-    for (i = 0; environ[i] != NULL; i++)
-    {
-        if (strncmp(environ[i], string, namelen) == 0)
-        {
+    for (i = 0; environ[i] != NULL; i++) {
+        if (strncmp(environ[i], string, namelen) == 0) {
             environ[i] = string;
             return 0;
         }
@@ -54,7 +51,6 @@ int putenv(char *string)
         return -1;
     environ[i] = string;
     environ[i+1] = NULL;
-
     return 0;
 }
 
@@ -64,7 +60,7 @@ static int environ_relocate(int envlen)
     static int inheap = 0;
     char **envp;
     size_t newsiz;
-    
+
     /* +2, one for the NULL and one for the new env variable */
     newsiz = (2 + envlen) * sizeof(char *);
     if (!inheap)
@@ -72,14 +68,12 @@ static int environ_relocate(int envlen)
     else
         envp = realloc(environ, newsiz);
 
-    if (envp == NULL)
-    {
+    if (envp == NULL) {
         errno = ENOMEM;
         return -1;
     }
 
-    if (!inheap)
-    {
+    if (!inheap) {
         memcpy(envp, environ, envlen*sizeof(char *));
         inheap = 1;
     }

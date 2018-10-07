@@ -21,7 +21,7 @@
 #define BEEOS_PANIC_H_
 
 /**
- * Kernel panic. 
+ * Kernel panic.
  * The execution of this function prints a message and hangs the system.
  *
  * @param fmt   Format string.
@@ -29,4 +29,3 @@
 void panic(const char *fmt, ...);
 
 #endif /* BEEOS_PANIC_H_ */
-

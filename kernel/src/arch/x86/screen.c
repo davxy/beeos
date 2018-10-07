@@ -24,8 +24,8 @@
 
 #define VIDEO_BUF   ((uint16_t *) (0xB8000 + KVBASE))
 
-#define BLACK           0
-#define LIGHT_GREY      7
+#define BLACK       0
+#define LIGHT_GREY  7
 
 #define MAKE_COLOR(bg, fg)      (((bg) << 4) | (fg))
 #define MAKE_ENTRY(bg, fg, c)   ((MAKE_COLOR((bg), (fg)) << 8) | (c))
@@ -55,4 +55,3 @@ void screen_update(struct screen *scr)
 
     scr->dirty = 0;
 }
-

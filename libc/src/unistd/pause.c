@@ -24,6 +24,7 @@
 int pause(void)
 {
     sigset_t set;
+
     sigprocmask(SIG_BLOCK, NULL, &set);
     return sigsuspend(&set);
 }

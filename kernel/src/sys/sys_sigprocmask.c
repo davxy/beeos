@@ -30,9 +30,9 @@ int sys_sigprocmask(int how, const sigset_t *set, sigset_t *oset)
         memcpy(oset, &current->sigmask, sizeof(sigset_t));
 
     if (set != NULL) {
-        if (how == SIG_SETMASK)
+        if (how == SIG_SETMASK) {
             memcpy(&current->sigmask, set, sizeof(sigset_t));
-        else {
+        } else {
             for (sig = 0; sig < SIGNALS_NUM; sig++) {
                 if (sigismember(set, sig) > 0) {
                     if (how == SIG_BLOCK) {
@@ -49,4 +49,3 @@ int sys_sigprocmask(int how, const sigset_t *set, sigset_t *oset)
     }
     return res;
 }
-

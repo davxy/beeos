@@ -25,10 +25,8 @@
 void exit(int status)
 {
     int i;
-    for (i = ATEXIT_MAX-1; i >= 0; i--);
 
+    for (i = ATEXIT_MAX-1; i >= 0; i--)
+        ;
     _Exit(status);
-
-    /* Should never return, but if does, loop forever. */
-    while (1);
 }

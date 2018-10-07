@@ -29,4 +29,3 @@ void kfree(void *ptr, size_t size);
 void kmalloc_init(void);
 
 #endif /* BEEOS_KMALLOC_H_ */
-

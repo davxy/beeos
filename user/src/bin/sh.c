@@ -36,10 +36,10 @@ static pid_t fgpid = -1;
 static int fgterm;
 
 /* Default prompt values */
-const char *host;
-const char *user;
+static const char *host;
+static const char *user;
 
-#define DEFAULT_USER    "anon"
+#define DEFAULT_USER    "guest"
 #define DEFAULT_HOST    "localhost"
 
 static void set_prompt_values(void)
@@ -53,8 +53,7 @@ static void set_prompt_values(void)
 
     /* Read the host name */
     host = getenv("HOSTNAME");
-    if (host == NULL)
-    {
+    if (host == NULL) {
         host = DEFAULT_HOST;
         setenv("HOSTNAME", DEFAULT_HOST, 0);
         printf("warning: HOSTNAME variable was not defined\n");
@@ -74,7 +73,6 @@ static void sigchld(int signo)
 
     if (signo != SIGCHLD)
         return;
-
     while (1) {
         pid = waitpid(-1, &status, WNOHANG);
         if (pid > 0) {
@@ -96,7 +94,6 @@ static int execute(int argc, char *argv[])
     int bg = 0;
 
     cmd = argv[0];
-
     /* check built-in commands first */
     if (strcmp(cmd, "exit") == 0) {
         if (getppid() != 1)
@@ -185,11 +182,9 @@ static int interactive(void)
     set_prompt_values();
 
     while (1) {
-
         if (getcwd(cwd, PATH_MAX) < 0)
             perror("getcwd");
         printf("%s@%s:%s$ ", user, host, cwd);
-
         if (fgets(cmd, CMD_MAX, stdin)) {
             argc = 0;
             argv[argc++] = strtok(cmd, " ");
@@ -221,7 +216,6 @@ int main(int argc, char *argv[])
         status = execute(argc-2, &argv[2]);
     else
         status = interactive();
-    
+
     return status;
 }
-

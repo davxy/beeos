@@ -29,6 +29,7 @@ int sigaction(int sig, const struct sigaction *act,
         struct sigaction *oact)
 {
     struct sigaction iact = *act;
+
     iact.sa_restorer = restorer;
     return syscall(__NR_sigaction, sig, &iact, oact);
 }

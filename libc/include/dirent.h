@@ -24,14 +24,12 @@
 #include <limits.h>     /* NAME_MAX */
 
 /** Directory entry. */
-struct dirent
-{
+struct dirent {
     ino_t   d_ino;                  /** Inode number */
     char    d_name[NAME_MAX+1];     /** Directory name */
 };
 
-typedef struct DIR
-{
+typedef struct DIR {
     int    fdn;          /** Directory file descriptor */
     struct dirent dent;  /** Last directory entry */
 } DIR;
@@ -43,6 +41,5 @@ int closedir(DIR *dirp);
 struct dirent *readdir(DIR *dirp);
 
 void rewinddir(DIR *dirp);
-
 
 #endif /* _DIRENT_H_ */

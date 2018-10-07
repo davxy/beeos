@@ -27,8 +27,7 @@
 
 #define MAX_CANON   256
 
-struct tty_st
-{
+struct tty_st {
     dev_t dev;              /* Associated device */
     pid_t pgrp;             /* Foreground process group */
     int refs;                /* References to this tty */
@@ -60,4 +59,3 @@ void tty_put(dev_t dev);
 
 
 #endif /* BEEOS_DRIVER_TTY_H_ */
-

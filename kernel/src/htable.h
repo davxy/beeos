@@ -55,8 +55,7 @@ static inline unsigned int hash_64(uint64_t val, unsigned int bits)
 #define hash(val, bits) \
     ((sizeof(val) <= 4) ? hash_32((val), (bits)) : hash_64((val), (bits)))
 
-struct htable_link
-{
+struct htable_link {
     struct htable_link *next;
     struct htable_link **pprev;
 };
@@ -97,4 +96,3 @@ static inline struct htable_link *htable_lookup(
 }
 
 #endif /* BEEOS_HTABLE_H_ */
-

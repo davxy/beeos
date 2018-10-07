@@ -25,4 +25,3 @@ int sys_tcsetpgrp(int fd, pid_t pgrp)
 {
     return tty_setpgrp(pgrp);
 }
-

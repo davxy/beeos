@@ -24,9 +24,9 @@
 
 /*
  * POSIX.1  requires  that  if  a process sends a signal to itself,
- * and the sending thread does not have the signal blocked, and no 
+ * and the sending thread does not have the signal blocked, and no
  * other thread has it unblocked or is waiting for it in sigwait(3),
- * at least one unblocked signal must be delivered to the sending 
+ * at least one unblocked signal must be delivered to the sending
  * thread before the kill() returns.
  *
  * This is respected because the do_signal is invoked in the
@@ -46,7 +46,7 @@ int sys_kill(pid_t pid, int sig)
             /* TODO: check for permissions */
 
             /* if sig is 0, only permissions are checked */
-            if (sig != 0) 
+            if (sig != 0)
                 task_signal(t, sig);
             break;
         }

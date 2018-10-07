@@ -30,35 +30,25 @@ int main(int argc, char *argv[])
     char buf[BUFSIZ];
     int n, i;
     int fd = 0;
-    
-    for (i = 1; i < argc; i++)
-    {
 
+    for (i = 1; i < argc; i++) {
         fd = open(argv[i], O_RDONLY, 0);
-        if (fd < 0)
-        {
+        if (fd < 0) {
             perror("cat");
             continue;
         }
-
-        if (fstat(fd, &status) < 0)
-        {
+        if (fstat(fd, &status) < 0) {
             perror("cat stat");
             continue;
         }
-
-        if (S_ISDIR(status.st_mode))
-        {
+        if (S_ISDIR(status.st_mode)) {
             errno = EISDIR;
             perror("cat");
             continue;
         }
-        
         while ((n = read(fd, buf, BUFSIZ)) > 0)
             write(1, buf, n);
-    
         close(fd);
     }
-
     return 0;
 }

@@ -21,8 +21,7 @@
 #include "FILE.h"
 
 
-FILE stdio_streams[3] =
-{
+FILE stdio_streams[3] = {
     { 0, 0 },
     { 1, 0 },
     { 2, 0 }

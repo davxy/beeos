@@ -38,19 +38,19 @@ ssize_t sys_write(int fd, const void *buf, size_t count)
     fil = current->fds[fd].fil;
 
     switch (fil->dent->inod->mode & S_IFMT) {
-        case S_IFBLK:
-        case S_IFCHR:
-        case S_IFREG:
-        case S_IFIFO:
-        case S_IFSOCK:
-            n = vfs_write(fil->dent->inod, buf, count, fil->off);
-            break;
-        case S_IFDIR:
-            n = -EBADF;
-            break;
-        default:
-            n = -1;
-            break;
+    case S_IFBLK:
+    case S_IFCHR:
+    case S_IFREG:
+    case S_IFIFO:
+    case S_IFSOCK:
+        n = vfs_write(fil->dent->inod, buf, count, fil->off);
+        break;
+    case S_IFDIR:
+        n = -EBADF;
+        break;
+    default:
+        n = -1;
+        break;
     }
 
     if (n > 0)

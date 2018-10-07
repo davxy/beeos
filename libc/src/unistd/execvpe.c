@@ -30,10 +30,8 @@ static int namep(const char *name, char *path, size_t pathmax)
     int n;
 
     envpath = getenv("PATH");
-
     /* Scan paths and try to find a file with that name */
-    while (envpath != NULL)
-    {
+    while (envpath != NULL) {
         endp = strchr(envpath, ':');
         if (endp != NULL)
             n = endp - envpath;
@@ -59,22 +57,19 @@ static int namep(const char *name, char *path, size_t pathmax)
 int execvpe(const char *file, char *const argv[], char *const envp[])
 {
     char cmd[PATH_MAX];
-    /* 
+
+    /*
      * Check if the original command contains at least a '/'.
      * Otherwise a scan for the environment variable 'PATH' must
      * be done
      */
-    if (!strchr(file, '/'))
-    {
+    if (!strchr(file, '/')) {
         if (namep(file, cmd, PATH_MAX) < 0)
             return -1;
-    }
-    else
-    {
+    } else {
         if (strlen(file) >= PATH_MAX)
             return -1;
         strcpy(cmd, file);
     }
-
     return execve(cmd, argv, envp);
 }

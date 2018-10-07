@@ -27,7 +27,7 @@ int main(int argc, char **argv)
     int fd, n;
     char buf[256] = {0};
     char *data = "Hello, World";
-        
+
     fd = open("data.tmp", O_RDWR|O_CREAT|O_TRUNC, 0);
     if (fd < 0)
         err_sys("open");

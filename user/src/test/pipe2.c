@@ -31,38 +31,31 @@ int main(int argc, char *argv[])
     pid_t pid;
     char line[MAXLINE];
 
-    if (pipe(fd) < 0)
-    {
+    if (pipe(fd) < 0) {
         printf("pipe error\n");
         return 1;
     }
 
-    if ((pid = fork()) < 0)
-    {
+    if ((pid = fork()) < 0) {
         printf("fork error\n");
         return 1;
     }
 
-    if (pid > 0)
-    {
+    if (pid > 0) {
         /* parent */
         close(fd[0]);
         dup2(fd[1], STDOUT_FILENO);
         close(fd[1]);
-        while (1)
-        {
+        while (1) {
             printf("[%d] Hello World this is a long string", i++);
             usleep(100000);
         }
-    }
-    else
-    {
+    } else {
         /* child */
         close(fd[1]);
         dup2(fd[0], STDIN_FILENO);
         close(fd[0]);
-        while (1)
-        {
+        while (1) {
             memset(line, 0, sizeof(line));
             n = read(STDIN_FILENO, line, MAXLINE-1);
             line[n] = 0; // add null terminator

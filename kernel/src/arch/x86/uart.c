@@ -33,7 +33,8 @@ static int rx_ready(void)
 
 int uart_getchar(void)
 {
-    while (!rx_ready());
+    while (!rx_ready())
+        ;
     return inb(PORT);
 }
 
@@ -44,7 +45,8 @@ static int tx_ready(void)
 
 void uart_putchar(int c)
 {
-    while (!tx_ready());
+    while (!tx_ready())
+        ;
     return outb(PORT, c);
 }
 
@@ -70,4 +72,3 @@ void uart_init(void)
 
     outb(PORT + 1, 0x01);   /* Enable all interrupts */
 }
-

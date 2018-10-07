@@ -57,8 +57,7 @@ int sys_nanosleep(const struct timespec *req, struct timespec *rem)
     list_delete(&tm.plink);
 
     now = timer_ticks;
-    if (now < when)
-    {
+    if (now < when) {
         ms = ticks_to_msecs(when - now);
         rem->tv_sec  = (time_t)(ms / 1000);
         rem->tv_nsec = (long)  (ms % 1000) * 1000000;

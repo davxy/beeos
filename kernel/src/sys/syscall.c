@@ -26,8 +26,7 @@
 
 #define SYSCALLS_NUM    (__NR_info + 1)
 
-static void *syscalls[SYSCALLS_NUM] =
-{
+static const void *syscalls[SYSCALLS_NUM] = {
     [__NR_exit]         = sys_exit,
     [__NR_fork]         = sys_fork,
     [__NR_read]         = sys_read,
@@ -67,7 +66,6 @@ static void *syscalls[SYSCALLS_NUM] =
 };
 
 
-
 /* TODO this is arch specific */
 typedef uint32_t (* syscall_f)(uint32_t arg1, ...);
 
@@ -76,14 +74,11 @@ static void syscall_handler(void)
 {
     struct isr_frame *ifr = current->arch.ifr;
 
-    if (ifr->eax < SYSCALLS_NUM && syscalls[ifr->eax] != NULL)
-    {
+    if (ifr->eax < SYSCALLS_NUM && syscalls[ifr->eax] != NULL) {
         ifr->eax = ((syscall_f)syscalls[ifr->eax])(
                 ifr->ebx, ifr->ecx, ifr->edx,
                 ifr->esi, ifr->edi, ifr->ebp);
-    }
-    else
-    {
+    } else {
         kprintf("Warning: unknown syscall number (%d)\n", ifr->eax);
         ifr->eax = -1;
     }
@@ -93,4 +88,3 @@ void syscall_init(void)
 {
     isr_register_handler(ISR_SYSCALL, syscall_handler);
 }
-

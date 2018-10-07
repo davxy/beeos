@@ -61,8 +61,7 @@
 /*
  * Primary meaning of scancodes.
  */
-static char kbd_map1[] =
-{
+static const char kbd_map1[] = {
     KEY_NULL,           /* 0x00 - Null */
     KEY_ESCAPE,         /* 0x01 - Escape  */
     '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '-', '=',
@@ -153,8 +152,7 @@ static char kbd_map1[] =
 /*
  * Secondary meaning of scancodes.
  */
-static char kbd_map2[] =
-{
+static const char kbd_map2[] = {
     KEY_NULL,           /* 0x00 - Undefined */
     KEY_ESCAPE,         /* 0x01 - Escape */
     '!', '@', '#', '$', '%', '^', '&', '*', '(', ')', '_', '+',
@@ -279,8 +277,7 @@ static void kbd_handler(void)
     unsigned int c;
 
     c = scan_key();
-    switch (c)
-    {
+    switch (c) {
     case 0x2A:  /* LShift down */
     case 0x36:  /* RShift down */
         kbd_status |= KBD_STATUS_SHIFT;
@@ -305,8 +302,7 @@ static void kbd_handler(void)
         kbd_status ^= KBD_STATUS_CAPS_LCK;
         break;
     default:
-        if ((c & 0x80) == 0)
-        {
+        if ((c & 0x80) == 0) {
             if ((kbd_status & KBD_STATUS_CTRL) != 0) {
                 c = kbd_map1[c];
                 if (c == 'c' || c == 'C') {
@@ -314,17 +310,16 @@ static void kbd_handler(void)
                     kill_tty_group();
                 }
                 c = '\n';
-            }
-            else if ((kbd_status & KBD_STATUS_ALT) != 0) {
+            } else if ((kbd_status & KBD_STATUS_ALT) != 0) {
                 /*kprintf("ALT + %c (0x%x)\n", c, c);*/
                 tty_change(c - 0x3B);
                 return;
-            }
-            else if ((((kbd_status & KBD_STATUS_SHIFT) != 0)
-                    ^ ((kbd_status & KBD_STATUS_CAPS_LCK) != 0)) != 0)
+            } else if ((((kbd_status & KBD_STATUS_SHIFT) != 0)
+                    ^ ((kbd_status & KBD_STATUS_CAPS_LCK) != 0)) != 0) {
                 c = kbd_map2[c];
-            else
+            } else {
                 c = kbd_map1[c];
+            }
             tty_update(c); /* Send the char to the tty driver */
         }
         break;

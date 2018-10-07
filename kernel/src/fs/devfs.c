@@ -47,40 +47,39 @@ static ssize_t devfs_inode_read(struct inode *inod, void *buf,
 {
     ssize_t n;
 
-    switch (inod->rdev)
-    {
-        case DEV_TTY:
-        case DEV_TTY0:
-        case DEV_TTY1:
-        case DEV_TTY2:
-        case DEV_TTY3:
-        case DEV_TTY4 :
-        case DEV_CONSOLE:
-            n = tty_read(inod->rdev, buf, count);
-            break;
-        case DEV_ZERO:
-            memset(buf, 0, count);
-            n = (ssize_t)count;
-            break;
-        case DEV_NULL:
-            n = (ssize_t)count;
-            break;
-        case DEV_INITRD:
-            n = ramdisk_read(buf, count, off);
-            break;
-        case DEV_MEM:
-            n = -1;
-            break;
-        case DEV_KMEM:
-            n = -1;
-            break;
-        case DEV_RANDOM:
-        case DEV_URANDOM:
-            n = random_read(buf, count);
-            break;
-        default:
-            n = -ENODEV;
-            break;
+    switch (inod->rdev) {
+    case DEV_TTY:
+    case DEV_TTY0:
+    case DEV_TTY1:
+    case DEV_TTY2:
+    case DEV_TTY3:
+    case DEV_TTY4 :
+    case DEV_CONSOLE:
+        n = tty_read(inod->rdev, buf, count);
+        break;
+    case DEV_ZERO:
+        memset(buf, 0, count);
+        n = (ssize_t)count;
+        break;
+    case DEV_NULL:
+        n = (ssize_t)count;
+        break;
+    case DEV_INITRD:
+        n = ramdisk_read(buf, count, off);
+        break;
+    case DEV_MEM:
+        n = -1;
+        break;
+    case DEV_KMEM:
+        n = -1;
+        break;
+    case DEV_RANDOM:
+    case DEV_URANDOM:
+        n = random_read(buf, count);
+        break;
+    default:
+        n = -ENODEV;
+        break;
     }
     return n;
 }
@@ -91,37 +90,36 @@ static ssize_t devfs_inode_write(struct inode *inod, const void *buf,
 {
     ssize_t n;
 
-    switch (inod->rdev)
-    {
-        case DEV_TTY:
-        case DEV_TTY0:
-        case DEV_TTY1:
-        case DEV_TTY2:
-        case DEV_TTY3:
-        case DEV_TTY4 :
-        case DEV_CONSOLE:
-            n = tty_write(inod->rdev, buf, count);
-            break;
-        case DEV_ZERO:
-        case DEV_NULL:
-            n = (ssize_t)count;
-            break;
-        case DEV_INITRD:
-            n = ramdisk_write(buf, count, off);
-            break;
-        case DEV_MEM:
-            n = -1;
-            break;
-        case DEV_KMEM:
-            n = -1;
-            break;
-        case DEV_RANDOM:
-        case DEV_URANDOM:
-            n = -1;
-            break;
-        default:
-            n = -ENODEV;
-            break;
+    switch (inod->rdev) {
+    case DEV_TTY:
+    case DEV_TTY0:
+    case DEV_TTY1:
+    case DEV_TTY2:
+    case DEV_TTY3:
+    case DEV_TTY4 :
+    case DEV_CONSOLE:
+        n = tty_write(inod->rdev, buf, count);
+        break;
+    case DEV_ZERO:
+    case DEV_NULL:
+        n = (ssize_t)count;
+        break;
+    case DEV_INITRD:
+        n = ramdisk_write(buf, count, off);
+        break;
+    case DEV_MEM:
+        n = -1;
+        break;
+    case DEV_KMEM:
+        n = -1;
+        break;
+    case DEV_RANDOM:
+    case DEV_URANDOM:
+        n = -1;
+        break;
+    default:
+        n = -ENODEV;
+        break;
     }
     return n;
 }
@@ -189,8 +187,7 @@ static struct inode *devfs_lookup(struct inode *dir, const char *name)
 #endif
 
     dev = name_to_dev(name);
-    while (curr_link != &devfs_nodes)
-    {
+    while (curr_link != &devfs_nodes) {
         curr = list_container(curr_link, struct devfs_inode, link);
         if (curr->base.rdev == dev) {
             inod = &curr->base;
@@ -241,8 +238,7 @@ static struct inode *dev_to_inode(dev_t dev)
     struct devfs_inode *inod = NULL;
     struct list_link *curr = devfs_nodes.next;
 
-    while (curr != &devfs_nodes)
-    {
+    while (curr != &devfs_nodes) {
         inod = list_container(curr, struct devfs_inode, link);
         if (inod->base.rdev == dev)
             break;
@@ -284,10 +280,9 @@ static int devfs_dentry_readdir(struct dentry *dir, unsigned int i,
 
     if (i == 0) {
         name = ".";
-    }
-    else if (i == 1)
+    } else if (i == 1) {
         name = "..";
-    else {
+    } else {
         if (i == 2)
             rd_curr_link = dir->child.next;
         if (rd_curr_link != &dir->child) {

@@ -72,6 +72,7 @@ static inline void outb(uint16_t port, uint8_t val)
 static inline uint8_t inb(uint16_t port)
 {
     uint8_t val;
+
     inb_asm(port, val);
     return val;
 }
@@ -96,6 +97,7 @@ static inline void outw(uint16_t port, uint16_t val)
 static inline uint16_t inw(uint16_t port)
 {
     uint16_t val;
+
     inw_asm(port, val);
     return val;
 }
@@ -120,9 +122,9 @@ static inline void outl(uint16_t port, uint32_t val)
 static inline uint32_t inl(uint16_t port)
 {
     uint32_t val;
+
     inl_asm(port, val);
     return val;
 }
 
 #endif /* BEEOS_ARCH_X86_IO_H_ */
-

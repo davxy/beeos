@@ -26,8 +26,7 @@
 #define BLOCK_SIZE  512
 
 
-static struct
-{
+static struct {
     void  *addr;
     size_t size;
 } ramdisk;
@@ -85,8 +84,7 @@ ssize_t ramdisk_read(void *buf, size_t size, size_t off)
     left -= n;
     ptr += n;
     nblk++;
-    while (left > 0)
-    {
+    while (left > 0) {
         if ((n = ramdisk_read_block(blk, nblk)) != BLOCK_SIZE)
             break;
         n = MIN(BLOCK_SIZE, left);
