@@ -58,6 +58,11 @@ int printf(const char *format, ...);
 /**
  *
  */
+int sprintf(char *str, const char *fmt, ...);
+
+/**
+ *
+ */
 int snprintf(char *str, size_t size, const char *fmt, ...);
 
 /**
@@ -85,6 +90,11 @@ int vprintf(const char *format, va_list ap);
  * @return
  */
 int vsnprintf(char *str, size_t n, const char *format, va_list ap);
+
+int fprintf(FILE *stream, const char *format, ...);
+
+int vfprintf(FILE *stream, const char *format, va_list ap);
+
 
 int fputc(int c, FILE *stream);
 

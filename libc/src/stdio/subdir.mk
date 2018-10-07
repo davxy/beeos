@@ -13,10 +13,13 @@ local_sources := FILE.c \
 				 gets.c \
 				 perror.c \
 				 printf.c \
+				 sprintf.c \
 				 snprintf.c \
 				 vprintf.c \
-				 vsnprintf.c \
 				 vsprintf.c \
+				 vsnprintf.c \
+				 fprintf.c \
+				 vfprintf.c \
 				 popen.c \
 				 pclose.c \
 				 fileno.c
