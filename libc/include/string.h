@@ -171,5 +171,7 @@ char *strtok(char *str, const char *delim);
 
 char *strchr(const char *str, int c);
 
+char *strdup(const char *s);
+
 
 #endif /* _STRING_H_ */

@@ -11,4 +11,5 @@ local_sources := memcmp.c \
 				 strerror.c \
 				 strlen.c \
 				 strtok.c \
-				 strchr.c
+				 strchr.c \
+				 strdup.c
