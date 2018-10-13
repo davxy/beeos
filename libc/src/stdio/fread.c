@@ -23,17 +23,25 @@
 
 size_t fread(void *ptr, size_t size, size_t nmemb, FILE *stream)
 {
-    size_t n;
+    size_t n, s;
     char *buf = (char *)ptr;
     int c;
+    int stop = 0;
 
     n = 0;
-    while (n < size * nmemb) {
-        if ((c = fgetc(stream)) == EOF)
-            break;
-        buf[n++] = (unsigned char)c;
-        if (stream->bufmode == _IOLBF && c == '\n')
-            break;
+    while (n < nmemb && stop == 0) {
+        s = 0;
+        while (s < size) {
+            if ((c = fgetc(stream)) == EOF)
+                return n;
+            buf[s++] = (unsigned char)c;
+            if (stream->bufmode == _IOLBF && c == '\n') {
+                stop = 1;
+                break;
+            }
+        }
+        buf += size;
+        n++;
     }
     return n;
 }

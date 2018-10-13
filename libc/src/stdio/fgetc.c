@@ -44,15 +44,8 @@ static int _fillbuf(FILE *stream)
 
 int fgetc(FILE *stream)
 {
-#if 1
     if (stream->nw > 0)
         fflush(stream);
     return (--(stream)->nr >= 0) ?
         (unsigned char)*stream->ptr++ : _fillbuf(stream);
-#else
-    char c;
-
-    read(stream->fd, &c, 1);
-    return (unsigned char)c;
-#endif
 }

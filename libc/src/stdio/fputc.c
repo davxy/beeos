@@ -24,7 +24,6 @@
 
 int fputc(int c, FILE *stream)
 {
-#if 1
     if (stream->buf == NULL) {
         stream->buf = (char *)malloc(stream->bufsize);
         if (stream->buf == NULL)
@@ -48,9 +47,5 @@ int fputc(int c, FILE *stream)
         if (fflush(stream) != 0)
             c = EOF;
     }
-#else
-    unsigned char ch = (unsigned char)c;
-    write(stream->fd, &ch, 1); 
-#endif
-    return c;
+    return (unsigned char)c;
 }

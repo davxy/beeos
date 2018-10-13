@@ -23,13 +23,18 @@
 
 size_t fwrite(const void *ptr, size_t size, size_t nmemb, FILE *stream)
 {
-    size_t n;
+    size_t n, s;
     const char *buf = (const char *)ptr;
 
     n = 0;
-    while (n < size * nmemb) {
-        if (fputc(buf[n], stream) == EOF)
-            break;
+    while (n < nmemb) {
+        s = 0;
+        while (s < size) {
+            if (fputc(buf[s], stream) == EOF)
+                return n;
+            s++;
+        }
+        buf += size;
         n++;
     }
     return n;
