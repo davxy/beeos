@@ -20,11 +20,10 @@
 #include <stdio.h>
 #include "FILE.h"
 
-
 FILE stdio_streams[3] = {
-    { 0, 0 },
-    { 1, 0 },
-    { 2, 0 }
+    { 0, 0, _IOLBF, BUFSIZ, 0, 0, (char *)0, (char *)0 },
+    { 1, 0, _IOLBF, BUFSIZ, 0, 0, (char *)0, (char *)0 },
+    { 2, 0, _IONBF, 1, 0, 0, (char *)0, (char *)0 }
 };
 
 FILE *stdin  = &stdio_streams[0];

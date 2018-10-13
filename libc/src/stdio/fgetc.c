@@ -19,19 +19,33 @@
 
 #include "FILE.h"
 #include <stdio.h>
+#include <stdlib.h>
 #include <unistd.h>
 
-int fgetc(FILE *stream)
+static int _fillbuf(FILE *stream)
 {
-    char character;
-    ssize_t n;
-
-    if ((n = read(stream->fd, &character, 1)) != 1) {
-        if (n == 0)
+    if (stream->buf == NULL) {
+        if ((stream->buf = (char *)malloc(stream->bufsize)) == NULL)
+            return EOF;
+    }
+    stream->ptr = stream->buf;
+    stream->nr = read(stream->fd, stream->ptr, stream->bufsize);
+    if (--stream->nr < 0) {
+        if (stream->nr == -1)
             stream->flags |= FILE_FLAG_EOF;
         else
             stream->flags |= FILE_FLAG_ERROR;
+        stream->nr = 0;
+        stream->nw = 0;
         return EOF;
     }
-    return (int)character;
+    return (unsigned char) *stream->ptr++;
+}
+
+int fgetc(FILE *stream)
+{
+    if (stream->nw > 0)
+        fflush(stream);
+    return (--(stream)->nr >= 0) ?
+        (unsigned char)*stream->ptr++ : _fillbuf(stream);
 }

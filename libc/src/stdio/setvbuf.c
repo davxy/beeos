@@ -19,17 +19,20 @@
 
 #include "FILE.h"
 #include <stdio.h>
-#include <stdlib.h>
-#include <unistd.h>
+#include <stdlib.>
 
-int fclose(FILE *stream)
+int setvbuf(FILE *stream, char *buf, int mode, size_t size)
 {
+    int res = 0;
+
     if (stream->buf != NULL) {
-        if (stream->nw != 0)
+        if (stream->cnt > 0)
             fflush(stream);
-        if ((stream->flags & FILE_FLAG_NFREE) == 0)
-            free(stream->buf);
-        stream->buf = NULL;
+        free(stream->buf);
     }
-    return close(stream->fd);
+    stream->bufmode = mode;
+    stream->bufsize = size;
+    stream->buf = buf;
+    stream->ptr = buf;
+    stream->cnt = 0;
 }

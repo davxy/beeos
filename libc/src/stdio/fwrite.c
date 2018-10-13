@@ -19,17 +19,23 @@
 
 #include "FILE.h"
 #include <stdio.h>
-#include <stdlib.h>
 #include <unistd.h>
 
-int fclose(FILE *stream)
+size_t fwrite(const void *ptr, size_t size, size_t nmemb, FILE *stream)
 {
-    if (stream->buf != NULL) {
-        if (stream->nw != 0)
-            fflush(stream);
-        if ((stream->flags & FILE_FLAG_NFREE) == 0)
-            free(stream->buf);
-        stream->buf = NULL;
+    size_t n, s;
+    const char *buf = (const char *)ptr;
+
+    n = 0;
+    while (n < nmemb) {
+        s = 0;
+        while (s < size) {
+            if (fputc(buf[s], stream) == EOF)
+                return n;
+            s++;
+        }
+        buf += size;
+        n++;
     }
-    return close(stream->fd);
+    return n;
 }

@@ -19,17 +19,29 @@
 
 #include "FILE.h"
 #include <stdio.h>
-#include <stdlib.h>
 #include <unistd.h>
 
-int fclose(FILE *stream)
+size_t fread(void *ptr, size_t size, size_t nmemb, FILE *stream)
 {
-    if (stream->buf != NULL) {
-        if (stream->nw != 0)
-            fflush(stream);
-        if ((stream->flags & FILE_FLAG_NFREE) == 0)
-            free(stream->buf);
-        stream->buf = NULL;
+    size_t n, s;
+    char *buf = (char *)ptr;
+    int c;
+    int stop = 0;
+
+    n = 0;
+    while (n < nmemb && stop == 0) {
+        s = 0;
+        while (s < size) {
+            if ((c = fgetc(stream)) == EOF)
+                return n;
+            buf[s++] = (unsigned char)c;
+            if (stream->bufmode == _IOLBF && c == '\n') {
+                stop = 1;
+                break;
+            }
+        }
+        buf += size;
+        n++;
     }
-    return close(stream->fd);
+    return n;
 }

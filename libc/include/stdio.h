@@ -33,10 +33,16 @@
 
 
 /** IO buffer size. */
-#define BUFSIZ            512
+#define BUFSIZ 512
 
 /** The End Of File character */
-#define EOF                (-1)
+#define EOF (-1)
+
+/** Buffering mode */
+#define _IONBF  0
+#define _IOLBF  1
+#define _IOFBF  2
+
 
 /** Opaque FILE type */
 typedef struct _FILE FILE;
@@ -193,6 +199,14 @@ FILE *fdopen(int fd, const char *mode);
  *                  and errno is set to indicate the error.
  */
 int fclose(FILE *stream);
+
+size_t fread(void *ptr, size_t size, size_t nmemb, FILE *stream);
+
+size_t fwrite(const void *ptr, size_t size, size_t nmemb, FILE *stream);
+
+int ferror(FILE *stream);
+
+int feof(FILE *stream);
 
 /**
  * For output streams, fflush() forces a write of all user-space buffered

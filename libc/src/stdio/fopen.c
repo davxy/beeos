@@ -62,5 +62,11 @@ FILE *fopen(const char *path, const char *mode)
     }
     fp->fd = fd;
     fp->flags = 0;
+    fp->bufmode = _IOFBF;
+    fp->bufsize = BUFSIZ;
+    fp->nr = 0;
+    fp->nw = 0;
+    fp->buf = NULL;
+    fp->ptr = NULL;
     return fp;
 }
