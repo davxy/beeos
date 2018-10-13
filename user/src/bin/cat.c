@@ -19,36 +19,49 @@
 
 #include <stdio.h>
 #include <stddef.h>
+#include <errno.h>
 #include <fcntl.h>
 #include <sys/stat.h>
-#include <errno.h>
-#include <unistd.h>
+
+static void filecopy(FILE *out, FILE *in)
+{
+    size_t nr, nw;
+    char buf[32];
+ 
+    while ((nr = fread(buf, 1, sizeof(buf), in)) > 0) {
+        if ((nw = fwrite(buf, 1, nr, out)) != nr)
+            break;
+    }
+    if (ferror(out))
+        perror("cat");
+}
 
 int main(int argc, char *argv[])
 {
     struct stat status;
-    char buf[BUFSIZ];
-    int n, i;
-    int fd = 0;
+    int i;
+    FILE *fp;
 
-    for (i = 1; i < argc; i++) {
-        fd = open(argv[i], O_RDONLY, 0);
-        if (fd < 0) {
-            perror("cat");
-            continue;
+    if (argc == 1) {
+        filecopy(stdout, stdin);
+    } else {
+        for (i = 1; i < argc; i++) {
+            if (stat(argv[i], &status) < 0) {
+                perror("cat stat");
+                continue;
+            }
+            if (S_ISDIR(status.st_mode)) {
+                errno = EISDIR;
+                perror("cat");
+                continue;
+            }
+            if ((fp = fopen(argv[i], "r")) == NULL) {
+                perror("cat");
+                continue;
+            }
+            filecopy(stdout, fp);
+            fclose(fp);
         }
-        if (fstat(fd, &status) < 0) {
-            perror("cat stat");
-            continue;
-        }
-        if (S_ISDIR(status.st_mode)) {
-            errno = EISDIR;
-            perror("cat");
-            continue;
-        }
-        while ((n = read(fd, buf, BUFSIZ)) > 0)
-            write(1, buf, n);
-        close(fd);
     }
     return 0;
 }

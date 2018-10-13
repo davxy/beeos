@@ -19,17 +19,8 @@
 
 #include "FILE.h"
 #include <stdio.h>
-#include <stdlib.h>
-#include <unistd.h>
 
-int fclose(FILE *stream)
+int ferror(FILE *stream)
 {
-    if (stream->buf != NULL) {
-        if (stream->nw != 0)
-            fflush(stream);
-        if ((stream->flags & FILE_FLAG_NFREE) == 0)
-            free(stream->buf);
-        stream->buf = NULL;
-    }
-    return close(stream->fd);
+    return (stream->flags & FILE_FLAG_ERROR);
 }

@@ -2,6 +2,10 @@ local_sources := FILE.c \
 				 fopen.c \
 				 fdopen.c \
 				 fclose.c \
+				 fread.c \
+				 fwrite.c \
+				 ferror.c \
+				 feof.c \
 				 fflush.c \
 				 fputc.c \
 				 putchar.c \

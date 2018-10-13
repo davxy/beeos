@@ -18,9 +18,28 @@
  */
 
 #include <stdio.h>
+#include <unistd.h>
+#include "FILE.h"
 
 int fflush(FILE *stream)
 {
-    /* Buffering is not implemented */
-    return 0;
+    int res = 0;
+    ssize_t n;
+    char *p = stream->buf;
+
+    while (stream->nw > 0) {
+        if ((n = write(stream->fd, p, stream->nw)) < 0) {
+            stream->flags |= FILE_FLAG_ERROR;
+            res = EOF;
+            break;
+        }
+        if (n > stream->nw)
+            n = stream->nw; /* be defensive */
+        stream->nw -= n;
+        p += n;
+    }
+    stream->ptr = stream->buf;
+    stream->nw = 0;
+    stream->nr = 0;
+    return res;
 }

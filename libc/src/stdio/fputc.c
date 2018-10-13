@@ -19,15 +19,38 @@
 
 #include "FILE.h"
 #include <stdio.h>
+#include <stdlib.h>
 #include <unistd.h>
 
 int fputc(int c, FILE *stream)
 {
-    char character = (char)c;
-
-    if (write(stream->fd, &character, 1) != 1) {
-        stream->flags |= FILE_FLAG_ERROR;
-        return EOF;
+#if 1
+    if (stream->buf == NULL) {
+        stream->buf = (char *)malloc(stream->bufsize);
+        if (stream->buf == NULL)
+            return EOF;
+        stream->nr = 0;
+        stream->nw = 0;
+        stream->ptr = stream->buf;
     }
+    if (stream->nr > 0) {
+        lseek(stream->fd, SEEK_CUR, -stream->nr);
+        stream->nr = 0;
+        stream->nw = 0;
+        stream->ptr = stream->buf; 
+    }
+    
+    *stream->ptr++ = c;
+    stream->nw++;
+    if (stream->nw >= stream->bufsize ||
+        (stream->bufmode == _IOLBF && (char)c == '\n') ||
+        stream->bufmode == _IONBF) {
+        if (fflush(stream) != 0)
+            c = EOF;
+    }
+#else
+    unsigned char ch = (unsigned char)c;
+    write(stream->fd, &ch, 1); 
+#endif
     return c;
 }

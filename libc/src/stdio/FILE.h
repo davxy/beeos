@@ -20,12 +20,19 @@
 #ifndef _STDIO_FILE_H_
 #define _STDIO_FILE_H_
 
-#define FILE_FLAG_ERROR (1 << 0)
-#define FILE_FLAG_EOF   (1 << 1)
+#define FILE_FLAG_ERROR     (1 << 0)
+#define FILE_FLAG_EOF       (1 << 1)
+#define FILE_FLAG_NFREE     (1 << 2)
 
 struct _FILE {
-    int fd;
-    int flags;
+    int     fd;         /* file descriptor */
+    int     flags;      /* mode of file access */
+    int     bufmode;    /* buffering mode */
+    int     bufsize;    /* buffer size */
+    int     nr;         /* buffered read characters */
+    int     nw;         /* buffered write characters */
+    char    *ptr;       /* next character position */
+    char    *buf;       /* location of buffer */
 };
 
 #endif /*_STDIO_FILE_H_ */
