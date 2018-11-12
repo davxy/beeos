@@ -10,4 +10,5 @@ local_sources := _Exit.c \
 				 putenv.c \
 				 unsetenv.c \
 				 system.c \
-				 abort.c
+				 abort.c \
+				 assert.c
