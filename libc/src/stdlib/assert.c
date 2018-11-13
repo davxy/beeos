@@ -23,7 +23,7 @@
 void __assert_failed(const char *expression, const char *file,
         unsigned int line)
 {
-    /* TODO: implement fprintf and print output to stderr */
-    printf("%s:%u: Assertion `%s` failed.\n", file, line, expression);
+    fprintf(stderr, "%s:%u: Assertion `%s` failed.\n",
+            file, line, expression);
     abort();
 }
