@@ -17,17 +17,6 @@
  * License along with BeeOS; if not, see <http://www.gnu/licenses/>.
  */
 
-/**
- * @file printf.c
- *
- * @brief
- *
- * @author     Davide Galassi
- * @date      Jul 15, 2014
- *
- *
- */
-
 
 #include <stdio.h>
 

@@ -17,9 +17,7 @@
  * License along with BeeOS; if not, see <http://www.gnu/licenses/>.
  */
 
-#include "FILE.h"
 #include <stdio.h>
-#include <unistd.h>
 
 size_t fwrite(const void *ptr, size_t size, size_t nmemb, FILE *stream)
 {
