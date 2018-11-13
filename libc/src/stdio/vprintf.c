@@ -17,39 +17,11 @@
  * License along with BeeOS; if not, see <http://www.gnu/licenses/>.
  */
 
-/**
- * @file vprintf.c
- *
- * @brief
- *
- * @author     Davide Galassi
- * @date      Jul 15, 2014
- *
- *
- */
-
-
 #include "FILE.h"
 #include <stdio.h>
-#include <unistd.h>
+
 
 int vprintf(const char *format, va_list ap)
 {
-    int written;
-    int tot;
-    int rtot;
-    char buf[BUFSIZ];
-    char *ptr = buf;
-
-    rtot = vsnprintf(buf, BUFSIZ, format, ap);
-    tot = rtot;
-    while (tot > 0) {
-        written = write(stdout->fd, ptr, tot);
-        if (written < 0)
-            break;
-        tot -= written;
-        ptr += written;
-    }
-
-    return rtot;
+    return vfprintf(stdout, format, ap);
 }

@@ -176,6 +176,7 @@ int vsnprintf(char *str, size_t size, const char *format, va_list ap)
             case 'p':
                 alignment = 2*sizeof(void *);
                 filler = '0';
+                /* no break */
             case 'x':
                 value_ui = va_arg (ap, unsigned int);
                 n = uimaxtoa_fill(value_ui, &str[s], 16, 0,

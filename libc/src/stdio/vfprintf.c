@@ -1,6 +1,4 @@
-#include "FILE.h"
 #include <stdio.h>
-#include <unistd.h>
 
 int vfprintf(FILE *stream, const char *format, va_list ap)
 {
@@ -12,7 +10,7 @@ int vfprintf(FILE *stream, const char *format, va_list ap)
         return n;
     left = n;
     while (left > 0) {
-        w = write(stream->fd, p, left);
+        w = fwrite(p, 1, n, stream);
         if (w < 0)
             break;
         left -= w;
