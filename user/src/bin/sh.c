@@ -185,10 +185,12 @@ static int interactive(void)
         if (getcwd(cwd, PATH_MAX) < 0)
             perror("getcwd");
         printf("%s@%s:%s$ ", user, host, cwd);
+        fflush(stdout);
         if (fgets(cmd, CMD_MAX, stdin)) {
             argc = 0;
             argv[argc++] = strtok(cmd, " ");
-            while ((argv[argc++] = strtok(NULL, " ")) != NULL);
+            while ((argv[argc++] = strtok(NULL, " ")) != NULL)
+                ;
             argc--;
             execute(argc, argv);
         }
