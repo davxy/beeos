@@ -62,8 +62,9 @@
 #define __NR_getgid         35
 #define __NR_setuid         36
 #define __NR_setgid         37
+#define __NR_socket         38
 /* Custom info syscall */
-#define __NR_info           38
+#define __NR_info           39
 
 
 #define STDIN_FILENO        0
