@@ -39,8 +39,6 @@ echo "memory:" $MEM "MB"
 echo "arch:" $ARCH
 echo "kernel:" $KERN
 
-EXTRA="$EXTRA -initrd disk.img -serial stdio"
-
-#echo $QEMU -kernel $KERN -m $MEM $ARCH_OPTS $EXTRA
+EXTRA="$EXTRA -initrd disk.img -serial stdio -net nic,model=e1000"
 
 $QEMU -kernel $KERN -m $MEM $ARCH_OPTS $EXTRA &

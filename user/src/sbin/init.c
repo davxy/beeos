@@ -55,6 +55,7 @@ static const struct dev_desc devs[] = {
     { "/dev/random",  S_IFCHR, makedev(0x01, 0x08) },
     { "/dev/urandom", S_IFCHR, makedev(0x01, 0x09) },
     { "/dev/initrd",  S_IFBLK, makedev(0x01, 0xFA) },
+    { "/dev/eth0",    S_IFCHR, makedev(0x01, 0x0A) },
 };
 #define NDEVS (sizeof(devs)/sizeof(*devs))
 

@@ -77,6 +77,9 @@ static ssize_t devfs_inode_read(struct inode *inod, void *buf,
     case DEV_URANDOM:
         n = random_read(buf, count);
         break;
+    case DEV_ETH0:
+        n = -1; /* TODO (using a nic abstraction) */
+        break;
     default:
         n = -ENODEV;
         break;
@@ -117,6 +120,10 @@ static ssize_t devfs_inode_write(struct inode *inod, const void *buf,
     case DEV_URANDOM:
         n = -1;
         break;
+    case DEV_ETH0:
+        n = -1; /* TODO (using a nic abstraction) */
+        break;
+        break;
     default:
         n = -ENODEV;
         break;
@@ -125,7 +132,7 @@ static ssize_t devfs_inode_write(struct inode *inod, const void *buf,
 }
 
 
-#define NDEVS 13
+#define NDEVS 14
 
 static struct {
     const char *name;
@@ -144,6 +151,7 @@ static struct {
     { "kmem",    DEV_KMEM },
     { "random",  DEV_RANDOM },
     { "urandom", DEV_URANDOM },
+    { "eth0",    DEV_ETH0 },
 };
 
 static dev_t name_to_dev(const char *name)

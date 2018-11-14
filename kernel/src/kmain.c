@@ -30,7 +30,7 @@
 #include "fs/devfs.h"
 #include "proc/task.h"
 #include "dev.h"
-
+#include "driver/e1000.h"
 
 #define ROOT_FS_TYPE    "ext2"
 #define ROOT_DEV        DEV_INITRD
@@ -92,6 +92,13 @@ void kmain(void)
 
     /* Mount root filesystem */
     mount_root();
+
+    {
+        struct e1000 eth;
+        pci_init();
+        if (e1000_init(&eth) < 0)
+            panic("eth init failure\n");
+    }
 
     /* Start the init process */
     if (task_create(init) == NULL)
