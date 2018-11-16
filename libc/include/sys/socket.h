@@ -4,6 +4,9 @@
 #include <sys/types.h>
 #include <unistd.h>
 
+typedef int socklen_t;
+typedef uint16_t sa_family_t; /* Address family */
+
 #define SOCK_STREAM     1   /**< Byte stream socket */
 #define SOCK_DGRAM      2   /**< Datagram socket */
 #define SOCK_RAW        3   /**< Raw protocol interface */

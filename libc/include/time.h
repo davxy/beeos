@@ -21,6 +21,7 @@
 #define _TIME_H_
 
 typedef long long int time_t;
+typedef long long clock_t;
 
 struct timespec {
     time_t  tv_sec;     /**> Seconds */
