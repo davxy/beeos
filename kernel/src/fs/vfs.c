@@ -18,8 +18,8 @@
  */
 
 #include "fs/vfs.h"
-#include "fs/devfs.h"   /* devfs_super_create */
-#include "fs/ext2.h"    /* ext2_super_create */
+#include "fs/devfs/devfs.h"   /* devfs_super_create */
+#include "fs/ext2/ext2.h"    /* ext2_super_create */
 #include "mm/slab.h"
 #include "kmalloc.h"
 #include "proc.h"

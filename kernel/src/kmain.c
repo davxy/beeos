@@ -27,7 +27,7 @@
 #include "mm/slab.h"
 #include "driver/tty.h"
 #include "fs/vfs.h"
-#include "fs/devfs.h"
+#include "fs/devfs/devfs.h"
 #include "proc/task.h"
 #include "dev.h"
 
