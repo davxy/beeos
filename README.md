@@ -87,8 +87,6 @@ CONTRIBUTIONS
 
   All contributions to the project will be listed in the AUTHORS document.
   
-  See the TODO document for tasks and missing features.
-
 
 CONTACT
 -------
