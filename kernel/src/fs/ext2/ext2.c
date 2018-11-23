@@ -19,7 +19,7 @@
 
 #include "ext2.h"
 #include "fs/vfs.h"
-#include "fs/devfs.h"
+#include "fs/devfs/devfs.h"
 #include "kmalloc.h"
 #include "dev.h"
 #include "util.h"
