@@ -21,10 +21,10 @@ README
 
 ### Prerequisites
 
-- gcc
-- binutils
-- make
-- qemu (qemu-system-x86)
+  - gcc
+  - binutils
+  - make
+  - qemu (qemu-system-x86)
 
 
 ### Quickstart
@@ -47,57 +47,51 @@ README
   
 **Supported Architectures**
   
-    - x86
+  - x86
 
 **Core**
 
-    - Multitasking
-    - Syscalls
-    - Virtual Memory
-    - Virtual File System: ext2, devfs
-    - SLAB  allocator
-    - Buddy allocator
-    - Timer queues
+  - Multitasking
+  - Syscalls
+  - Virtual Memory
+  - Virtual File System: ext2, devfs
+  - SLAB  allocator
+  - Buddy allocator
+  - Timer queues
 
 **IPC**
 
-    - Signals
-    - Pipes
+  - Signals
+  - Pipes
     
 **Synchronization**
 
-    - Spinlocks
-    - Wait queues
+  - Spinlocks
+  - Wait queues
 
 **Drivers**
 
-    - TTY
-    - Screen
-    - Ramdisk
-    - Keyboard
-    - PRNG
+  - TTY
+  - Screen
+  - Ramdisk
+  - Keyboard
+  - PRNG
 
 **Other**
 
-    - Multi TTY console
+  - Multi TTY console
 
 
 CONTRIBUTIONS
 -------------
 
-  All contributions to the project will be listed in the AUTHORS document.
+  All contributions to the project will be listed in the AUTHORS file.
   
-
-CONTACT
--------
-
-    Davide Galassi <davxy@datawok.net>
-
 
 LICENSING
 ---------
 
-    BeeOS is free software. See the file COPYING for licensing conditions.
+  BeeOS is free software. See the file COPYING for licensing conditions.
 
 
 CONTENTS
@@ -116,7 +110,7 @@ CONTENTS
       BeeOS standard C library.
 
     libu/
-      Common user level functionalities.
+      Common user functions.
 
     user/
       Various user applications and test programs.
