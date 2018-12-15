@@ -21,7 +21,7 @@ README
 
 ### Prerequisites
 
-  - gcc
+  - gcc (and maybe gcc-multilib)
   - binutils
   - make
   - qemu (qemu-system-x86)
