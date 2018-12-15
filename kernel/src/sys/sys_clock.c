@@ -18,9 +18,9 @@
  */
 
 #include "sys.h"
-#include "timer.h"
+#include "proc.h"
 
 unsigned int sys_clock(void)
 {
-    return (unsigned int)timer_ticks;
+    return (unsigned int)current->usage;
 }

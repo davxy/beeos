@@ -28,11 +28,6 @@ struct timespec {
     long    tv_nsec;    /**> Nanoseconds */
 };
 
-/*
- * The macro `CLOCKS_PER_SEC' is an expression with type `clock_t' that is
- * the number per second of the value returned by the `clock' function.
- * The value of CLOCKS_PER_SEC is required to be 1 million on all XSI systems.
- */
 #define CLOCKS_PER_SEC ((clock_t) 100)
 
 clock_t clock(void);

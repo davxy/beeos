@@ -26,12 +26,11 @@
 
 
 /* Clock ticks since system startup. */
-extern unsigned long timer_ticks;
+extern clock_t timer_ticks;
 
 /** Converts milliseconds to clock ticks. */
 #define msecs_to_ticks(msecs) \
-        (((unsigned long)(msecs) + \
-                (1000L / CLOCKS_PER_SEC) - 1) / (1000L / CLOCKS_PER_SEC))
+        (((unsigned long)(msecs) + (1000L / CLOCKS_PER_SEC) - 1) / (1000L / CLOCKS_PER_SEC))
 
 #define ticks_to_msecs(ticks) \
         ((1000L / CLOCKS_PER_SEC) * (unsigned long)(ticks))
