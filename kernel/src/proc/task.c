@@ -77,6 +77,7 @@ int task_init(struct task *tsk, task_entry_t entry)
     tsk->brk = current->brk;
 
     /* sheduler */
+    tsk->usage = 0;
     tsk->state = TASK_RUNNING;
     tsk->counter = msecs_to_ticks(SCHED_TIMESLICE);
     tsk->exit_code = 0;

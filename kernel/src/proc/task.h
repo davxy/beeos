@@ -66,6 +66,7 @@ struct task {
     struct timer_event  alarm;          /**< Alarm timer event (pre-allocated) */
     struct list_link    condw;          /**< Conditional wait */
     dev_t               tty;            /**< Controlling terminal */
+    clock_t             usage;          /**< CPU time in clock ticks */
 };
 
 

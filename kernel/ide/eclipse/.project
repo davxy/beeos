@@ -31,11 +31,6 @@
 			<locationURI>BASE_LOC/Makefile</locationURI>
 		</link>
 		<link>
-			<name>include</name>
-			<type>2</type>
-			<locationURI>BASE_LOC/include</locationURI>
-		</link>
-		<link>
 			<name>src</name>
 			<type>2</type>
 			<locationURI>BASE_LOC/src</locationURI>

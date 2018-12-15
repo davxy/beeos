@@ -99,6 +99,8 @@ int sys_mount(const char *source, const char *target,
               const char *fs_type, unsigned long flags,
               const void *data);
 
+unsigned int sys_clock(void);
+
 int sys_info(void);
 
 

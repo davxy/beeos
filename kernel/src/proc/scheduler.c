@@ -84,10 +84,12 @@ int do_signal(void)
     return 0;
 }
 
+
 void scheduler(void)
 {
     struct task *curr;
     struct task *next;
+    static clock_t prev_clock;
 
     curr = current;
     next = list_container(current->tasks.next,
@@ -101,6 +103,10 @@ void scheduler(void)
         ktask.state = TASK_RUNNING;
         next = &ktask;
     }
+
+    /* Update CPU usage statistics */
+    current->usage += (timer_ticks - prev_clock);
+    prev_clock = timer_ticks;
 
     current = next;
     current->counter = msecs_to_ticks(SCHED_TIMESLICE);
