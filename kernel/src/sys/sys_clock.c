@@ -17,15 +17,10 @@
  * License along with BeeOS; if not, see <http://www.gnu/licenses/>.
  */
 
-#include <unistd.h>
-#include <stdio.h>
-#include <time.h>
+#include "sys.h"
+#include "timer.h"
 
-int main(void)
+unsigned int sys_clock(void)
 {
-    while (1) {
-        printf("Hello from %d (%u)\n", getpid(), clock());
-        sleep(1);
-    }
-    return 0;
+    return (unsigned int)timer_ticks;
 }

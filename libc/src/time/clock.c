@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015-2018, Davide Galassi. All rights reserved.
+ * Copyright (c) 2015-2018, BeeOS Authors. All rights reserved.
  *
  * This file is part of the BeeOS software.
  *
@@ -17,15 +17,10 @@
  * License along with BeeOS; if not, see <http://www.gnu/licenses/>.
  */
 
-#include <unistd.h>
-#include <stdio.h>
 #include <time.h>
+#include <unistd.h>
 
-int main(void)
+clock_t clock(void)
 {
-    while (1) {
-        printf("Hello from %d (%u)\n", getpid(), clock());
-        sleep(1);
-    }
-    return 0;
+    return syscall(__NR_clock);
 }

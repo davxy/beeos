@@ -62,6 +62,7 @@ static const void *syscalls[SYSCALLS_NUM] = {
     [__NR_setuid]       = sys_setuid,
     [__NR_getgid]       = sys_getgid,
     [__NR_setgid]       = sys_setgid,
+    [__NR_clock]        = sys_clock,
     [__NR_info]         = sys_info,
 };
 

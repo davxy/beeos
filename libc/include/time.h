@@ -21,10 +21,20 @@
 #define _TIME_H_
 
 typedef long long int time_t;
+typedef long long int clock_t;
 
 struct timespec {
     time_t  tv_sec;     /**> Seconds */
     long    tv_nsec;    /**> Nanoseconds */
 };
+
+/*
+ * The macro `CLOCKS_PER_SEC' is an expression with type `clock_t' that is
+ * the number per second of the value returned by the `clock' function.
+ * The value of CLOCKS_PER_SEC is required to be 1 million on all XSI systems.
+ */
+#define CLOCKS_PER_SEC ((clock_t) 100)
+
+clock_t clock(void);
 
 #endif /* _TIME_H_ */
