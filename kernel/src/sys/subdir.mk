@@ -35,5 +35,5 @@ local_sources := syscall.c \
 				 sys_chdir.c \
 				 sys_alarm.c \
 				 sys_mount.c \
+				 sys_clock.c \
 				 sys_socket.c
-

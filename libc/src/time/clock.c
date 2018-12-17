@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015-2018, Davide Galassi. All rights reserved.
+ * Copyright (c) 2015-2018, BeeOS Authors. All rights reserved.
  *
  * This file is part of the BeeOS software.
  *
@@ -17,19 +17,10 @@
  * License along with BeeOS; if not, see <http://www.gnu/licenses/>.
  */
 
-#ifndef _TIME_H_
-#define _TIME_H_
+#include <time.h>
+#include <unistd.h>
 
-typedef long long int time_t;
-typedef long long int clock_t;
-
-struct timespec {
-    time_t  tv_sec;     /**> Seconds */
-    long    tv_nsec;    /**> Nanoseconds */
-};
-
-#define CLOCKS_PER_SEC ((clock_t) 100)
-
-clock_t clock(void);
-
-#endif /* _TIME_H_ */
+clock_t clock(void)
+{
+    return syscall(__NR_clock);
+}

@@ -20,7 +20,7 @@
 #include "timer.h"
 #include "proc.h"
 
-unsigned long timer_ticks = 0;
+clock_t timer_ticks = 0;
 
 /* Timer events queue. */
 static struct list_link timer_events;

@@ -19,7 +19,7 @@
 
 #include "sys.h"
 #include "fs/vfs.h"
-#include "fs/devfs.h"
+#include "fs/devfs/devfs.h"
 #include "proc.h"
 #include <errno.h>
 #include <sys/stat.h>

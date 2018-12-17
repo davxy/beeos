@@ -19,12 +19,22 @@
 
 #include <unistd.h>
 #include <stdio.h>
+#include <time.h>
 
 int main(void)
 {
+    clock_t prev;
+
+    prev = clock();
     while (1) {
-        printf("Hello from %d\n", getpid());
-        sleep(3);
+        if ((clock() - prev)/CLOCKS_PER_SEC >= 3) {
+            printf("\n");
+            printf("Going to sleep...(cpu time: ~%u)\n",
+                    clock()/ CLOCKS_PER_SEC);
+            prev = clock();
+            sleep(3);
+        }
+        printf(".");
     }
     return 0;
 }
