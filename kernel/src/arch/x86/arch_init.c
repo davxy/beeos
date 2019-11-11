@@ -71,55 +71,85 @@ struct multiboot_info {
 #define ZONE_LOW_TOP        0x400000
 #define MB_HIGH_MEM_START   0x100000
 
+/*
+ * Moltiboot low mem zone (The first 1MB).
+ * Instead of try to find out what parts of the low memory are
+ * effectively usable just discard the first 1MB of memory.
+ *
+ * For the Kernel, the first 4MB of ram are classified as LOW memory.
+ */
 static void mm_init(const struct multiboot_info *mbi)
 {
-    char *kend;
-    const char *mend;
-    size_t msize, lsize;
+    char *addr, *end;
+    size_t msize;
     int ret;
 
-    /*
-     * Low mem zone (with respect to multiboot).
-     * Instead of try to find out what parts of the low memory are
-     * effectively usable just discard the first 1MB of mem.
-     */
-
-    /*
-     * High mem zone (with respect to multiboot).
-     * Free the memory after the kernel space.
-     */
-
-    msize = mbi->mem_upper * 1024;
-    lsize = MIN(msize, ZONE_LOW_TOP - MB_HIGH_MEM_START);
-    ret = frame_zone_add((char *)MB_HIGH_MEM_START, lsize,
-                         PAGE_SIZE, ZONE_LOW);
+    msize = ALIGN_DOWN(mbi->mem_upper * 1024, PAGE_SIZE);
+    /* At most add 3MB */
+    if (msize > ZONE_LOW_TOP - MB_HIGH_MEM_START)
+        msize = ZONE_LOW_TOP - MB_HIGH_MEM_START;
+    ret = frame_zone_add((char *)MB_HIGH_MEM_START, msize, PAGE_SIZE, ZONE_LOW);
     if (ret < 0)
         panic("error adding low mem zone");
 
-    if (msize > lsize) {
-        ret = frame_zone_add((char *)MB_HIGH_MEM_START + lsize,
-                             msize - lsize, PAGE_SIZE, ZONE_HIGH);
-        if (ret < 0)
-            panic("Error adding high mem zone");
+    /* Hack to get the kernel brk */
+    addr = (char *)ALIGN_UP((uintptr_t)kmalloc(0,0), PAGE_SIZE);
+    addr = (char *)virt_to_phys(addr);
+    end = (char *)MB_HIGH_MEM_START + msize;
+    /* Free unused space (after the kernel brk) */
+    while (addr < end) {
+        frame_free(addr, 0);
+        addr += PAGE_SIZE;
     }
+}
 
-    /* Free the unused space (after the kernel brk) */
-    kend = (char *)ALIGN_UP((uintptr_t)kmalloc(0,0), PAGE_SIZE); /* hack to get brk */
-    kend = (char *)virt_to_phys(kend);
-    mend = (char *)MB_HIGH_MEM_START + msize;
-    while (kend < mend) {
-        frame_free(kend, 0);
-        kend += PAGE_SIZE;
+#define RESV 0x4000000
+
+static void mm_high_init(const struct multiboot_info *mbi)
+{
+    char *addr, *end;
+    size_t msize;
+    int ret;
+
+    msize = ALIGN_DOWN(mbi->mem_upper * 1024, PAGE_SIZE);
+    /* Check if there is memory over the first 4MB */
+    if (msize <= ZONE_LOW_TOP - MB_HIGH_MEM_START)
+        return;
+    msize -= (ZONE_LOW_TOP - MB_HIGH_MEM_START);
+
+    /* Free HIGH zone memory (above ZONE_LOW_TOP) */
+    addr = (char *)ZONE_LOW_TOP;
+    end = (char *)ZONE_LOW_TOP + msize;
+
+    ret = frame_zone_add((char *)ZONE_LOW_TOP, msize, PAGE_SIZE, ZONE_HIGH);
+    if (ret < 0 && msize > RESV) {
+        ret = frame_zone_add((char *)ZONE_LOW_TOP, RESV, PAGE_SIZE, ZONE_HIGH);
+        if (ret == 0) {
+            addr = (char *)ZONE_LOW_TOP;
+            end = (char *)ZONE_LOW_TOP + RESV;
+            while (addr < end) {
+                frame_free(addr, 0);
+                addr += PAGE_SIZE;
+            }
+            end = (char *)ZONE_LOW_TOP + msize;
+            ret = frame_zone_add((char *)ZONE_LOW_TOP + RESV,
+                    msize - RESV, PAGE_SIZE, ZONE_HIGH);
+        }
+    }
+    if (ret < 0)
+        panic("Error adding high mem zone");
+
+    while (addr < end) {
+        frame_free(addr, 0);
+        addr += PAGE_SIZE;
     }
 }
 
 static void mod_load(const struct multiboot_info *mbi)
 {
-    char *addr;
-    char *start;
-    char *end;
-    size_t size;
+    char *addr, *start, *end;
     char **mods_addr = (char **)mbi->mods_addr;
+    size_t size;
 
     start = mods_addr[0];
     end   = mods_addr[1];
@@ -133,12 +163,16 @@ static void mod_load(const struct multiboot_info *mbi)
     ramdisk_init(addr, size); /* Initialize ramdisk device */
 }
 
+const struct multiboot_info *g_mbi;
+
 /*
  * Architecture specific initialization.
  * Must be executed before other generic routines.
  */
 void arch_init(const struct multiboot_info *mbi)
 {
+    g_mbi = mbi;
+
     /*
      * Check for initrd.
      * To avoid corruption of the initrd content, this should be done
@@ -161,6 +195,13 @@ void arch_init(const struct multiboot_info *mbi)
 
     /* Finish with paging initialization */
     paging_init();
+
+
+}
+
+void arch_final(void)
+{
+    mm_high_init(g_mbi);
 
     /* Initialize keyboard */
     kbd_init();

@@ -228,7 +228,7 @@ struct dentry *dentry_create(const char *name, struct dentry *parent,
     de->inod = NULL; /* May be without an inode */
     de->parent = (parent != NULL) ? parent : de;
     list_init(&de->child);  /* Empty children list */
-    list_insert_before(&parent->child, &de->link); /* Insert in the parent child  list */
+    list_insert_before(&de->parent->child, &de->link); /* Insert in the parent child  list */
     de->mounted = 0;
     de->ops = ops;
     return de;

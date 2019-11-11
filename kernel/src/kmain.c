@@ -87,6 +87,9 @@ void kmain(void)
     tty_init();
     syscall_init();
 
+    /* Finish machine specific initialization */
+    arch_final();
+
     kprintf("BeeOS v%d.%d.%d - %s\n\n",
             BEEOS_MAJOR, BEEOS_MINOR, BEEOS_PATCH, BEEOS_CODENAME);
 

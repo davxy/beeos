@@ -323,6 +323,7 @@ static void map_propagate(unsigned int idx)
  * If not we send a SEGV signal to the current process (TODO).
  * rdreference
  */
+#define DEBUG_PAGING
 static void page_fault_handler(void)
 {
     uint32_t virt, phys;
@@ -335,6 +336,7 @@ static void page_fault_handler(void)
     kprintf("page fault at 0x%x\n", current->arch.ifr->eip);
     kprintf("faulting address 0x%x\n", virt);
     kprintf("error code: %x\n", current->arch.ifr->err_no);
+    kprintf("--------\n");
 #endif
 
     if (virt < KVBASE) {
@@ -346,7 +348,7 @@ static void page_fault_handler(void)
         zone_flags = ZONE_HIGH;
     }
 
-    phys = (uint32_t)frame_alloc(0, zone_flags);
+    phys = (uint32_t)frame_alloc(0, 0);
     if (phys == 0)
         panic("Out of mem in page fault handler");
     if ((int)page_map((char *)virt, (uint32_t)-1) < 0)
