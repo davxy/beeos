@@ -72,6 +72,7 @@ static void mount_root(void)
     current->cwd  = ddup(sb->root);
 }
 
+void arch_final(void);
 
 void kmain(void)
 {
@@ -87,11 +88,14 @@ void kmain(void)
     tty_init();
     syscall_init();
 
-    kprintf("BeeOS v%d.%d.%d - %s\n\n",
-            BEEOS_MAJOR, BEEOS_MINOR, BEEOS_PATCH, BEEOS_CODENAME);
+    /* Finish machine specific initialization */
+    arch_final();
 
     /* Mount root filesystem */
     mount_root();
+
+    kprintf("BeeOS v%d.%d.%d - %s\n\n",
+            BEEOS_MAJOR, BEEOS_MINOR, BEEOS_PATCH, BEEOS_CODENAME);
 
     /* Start the init process */
     if (task_create(init) == NULL)
@@ -99,6 +103,4 @@ void kmain(void)
 
     /* Process 0 continues with the idle procedure */
     idle();
-    /* Should never happen */
-    panic("Idle task exited");
 }

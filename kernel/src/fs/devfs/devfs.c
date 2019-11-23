@@ -215,7 +215,7 @@ static struct devfs_inode *devfs_sb_inode_alloc(struct super_block *sb)
     inod = (struct devfs_inode *)kmalloc(sizeof(struct devfs_inode), 0);
     if (inod == NULL)
         return NULL;
-
+    list_init(&inod->link);
     list_insert_before(&devfs_nodes, &inod->link);
     return inod;
 }
@@ -314,6 +314,10 @@ struct super_block *devfs_super_create(dev_t dev)
     struct inode *iroot;
     struct dentry *droot;
     struct super_block *sb = NULL;
+
+    /* First call */
+    if (devfs_nodes.next == NULL)
+        list_init(&devfs_nodes);
 
     droot = dentry_create("/", NULL, &devfs_dentry_ops);
     if (droot != NULL) {

@@ -186,7 +186,9 @@ static void slab_space_free(struct slabctl* slab, size_t size)
     if ((cache->flags & SLAB_EMBED_SLABCTL) == 0)
         slab_cache_free(slab_slabctl_cache, slab);
 
-    order = size >> (1 + SLAB_UNIT_BITS);
+    order = fnzb(size >> SLAB_UNIT_BITS);
+    if ((1 << (order + SLAB_UNIT_BITS)) < size)
+        order++;
     frame_free(virt_to_phys(data), order);
 }
 
@@ -202,8 +204,10 @@ static struct slabctl *slab_space_alloc(struct slab_cache *cache, int flags)
     unsigned int objs;
 
     size = ALIGN_UP(cache->slab_objs * cache->objsize, SLAB_UNIT_SIZE);
-    order = size >> (1 + SLAB_UNIT_BITS);
-    data = frame_alloc(order, ZONE_LOW);
+    order = fnzb(size >> SLAB_UNIT_BITS);
+    if ((1 << (order + SLAB_UNIT_BITS)) < size)
+        order++;
+    data = frame_alloc(order, 0);
     if (data == NULL)
         return NULL;
     data = phys_to_virt(data);

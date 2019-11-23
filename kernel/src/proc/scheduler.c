@@ -26,7 +26,7 @@
 
 
 struct task ktask;
-struct task *current;
+struct task *current = &ktask;
 
 
 static int sigpop(sigset_t *sigpend, const sigset_t *sigmask)

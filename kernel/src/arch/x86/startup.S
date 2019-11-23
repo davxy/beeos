@@ -105,7 +105,7 @@ startup:
 freeze:
     cli
 	hlt
-	jmp		freeze  /* just in case... */
+	jmp    freeze  /* just in case... */
 .size freeze, .-freeze
 
 /*
