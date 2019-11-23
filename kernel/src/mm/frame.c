@@ -23,9 +23,6 @@
 #include "kprintf.h"
 
 
-int frame_alloc_initialized = 0;
-
-
 /* List of all the registered zones */
 static struct zone_st *zone_list;
 
@@ -88,7 +85,6 @@ int frame_zone_add(void *addr, size_t size, size_t frame_size, int flags)
         if (res == 0) {
             zone->next = zone_list;
             zone_list = zone;
-            frame_alloc_initialized = 1;
         } else {
             kfree(zone, sizeof(struct zone_st));
         }
