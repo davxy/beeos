@@ -29,6 +29,7 @@
 #include "mm/frame.h"
 #include "panic.h"
 #include "proc.h"
+#include "sys.h"
 #include <string.h>
 #include <errno.h>
 
@@ -308,6 +309,16 @@ static void map_propagate(unsigned int idx)
     flush_tlb();
 }
 
+/* Page fault error bits */
+/* The fault is caused by a page-protection violation. */
+#define ERR_PRESENT (1 << 0)
+/* The fault was caused by a write access */
+#define ERR_WRITE   (1 << 1)
+/* The fault was caused by user-mode code */
+#define ERR_USER    (1 << 2)
+/* The fault was triggered by an instruction fetch (only if NX bit is enabled)*/
+#define ERR_FETCH   (1 << 4)
+
 /*
  * Page fault interrupt handler.
  * Here, after some conditions checking, we try to resolve the fault
@@ -323,29 +334,38 @@ static void map_propagate(unsigned int idx)
  * If not we send a SEGV signal to the current process (TODO).
  * rdreference
  */
-#define DEBUG_PAGING
 static void page_fault_handler(void)
 {
     uint32_t virt, phys;
-    unsigned int zone_flags = ZONE_LOW;
+    int err, do_kill = 0;
 
     fault_addr_get(virt);
+    err = current->arch.ifr->err_no;
 
 #ifdef DEBUG_PAGING
     kprintf("pid: %d\n", current->pid);
     kprintf("page fault at 0x%x\n", current->arch.ifr->eip);
     kprintf("faulting address 0x%x\n", virt);
-    kprintf("error code: %x\n", current->arch.ifr->err_no);
+    kprintf("error code: %x\n", err);
     kprintf("--------\n");
 #endif
 
-    if (virt < KVBASE) {
+    if ((err & (ERR_PRESENT | ERR_FETCH)) != 0) {
+        kprintf("Protection fault or NX violation... kill process %d\n",
+                current->pid);
+        do_kill = 1;
+    }
+    if ((err & ERR_USER) != 0) {
         /*
-         * TODO: just in 2 particular cases, else send to the process SIGSEGV
-         * 1) Can expand stack
-         * 2) Can expand heap
+         * User land process fault.
+         * Send SIGSEGV in case that:
+         * - Read/Write to KERNEL SPACE
+         * - Can't expand stack (TODO)
+         * - Can't expand heap (TODO)
+         * - Accessing read only address for write (< heap_base) (TODO)
          */
-        zone_flags = ZONE_HIGH;
+        if (virt >= KVBASE)
+            do_kill = 1;
     }
 
     phys = (uint32_t)frame_alloc(0, 0);
@@ -354,10 +374,11 @@ static void page_fault_handler(void)
     if ((int)page_map((char *)virt, (uint32_t)-1) < 0)
         panic("Map page error");
 
-    if (virt >= KVBASE) {
+    if (virt >= KVBASE)
         map_propagate(DIR_INDEX(virt));
-        kprintf("Propagate\n");
-    }
+
+    if (do_kill)
+        sys_kill(current->pid, SIGSEGV);
 }
 
 /*
