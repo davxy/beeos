@@ -84,36 +84,6 @@ static void *ksbrk(intptr_t increment)
     return ptr;
 }
 
-#if 0
-void *frame_alloc(unsigned int order, unsigned int flags);
-#include "arch/x86/vmem.h"
-/* ARCH dependent because of frame size */
-static void *kmalloc_fallback(size_t size)
-{
-    void *ptr;
-    static char *last = NULL;
-    static size_t left = 0;
-    extern int frame_alloc_initialized;
-
-    if (frame_alloc_initialized) {
-        if (left < size && last != NULL) {
-            ptr = (void *)frame_alloc(size >> 12, 0);
-            if (ptr == NULL)
-                return ptr;
-            ptr = virt_to_phys(ptr);
-            left = 0x1000;
-        } else {
-            ptr = last;
-        }
-        last = (char *)ptr + size;
-        left -= size;
-    } else {
-        ptr = ksbrk((intptr_t)size);
-    }
-    return ptr;
-}
-#endif
-
 void *kmalloc(size_t size, int flags)
 {
     unsigned int i;
