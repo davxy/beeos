@@ -6,7 +6,7 @@ README
 ------
 
   A simple and minimal "Unix-like" kernel trying to be POSIX compliant.
-  (at least with regard to the implemented services).
+  (at least with respect to the implemented services).
 
   The kernel is **NOT STABLE** for production and is a discontinuous work
   mainly used as a didactical tool for operating systems and low level
@@ -21,10 +21,10 @@ README
 
 ### Prerequisites
 
-  - gcc (and maybe gcc-multilib)
+  - gcc
   - binutils
   - make
-  - qemu (qemu-system-x86)
+  - qemu (qemu-system)
 
 
 ### Quickstart
