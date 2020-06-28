@@ -17,17 +17,11 @@
  * License along with BeeOS; if not, see <http://www.gnu/licenses/>.
  */
 
-/**
- * @file    stdlib.h
- * @brief
- * @author     Davide Galassi
- * @date      Jul 18, 2014
- */
-
 #ifndef _STDLIB_H_
 #define _STDLIB_H_
 
 #include <sys/types.h>
+#include <limits.h>
 
 #define ATEXIT_MAX  32
 
@@ -124,5 +118,11 @@ int putenv(char *str);
 int system(const char *cmd);
 
 void abort(void);
+
+#define RAND_MAX    INT_MAX
+
+void srand(unsigned int seed);
+
+int rand(void);
 
 #endif /* _STDLIB_H_ */

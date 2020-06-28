@@ -11,4 +11,5 @@ local_sources := _Exit.c \
 				 unsetenv.c \
 				 system.c \
 				 abort.c \
-				 assert.c
+				 assert.c \
+				 rand.c
