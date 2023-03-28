@@ -1,4 +1,0 @@
-set arch i386
-set disassembly-flavor intel
-set print pretty
-break kmain
