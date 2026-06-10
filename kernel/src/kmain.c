@@ -30,7 +30,8 @@
 #include "fs/devfs/devfs.h"
 #include "proc/task.h"
 #include "dev.h"
-
+#include "driver/pci.h"
+#include "driver/e1000.h"
 
 #define ROOT_FS_TYPE    "ext2"
 #define ROOT_DEV        DEV_INITRD
@@ -72,6 +73,7 @@ static void mount_root(void)
     current->cwd  = ddup(sb->root);
 }
 
+void arch_final(void);
 
 void kmain(void)
 {
@@ -87,11 +89,19 @@ void kmain(void)
     tty_init();
     syscall_init();
 
-    kprintf("BeeOS v%d.%d.%d - %s\n\n",
-            BEEOS_MAJOR, BEEOS_MINOR, BEEOS_PATCH, BEEOS_CODENAME);
+    /* Finish machine specific initialization */
+    arch_final();
 
     /* Mount root filesystem */
     mount_root();
+
+    /* Scan the PCI bus and initialize the network device (if present) */
+    pci_init();
+    if (e1000_init() < 0)
+        kprintf("e1000 ethernet adapter not available\n");
+
+    kprintf("BeeOS v%d.%d.%d - %s\n\n",
+            BEEOS_MAJOR, BEEOS_MINOR, BEEOS_PATCH, BEEOS_CODENAME);
 
     /* Start the init process */
     if (task_create(init) == NULL)
@@ -99,6 +109,4 @@ void kmain(void)
 
     /* Process 0 continues with the idle procedure */
     idle();
-    /* Should never happen */
-    panic("Idle task exited");
 }

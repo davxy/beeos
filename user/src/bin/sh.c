@@ -30,6 +30,8 @@
 
 #define CMD_MAX 64
 
+extern char **environ;
+
 static char cmd[CMD_MAX];
 static char cwd[PATH_MAX];
 static pid_t fgpid = -1;

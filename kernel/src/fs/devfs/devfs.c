@@ -22,6 +22,7 @@
 #include "driver/tty.h"
 #include "driver/ramdisk.h"
 #include "driver/random.h"
+#include "driver/e1000.h"
 #include "kmalloc.h"
 #include "kprintf.h"
 #include "list.h"
@@ -77,6 +78,9 @@ static ssize_t devfs_inode_read(struct inode *inod, void *buf,
     case DEV_URANDOM:
         n = random_read(buf, count);
         break;
+    case DEV_ETH0:
+        n = e1000_read(buf, count);
+        break;
     default:
         n = -ENODEV;
         break;
@@ -117,6 +121,9 @@ static ssize_t devfs_inode_write(struct inode *inod, const void *buf,
     case DEV_URANDOM:
         n = -1;
         break;
+    case DEV_ETH0:
+        n = e1000_write(buf, count);
+        break;
     default:
         n = -ENODEV;
         break;
@@ -125,7 +132,7 @@ static ssize_t devfs_inode_write(struct inode *inod, const void *buf,
 }
 
 
-#define NDEVS 13
+#define NDEVS 14
 
 static struct {
     const char *name;
@@ -144,6 +151,7 @@ static struct {
     { "kmem",    DEV_KMEM },
     { "random",  DEV_RANDOM },
     { "urandom", DEV_URANDOM },
+    { "eth0",    DEV_ETH0 },
 };
 
 static dev_t name_to_dev(const char *name)
@@ -215,7 +223,7 @@ static struct devfs_inode *devfs_sb_inode_alloc(struct super_block *sb)
     inod = (struct devfs_inode *)kmalloc(sizeof(struct devfs_inode), 0);
     if (inod == NULL)
         return NULL;
-
+    list_init(&inod->link);
     list_insert_before(&devfs_nodes, &inod->link);
     return inod;
 }
@@ -314,6 +322,10 @@ struct super_block *devfs_super_create(dev_t dev)
     struct inode *iroot;
     struct dentry *droot;
     struct super_block *sb = NULL;
+
+    /* First call */
+    if (devfs_nodes.next == NULL)
+        list_init(&devfs_nodes);
 
     droot = dentry_create("/", NULL, &devfs_dentry_ops);
     if (droot != NULL) {

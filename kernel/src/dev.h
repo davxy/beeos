@@ -40,6 +40,8 @@
 #define DEV_RANDOM              0x0108
 /** Faster, less secure random number generator */
 #define DEV_URANDOM             0x0109
+/** NIC */
+#define DEV_ETH0                0x010A
 /** Current TTY console */
 #define DEV_TTY0                0x0400
 /** First TTY console */

@@ -1,21 +1,28 @@
 #!/bin/sh
 
+# Abort on the first error: a partially populated image silently
+# panics the kernel at boot ("init exiting").
+set -e
+
 # Root source
 ROOT_SRC=../user/build/x86
 
-umount /dev/loop0
-losetup -d /dev/loop0
+# Cleanup possible leftovers from a previous failed run
+umount tmp 2>/dev/null || true
 
-# Create the image and make the filesystem
+# Create the image and make the filesystem.
+# The kernel ext2 driver assumes 1024-byte blocks, so the block size is
+# forced here. The inode size is read from the superblock and both 128
+# and 256 byte inodes are supported; 128 is the default to keep the
+# image compact (override with e.g. INODE_SIZE=256).
+INODE_SIZE=${INODE_SIZE:-128}
 dd if=/dev/zero of=disk.img bs=1M count=1
-mkfs.ext2 disk.img
+mkfs.ext2 -F -b 1024 -I $INODE_SIZE disk.img
 
-# Setup loopback device and mount to a temporary directory
-losetup -f
-sleep 1
-losetup /dev/loop0 disk.img
+# Mount using a dynamically allocated loopback device.
+# /dev/loop0 may already be taken (e.g. by snap squashfs images).
 mkdir -p tmp
-mount /dev/loop0 tmp
+mount -o loop disk.img tmp
 
 # Copy the sysroot in the destination
 cp -r sysroot/* tmp/
@@ -36,8 +43,8 @@ for f in $SRC_FILES; do
     cp $f $d
 done
 
-sync
+# Umount the destination and release the loopback device
+umount tmp
+rmdir tmp
 
-# Umount the destination and shutdown the loopback device
-#umount /dev/loop0
-#losetup -d /dev/loop0
+echo "disk.img successfully created"
