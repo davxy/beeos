@@ -72,6 +72,17 @@ struct multiboot_info {
 #define MB_HIGH_MEM_START   0x100000
 
 /*
+ * Highest physical address directly usable by the kernel.
+ * Physical memory is mapped in the kernel virtual space starting at
+ * KVBASE (0xC0000000) and the top of the virtual space, from 0xFF7FF000
+ * up, is reserved for the recursive page tables mappings and the "wild"
+ * page. Thus phys_to_virt works only for physical addresses below
+ * 1GB-8MB; round down to a 4MB boundary. Memory above this limit is
+ * currently left unused (would require a kmap-like mechanism).
+ */
+#define ZONE_HIGH_TOP       0x3F400000
+
+/*
  * Moltiboot low mem zone (The first 1MB).
  * Instead of try to find out what parts of the low memory are
  * effectively usable just discard the first 1MB of memory.
@@ -116,6 +127,9 @@ static void mm_high_init(const struct multiboot_info *mbi)
     if (msize <= ZONE_LOW_TOP - MB_HIGH_MEM_START)
         return;
     msize -= (ZONE_LOW_TOP - MB_HIGH_MEM_START);
+    /* Ignore memory beyond the phys_to_virt addressable limit */
+    if (msize > ZONE_HIGH_TOP - ZONE_LOW_TOP)
+        msize = ZONE_HIGH_TOP - ZONE_LOW_TOP;
 
     /* Free HIGH zone memory (above ZONE_LOW_TOP) */
     addr = (char *)ZONE_LOW_TOP;
