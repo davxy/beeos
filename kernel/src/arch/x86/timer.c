@@ -22,21 +22,23 @@
 #include "io.h"
 #include "isr.h"
 
-
-#define TIMER_IO_DAT        0x40    /* Data port */
-#define TIMER_IO_CMD        0x43    /* Command port */
-
+/* Internal clock frequency is 1193180 Hz. */
 #define TIMER_ARCH_HZ       1193180 /* Built-in timer max frequency */
-#define TIMER_OPMODE        0x04    /* Mode 2, rate generator */
-#define TIMER_ACCESS        0x30    /* 16bit, LSB first */
-
-/* The value we send to the PIT is the value to divide it's input
+/*
+ * The value we send to the PIT is the value to divide it's input
  * clock (1193180 Hz) to get the required frequency.
  * The divisor must be small enough to fit into 16-bits.
  *
  * TIMER_ARCH_FREQ / freq < 65536 => frequency > 18,20
  */
-#define TIMER_DIVISOR       (TIMER_ARCH_HZ / TIMER_HZ)
+#define TIMER_DIVISOR       (TIMER_ARCH_HZ / CLOCKS_PER_SEC)
+
+#define TIMER_IO_DAT        0x40    /* Data port */
+#define TIMER_IO_CMD        0x43    /* Command port */
+
+#define TIMER_OPMODE        0x04    /* Mode 2, rate generator */
+#define TIMER_ACCESS        0x30    /* 16bit, LSB first */
+
 
 static void timer_handler(void)
 {

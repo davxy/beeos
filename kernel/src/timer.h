@@ -22,20 +22,18 @@
 
 #include "list.h"
 #include <stdint.h>
+#include <time.h>
 
 
 /* Clock ticks since system startup. */
-extern unsigned long timer_ticks;
-
-/* Timer frequency */
-#define TIMER_HZ    100
+extern clock_t timer_ticks;
 
 /** Converts milliseconds to clock ticks. */
 #define msecs_to_ticks(msecs) \
-        (((unsigned long)(msecs) + (1000L / TIMER_HZ) - 1) / (1000L / TIMER_HZ))
+        (((unsigned long)(msecs) + (1000L / CLOCKS_PER_SEC) - 1) / (1000L / CLOCKS_PER_SEC))
 
 #define ticks_to_msecs(ticks) \
-        ((1000L / TIMER_HZ) * (unsigned long)(ticks))
+        ((1000L / CLOCKS_PER_SEC) * (unsigned long)(ticks))
 
 
 /** Timer event callback signature. */

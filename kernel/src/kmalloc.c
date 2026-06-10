@@ -89,10 +89,12 @@ void *kmalloc(size_t size, int flags)
     unsigned int i;
 
     if (kmalloc_initialized == 0)
-        return ksbrk((intptr_t)size);
+        return ksbrk(size);
     i = (size < 16) ? 16 : next_pow2(size);
     i >>= 4;
     i = fnzb(i);
+    if (i >= KMALLOCS_SLABS_NUM)
+        return NULL;    /* Request exceeds the biggest cache size */
     return slab_cache_alloc(kmalloc_caches[i], flags);
 }
 
@@ -105,6 +107,8 @@ void kfree(void *ptr, size_t size)
     i= (size < 16) ? 16 : next_pow2(size);
     i >>= 4;
     i = fnzb(i);
+    if (i >= KMALLOCS_SLABS_NUM)
+        return;
     slab_cache_free(kmalloc_caches[i], ptr);
 }
 

@@ -22,7 +22,7 @@
 
 #define BEEOS_MAJOR       0
 #define BEEOS_MINOR       2
-#define BEEOS_PATCH       0
+#define BEEOS_PATCH       1
 
 #define BEEOS_CODENAME    "BronzeAge"
 

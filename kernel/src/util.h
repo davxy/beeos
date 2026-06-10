@@ -32,6 +32,7 @@
 
 /**
  * First non zero bit position starting from left.
+ *
  * @param v     Value under analysis.
  * @return      Zero based bit position.
  *              If the input value is zero then returns 0.

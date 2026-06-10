@@ -27,7 +27,7 @@
 #include "mm/slab.h"
 #include "driver/tty.h"
 #include "fs/vfs.h"
-#include "fs/devfs.h"
+#include "fs/devfs/devfs.h"
 #include "proc/task.h"
 #include "dev.h"
 #include "driver/e1000.h"
@@ -72,6 +72,7 @@ static void mount_root(void)
     current->cwd  = ddup(sb->root);
 }
 
+void arch_final(void);
 
 void kmain(void)
 {
@@ -87,8 +88,8 @@ void kmain(void)
     tty_init();
     syscall_init();
 
-    kprintf("BeeOS v%d.%d.%d - %s\n\n",
-            BEEOS_MAJOR, BEEOS_MINOR, BEEOS_PATCH, BEEOS_CODENAME);
+    /* Finish machine specific initialization */
+    arch_final();
 
     /* Mount root filesystem */
     mount_root();
@@ -100,12 +101,13 @@ void kmain(void)
             panic("eth init failure\n");
     }
 
+    kprintf("BeeOS v%d.%d.%d - %s\n\n",
+            BEEOS_MAJOR, BEEOS_MINOR, BEEOS_PATCH, BEEOS_CODENAME);
+
     /* Start the init process */
     if (task_create(init) == NULL)
         panic("Unable to start init task");
 
     /* Process 0 continues with the idle procedure */
     idle();
-    /* Should never happen */
-    panic("Idle task exited");
 }

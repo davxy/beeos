@@ -1,10 +1,7 @@
 set arch i386
 set disassembly-flavor intel
-target remote localhost:1234
-symbol-file ../kernel/build/x86/kernel.sym
 set print pretty
 disp /3i $pc
 break kmain
 break *0x100010
 break *0x100000
-continue

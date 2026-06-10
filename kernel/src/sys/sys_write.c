@@ -19,7 +19,7 @@
 
 #include "sys.h"
 #include "dev.h"
-#include "fs/devfs.h"
+#include "fs/devfs/devfs.h"
 #include "fs/vfs.h"
 #include "proc.h"
 #include <stddef.h>
