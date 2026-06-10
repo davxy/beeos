@@ -112,12 +112,21 @@ int main(int argc, char *argv[])
         received = read(sfdn, &ip_pkt_receive, sizeof(struct ip_pkt));
         clock_pong = clock ();
 
-        if (ip_pkt_receive.icmp.un.echo.id == icmp_pkt_send.icmp.un.echo.id) {
+        if (received < 0) {
+            perror(NULL);
+            return 1;
+        }
+        if (received < (ssize_t)(sizeof(struct iphdr) +
+                                 sizeof(struct icmphdr)))
+            continue;
+
+        if (ip_pkt_receive.icmp.type == ICMP_ECHOREPLY &&
+            ip_pkt_receive.icmp.un.echo.id == icmp_pkt_send.icmp.un.echo.id) {
             clock_time = (clock_pong - clock_ping);
-            printf ("pong %llu.%03llu s\n",
-                    clock_time / CLOCKS_PER_SEC,
-                    (clock_time % CLOCKS_PER_SEC) *
-                    1000 / CLOCKS_PER_SEC);
+            printf ("pong %u.%03u s\n",
+                    (unsigned int)(clock_time / CLOCKS_PER_SEC),
+                    (unsigned int)((clock_time % CLOCKS_PER_SEC) *
+                    1000 / CLOCKS_PER_SEC));
             break;
         }
     }

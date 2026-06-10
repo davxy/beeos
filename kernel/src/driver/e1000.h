@@ -58,4 +58,12 @@ ssize_t e1000_read(void *buf, size_t size);
  */
 ssize_t e1000_write(const void *buf, size_t size);
 
+/**
+ * Get the interface MAC address.
+ *
+ * @param mac   Output buffer, 6 bytes.
+ * @return      0 on success, negative if the device is not present.
+ */
+int e1000_mac(uint8_t *mac);
+
 #endif /* BEEOS_DRIVER_E1000_H_ */

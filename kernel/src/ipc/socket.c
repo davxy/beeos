@@ -18,9 +18,12 @@
  */
 
 /*
- * For now only AF_PACKET/SOCK_RAW sockets are implemented.
- * A packet socket maps straight to the network interface: each read
- * returns one received ethernet frame, each write transmits one frame.
+ * Raw sockets only, two flavors:
+ * - AF_PACKET maps straight to the network interface: each read
+ *   returns one received ethernet frame, each write transmits one.
+ * - AF_INET sends the payload wrapped in a kernel-built IP header to
+ *   the connect()ed peer and receives whole IP packets matching the
+ *   socket protocol (header included), as expected e.g. by ping.
  */
 
 #include "ipc/socket.h"
@@ -28,7 +31,9 @@
 #include "proc.h"
 #include "kmalloc.h"
 #include "driver/e1000.h"
+#include "net/ip.h"
 #include <sys/socket.h>
+#include <netinet/in.h>
 #include <string.h>
 #include <limits.h>
 #include <fcntl.h>
@@ -44,6 +49,11 @@ struct socket_inode {
 };
 
 
+static in_addr_t socket_peer(const struct socket_inode *snode)
+{
+    return ((const struct sockaddr_in *)&snode->addr)->sin_addr.s_addr;
+}
+
 static int socket_read(struct inode *inod, void *buf,
                        size_t count, size_t offset)
 {
@@ -51,7 +61,9 @@ static int socket_read(struct inode *inod, void *buf,
 
     if (snode->family == AF_PACKET)
         return e1000_read(buf, count);
-    return -EINVAL;
+    /* AF_INET */
+    return ip_recv(buf, count, snode->protocol,
+                   (snode->connected != 0) ? socket_peer(snode) : 0);
 }
 
 static int socket_write(struct inode *inod, const void *buf,
@@ -61,7 +73,10 @@ static int socket_write(struct inode *inod, const void *buf,
 
     if (snode->family == AF_PACKET)
         return e1000_write(buf, count);
-    return -EINVAL;
+    /* AF_INET */
+    if (snode->connected == 0)
+        return -EDESTADDRREQ;
+    return ip_send(socket_peer(snode), snode->protocol, buf, count);
 }
 
 
@@ -97,10 +112,12 @@ int socket_create(int family, int type, int protocol)
     struct file *file;
     struct dentry *dent;
 
-    if (family != AF_PACKET)
+    if (family != AF_PACKET && family != AF_INET)
         return -EAFNOSUPPORT;
     if (type != SOCK_RAW)
         return -ESOCKTNOSUPPORT;
+    if (family == AF_INET && protocol <= 0)
+        return -EPROTONOSUPPORT;
 
     for (fd = 0; fd < OPEN_MAX; fd++) {
         if (current->fds[fd].fil == NULL)
@@ -157,6 +174,8 @@ int socket_connect(int sockfd, const struct sockaddr *addr,
     snode = (struct socket_inode *)fil->dent->inod;
     if (snode->family == AF_PACKET)
         return -EOPNOTSUPP; /* Packet sockets are not connection oriented */
+    if (addr->sa_family != snode->family)
+        return -EAFNOSUPPORT;
 
     memcpy(&snode->addr, addr, addrlen);
     snode->connected = 1;

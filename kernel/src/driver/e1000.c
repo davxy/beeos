@@ -355,6 +355,14 @@ ssize_t e1000_read(void *buf, size_t size)
     return (ssize_t)n;
 }
 
+int e1000_mac(uint8_t *mac)
+{
+    if (eth.pci == NULL)
+        return -ENODEV;
+    memcpy(mac, eth.mac, sizeof(eth.mac));
+    return 0;
+}
+
 ssize_t e1000_write(const void *buf, size_t size)
 {
     volatile struct e1000_tx_desc *desc;
