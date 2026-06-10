@@ -35,6 +35,9 @@
 #define EXT2_BLK_DBL        13  /* Double indirect blocks index */
 #define EXT2_BLK_TPL        14  /* Triple indirect blocks index */
 
+#define EXT2_GOOD_OLD_REV   0   /* Revision 0: fixed inode size */
+#define EXT2_GOOD_OLD_INODE_SIZE    128
+
 /*
  * Unused macros reserved for future extensions or completeness.
  */
@@ -71,7 +74,13 @@ struct ext2_disk_super_block {
     uint32_t checkinterval;     /* maximum time between checks */
     uint32_t creator_os;        /* indicator of which OS created */
     uint32_t rev_level;         /* EXT2 revision level */
-    uint32_t reserved[236];     /* padding to 1024 bytesOS */
+    uint16_t def_resuid;        /* default uid for reserved blocks */
+    uint16_t def_resgid;        /* default gid for reserved blocks */
+    /* The following fields are valid only if rev_level > 0 */
+    uint32_t first_ino;         /* first non-reserved inode */
+    uint16_t inode_size;        /* size of the on-disk inode structure */
+    uint16_t block_group_nr;    /* group number of this superblock copy */
+    uint32_t reserved[233];     /* padding to 1024 bytes */
 };
 
 struct ext2_group_desc {
@@ -119,6 +128,7 @@ struct ext2_disk_dirent {
 struct ext2_super_block {
     struct super_block      base;
     uint32_t                block_size;
+    uint32_t                inode_size;
     uint32_t                inodes_per_group;
     uint32_t                log_block_size;
     struct ext2_group_desc *gd_table;
@@ -229,8 +239,8 @@ static struct inode *ext2_lookup(struct inode *dir, const char *name)
     if (dirbuf == NULL)
         return NULL;
 
-    if (devfs_read(dir->sb->dev, dirbuf, dir->size,
-                   ((struct ext2_inode *)dir)->blocks[0] * 1024) != dir->size)
+    if (ext2_read((struct ext2_inode *)dir, dirbuf, dir->size, 0)
+            != dir->size)
         goto end;
 
     count = dir->size;
@@ -277,8 +287,7 @@ static int ext2_readdir(struct inode *dir, unsigned int i,
     if (dirbuf == NULL)
         return -ENOMEM;
 
-    ret = devfs_read(dir->sb->dev, dirbuf, dir->size,
-                    ((struct ext2_inode *)dir)->blocks[0] * 1024);
+    ret = ext2_read((struct ext2_inode *)dir, dirbuf, dir->size, 0);
     if (ret != dir->size) {
         if (ret >= 0)
             ret = -EIO;
@@ -343,6 +352,11 @@ static void ext2_super_inode_free(struct inode *inod)
 
 /*
  * Fetch inode information from the device.
+ *
+ * Inodes can be larger than the ext2_disk_inode structure (e.g. 256
+ * bytes with a recent mkfs.ext2): the extra space holds fields we do
+ * not use, so only the first sizeof(disk_inod) bytes are read while
+ * sb->inode_size is used as the stride within the inode table.
  */
 static int ext2_super_inode_read(struct inode *inod)
 {
@@ -352,11 +366,11 @@ static int ext2_super_inode_read(struct inode *inod)
     int group = ((inod->ino - 1) / sb->inodes_per_group);
     const struct ext2_group_desc *gd = &sb->gd_table[group];
     int table_index = (inod->ino - 1 ) % sb->inodes_per_group;
-    int blockno = ((table_index * 128) / 1024 ) + gd->inode_table;
-    int ind = table_index % (1024 /128);
+    int blockno = ((table_index * sb->inode_size) / sb->block_size) + gd->inode_table;
+    int ind = table_index % (sb->block_size / sb->inode_size);
 
     n = devfs_read(sb->base.dev, &disk_inod, sizeof(disk_inod),
-                   blockno * 1024 + ind*sizeof(disk_inod));
+                   blockno * sb->block_size + ind * sb->inode_size);
     if (n != sizeof(disk_inod))
         return -1;
 
@@ -418,6 +432,17 @@ struct super_block *ext2_super_create(dev_t dev)
     sb->base.dev = dev;
     sb->log_block_size = dsb.log_block_size;
     sb->block_size = 1024 << dsb.log_block_size;
+
+    /* Revision 0 has a fixed inode size; later revisions store it in
+     * the superblock (e.g. 256 with current mkfs.ext2 defaults). */
+    if (dsb.rev_level == EXT2_GOOD_OLD_REV)
+        sb->inode_size = EXT2_GOOD_OLD_INODE_SIZE;
+    else
+        sb->inode_size = dsb.inode_size;
+    if (sb->inode_size < EXT2_GOOD_OLD_INODE_SIZE
+        || sb->block_size % sb->inode_size != 0)
+        return NULL;
+
     gd_block = (dsb.log_block_size == 0) ? (uint32_t)3 : (uint32_t)2;
     num_groups = (dsb.blocks_count - 1) / dsb.blocks_per_group + 1;
 

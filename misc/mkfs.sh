@@ -11,11 +11,13 @@ ROOT_SRC=../user/build/x86
 umount tmp 2>/dev/null || true
 
 # Create the image and make the filesystem.
-# The kernel ext2 driver assumes 1024-byte blocks and 128-byte inodes
-# (revision 0 layout). Modern e2fsprogs defaults to 256-byte inodes,
-# which the driver misreads, so the values are forced here.
+# The kernel ext2 driver assumes 1024-byte blocks, so the block size is
+# forced here. The inode size is read from the superblock and both 128
+# and 256 byte inodes are supported; 128 is the default to keep the
+# image compact (override with e.g. INODE_SIZE=256).
+INODE_SIZE=${INODE_SIZE:-128}
 dd if=/dev/zero of=disk.img bs=1M count=1
-mkfs.ext2 -F -b 1024 -I 128 disk.img
+mkfs.ext2 -F -b 1024 -I $INODE_SIZE disk.img
 
 # Mount using a dynamically allocated loopback device.
 # /dev/loop0 may already be taken (e.g. by snap squashfs images).
