@@ -22,6 +22,7 @@
 #include "net/ip.h"
 #include "driver/e1000.h"
 #include "kmalloc.h"
+#include "timer.h"
 #include <arpa/inet.h>
 #include <string.h>
 #include <errno.h>
@@ -30,6 +31,8 @@
 #define ARP_OP_REQUEST  1
 #define ARP_OP_REPLY    2
 
+/* Reply wait timeout, in milliseconds */
+#define ARP_TIMEOUT_MS  1000
 /* Frames inspected while waiting for the reply before giving up */
 #define ARP_MAX_FRAMES  64
 
@@ -60,6 +63,7 @@ int arp_resolve(in_addr_t ip, uint8_t *mac)
     const struct arp_frame *rep;
     uint8_t *frame;
     in_addr_t spa;
+    unsigned long deadline;
     ssize_t n;
     int i, res;
 
@@ -92,16 +96,18 @@ int arp_resolve(in_addr_t ip, uint8_t *mac)
     if (frame == NULL)
         return -ENOMEM;
 
-    /*
-     * Wait for the reply, discarding everything else.
-     * WARNING: if no frame at all is received this blocks forever
-     * (e1000_read has no timeout yet).
-     */
+    /* Wait for the reply, discarding everything else */
     res = -EHOSTUNREACH;
+    deadline = (unsigned long)timer_ticks + msecs_to_ticks(ARP_TIMEOUT_MS);
     for (i = 0; i < ARP_MAX_FRAMES; i++) {
-        n = e1000_read(frame, ETH_FRAME_MAX);
+        if ((unsigned long)timer_ticks >= deadline)
+            break;
+        n = e1000_read_timeout(frame, ETH_FRAME_MAX,
+                               deadline - (unsigned long)timer_ticks);
+        if (n == -ETIMEDOUT)
+            break;
         if (n < 0) {
-            res = n;
+            res = n;    /* e.g. -EINTR */
             break;
         }
         if ((size_t)n < sizeof(struct arp_frame))

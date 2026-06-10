@@ -82,6 +82,8 @@ void task_delete(struct task *tsk);
 
 void task_signal(struct task *tsk, int sig);
 
+int task_signal_pending(struct task *tsk);
+
 
 int task_arch_init(struct task_arch *tsk, task_entry_t entry);
 

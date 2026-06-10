@@ -40,14 +40,27 @@ int e1000_init(void);
 
 /**
  * Read a single received frame.
- * Blocks until a frame is available. If the frame is bigger than the
- * supplied buffer the exceeding part is silently discarded.
+ * Blocks until a frame is available or a signal is pending for the
+ * current task (-EINTR). If the frame is bigger than the supplied
+ * buffer the exceeding part is silently discarded.
  *
  * @param buf   Destination buffer.
  * @param size  Buffer size.
  * @return      Number of bytes copied into buf, negative on error.
  */
 ssize_t e1000_read(void *buf, size_t size);
+
+/**
+ * Read a single received frame, giving up after a timeout.
+ * Same as e1000_read() but waits at most `timeout` ticks before
+ * returning -ETIMEDOUT.
+ *
+ * @param buf     Destination buffer.
+ * @param size    Buffer size.
+ * @param timeout Maximum wait, in system ticks (0 = wait forever).
+ * @return        Number of bytes copied into buf, negative on error.
+ */
+ssize_t e1000_read_timeout(void *buf, size_t size, unsigned long timeout);
 
 /**
  * Transmit a single frame.

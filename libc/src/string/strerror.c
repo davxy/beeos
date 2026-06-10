@@ -108,6 +108,12 @@ char *strerror(int errnum)
     case EAFNOSUPPORT:
         s = "Address family not supported by protocol";
         break;
+    case ETIMEDOUT:
+        s = "Connection timed out";
+        break;
+    case EHOSTUNREACH:
+        s = "No route to host";
+        break;
 #if 0
 #define ENFILE      23  /* File table overflow */
 #define ENOTTY      25  /* Not a typewriter */
@@ -195,10 +201,8 @@ char *strerror(int errnum)
 #define ENOTCONN    107 /* Transport endpoint is not connected */
 #define ESHUTDOWN   108 /* Cannot send after transport endpoint shutdown */
 #define ETOOMANYREFS    109 /* Too many references: cannot splice */
-#define ETIMEDOUT   110 /* Connection timed out */
 #define ECONNREFUSED    111 /* Connection refused */
 #define EHOSTDOWN   112 /* Host is down */
-#define EHOSTUNREACH    113 /* No route to host */
 #define EALREADY    114 /* Operation already in progress */
 #define EINPROGRESS 115 /* Operation now in progress */
 #define ESTALE      116 /* Stale NFS file handle */
