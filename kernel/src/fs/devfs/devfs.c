@@ -22,6 +22,7 @@
 #include "driver/tty.h"
 #include "driver/ramdisk.h"
 #include "driver/random.h"
+#include "driver/e1000.h"
 #include "kmalloc.h"
 #include "kprintf.h"
 #include "list.h"
@@ -77,6 +78,9 @@ static ssize_t devfs_inode_read(struct inode *inod, void *buf,
     case DEV_URANDOM:
         n = random_read(buf, count);
         break;
+    case DEV_ETH0:
+        n = e1000_read(buf, count);
+        break;
     default:
         n = -ENODEV;
         break;
@@ -117,6 +121,9 @@ static ssize_t devfs_inode_write(struct inode *inod, const void *buf,
     case DEV_URANDOM:
         n = -1;
         break;
+    case DEV_ETH0:
+        n = e1000_write(buf, count);
+        break;
     default:
         n = -ENODEV;
         break;
@@ -125,7 +132,7 @@ static ssize_t devfs_inode_write(struct inode *inod, const void *buf,
 }
 
 
-#define NDEVS 13
+#define NDEVS 14
 
 static struct {
     const char *name;
@@ -144,6 +151,7 @@ static struct {
     { "kmem",    DEV_KMEM },
     { "random",  DEV_RANDOM },
     { "urandom", DEV_URANDOM },
+    { "eth0",    DEV_ETH0 },
 };
 
 static dev_t name_to_dev(const char *name)
