@@ -24,7 +24,10 @@ CFLAGS := -O0 -g -Wall -MMD -MP -nostdinc -fno-builtin \
 #
 ASFLAGS := -g -Wall -MMD -MP -nostdinc -fno-builtin
 #
-LDFLAGS := -ffreestanding
+# -no-pie is required with toolchains producing PIE executables by default
+# (e.g. gcc on Ubuntu >= 18.04). The kernel ELF loader maps segments at
+# their nominal vaddr and cannot relocate position independent executables.
+LDFLAGS := -ffreestanding -no-pie
 #
 # Standard C library relative path
 LDLIBS := $(libc)
@@ -35,8 +38,11 @@ SOURCE_DIR := src
 
 ifeq ($(ARCH),x86)
 
-TARGET_ARCH := -m32
-TARGET_MACH := -m32
+# -march=i686 prevents the compiler from emitting MMX/SSE instructions
+# (default with some toolchains). The kernel doesn't enable SSE (CR4.OSFXSR)
+# nor preserves FPU/SSE context on task switch, so their use traps with #UD.
+TARGET_ARCH := -m32 -march=i686
+TARGET_MACH := -m32 -march=i686
 
 else ifeq ($(ARCH),x86_64)
 
