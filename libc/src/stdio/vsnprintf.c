@@ -544,10 +544,14 @@ static size_t strtostr_fill(char *string, char *buffer, int width,
     if (width < 0 && -max < 0 && width < -max)
         width = -max;
 
+    /* String longer than the field width: the width is a minimum,
+     * print the whole string (clamped to the available space). */
     if (width != 0 && size_s > abs(width)) {
-        memcpy(buffer, string, abs(width));
-        buffer[width] = '\0';
-        return width;
+        if (max > 0 && size_s > (size_t)max)
+            size_s = max;
+        memcpy(buffer, string, size_s);
+        buffer[size_s] = '\0';
+        return size_s;
     }
 
     if (width == 0 && max > 0 && size_s > max) {
