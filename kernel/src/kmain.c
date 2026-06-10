@@ -30,6 +30,7 @@
 #include "fs/devfs/devfs.h"
 #include "proc/task.h"
 #include "dev.h"
+#include "driver/pci.h"
 #include "driver/e1000.h"
 
 #define ROOT_FS_TYPE    "ext2"
@@ -94,12 +95,10 @@ void kmain(void)
     /* Mount root filesystem */
     mount_root();
 
-    {
-        struct e1000 eth;
-        pci_init();
-        if (e1000_init(&eth) < 0)
-            panic("eth init failure\n");
-    }
+    /* Scan the PCI bus and initialize the network device (if present) */
+    pci_init();
+    if (e1000_init() < 0)
+        kprintf("e1000 ethernet adapter not available\n");
 
     kprintf("BeeOS v%d.%d.%d - %s\n\n",
             BEEOS_MAJOR, BEEOS_MINOR, BEEOS_PATCH, BEEOS_CODENAME);

@@ -30,5 +30,8 @@ struct pci_device *pci_get_device(int vendor_id, int device_id);
 
 void pci_register_handler(struct pci_device *dev, void (*handler)(void));
 
+/** Enable memory space access and DMA bus mastering for the device. */
+void pci_bus_master_enable(const struct pci_device *dev);
+
 
 #endif /* BEEOS_DRIVER_PCI_H_ */

@@ -5,6 +5,7 @@
 #include "arch/x86/isr_arch.h"
 #include "kprintf.h"
 #include "isr.h"
+#include "proc.h"
 
 struct pci_conf_hdr
 {
@@ -56,20 +57,29 @@ struct pci_device *pci_device_list;
 #define PCI_MAX_BUSES   256
 #define PCI_MAX_SLOTS   32
 
+/* PCI command register bits */
+#define PCI_CMD_MEM_ENABLE  (1 << 1)
+#define PCI_CMD_BUS_MASTER  (1 << 2)
+
+/* Interrupt lines routable by the PIC */
+#define PCI_IRQ_LINES   16
+/* Interrupt pins (INTA#..INTD#) */
+#define PCI_IRQ_PINS    4
+
 
 struct pci_irq
 {
-    void    (*handler)();
-    int     int_pin;
+    void    (*handler)(void);
     void    *aux;
 };
 
-struct pci_irq pci_irqs[32][4];
+static struct pci_irq pci_irqs[PCI_IRQ_LINES][PCI_IRQ_PINS];
 
 
 struct pci_device *pci_get_device(int vendor_id, int device_id)
 {
     struct pci_device *dev;
+
     for (dev = pci_device_list; dev != NULL; dev = dev->next)
     {
         if (dev->vendor_id == vendor_id && dev->device_id == device_id)
@@ -78,31 +88,52 @@ struct pci_device *pci_get_device(int vendor_id, int device_id)
     return NULL;
 }
 
-#include "proc.h"
-
-void pci_handler(void)
+static void pci_handler(void)
 {
     int i;
-    int int_no = current->arch.ifr->int_no - 32;
+    unsigned int int_no = current->arch.ifr->int_no - 32;
 
-    for(i = 0; i < 4; i++) {
-        if(pci_irqs[int_no][i].handler != NULL)
+    if (int_no >= PCI_IRQ_LINES)
+        return;
+    for (i = 0; i < PCI_IRQ_PINS; i++) {
+        if (pci_irqs[int_no][i].handler != NULL)
             pci_irqs[int_no][i].handler();
     }
 }
 
 void pci_register_handler(struct pci_device *dev, void (*handler)(void))
 {
-    struct pci_irq *irq;
     int int_line = dev->int_line;
     int int_pin  = dev->int_pin;
 
-    irq = &pci_irqs[int_line][int_pin];
-    irq->int_pin = int_pin;
-    irq->handler = handler;
+    if (int_line < 0 || int_line >= PCI_IRQ_LINES ||
+        int_pin < 1 || int_pin > PCI_IRQ_PINS) {
+        kprintf("pci: cannot route int-line %d (pin %d)\n", int_line, int_pin);
+        return;
+    }
+    pci_irqs[int_line][int_pin - 1].handler = handler;
     kprintf("Register PCI int on int-line %d (ISR%d)\n",
             int_line, ISR_IRQ0 + int_line);
     isr_register_handler(ISR_IRQ0 + int_line, &pci_handler);
+}
+
+void pci_bus_master_enable(const struct pci_device *dev)
+{
+    union cfg_addr addr;
+    uint32_t val;
+
+    addr.val = 0;
+    addr.enable = 1;
+    addr.bus = dev->bus;
+    addr.slot = dev->slot;
+    addr.reg = 1;   /* Command and status registers */
+    outl(PCI_ADDR_PORT, addr.val);
+    val = inl(PCI_DATA_PORT);
+    val |= PCI_CMD_MEM_ENABLE | PCI_CMD_BUS_MASTER;
+    /* Do not touch the status half (write-1-to-clear bits) */
+    val &= 0x0000FFFF;
+    outl(PCI_ADDR_PORT, addr.val);
+    outl(PCI_DATA_PORT, val);
 }
 
 void pci_init(void)
@@ -143,28 +174,20 @@ void pci_init(void)
             pcidev = kmalloc(sizeof(struct pci_device), 0);
             if (!pcidev)
                 panic("No memory for pci device");
+            pcidev->bus = b;
+            pcidev->slot = s;
             pcidev->vendor_id = hdr.vendor_id;
             pcidev->device_id = hdr.device_id;
-            pcidev->mm_base = hdr.bars[0] & ~3;
-            pcidev->io_base = hdr.bars[1] & 0xFFFFFFFC; // depends on device
+            pcidev->class_code = hdr.pci_major;
+            pcidev->subclass = hdr.pci_minor;
+            pcidev->prog_if = hdr.pci_interface;
+            pcidev->mm_base = hdr.bars[0] & ~0xFUL;
+            pcidev->io_base = hdr.bars[1] & ~0x3UL; /* depends on device */
             pcidev->int_line = hdr.int_line;
             pcidev->int_pin = hdr.int_pin;
             pcidev->next = pci_device_list;
             pci_device_list = pcidev;
 
-            /* enable PCI bus mastering. TODO: create a function for this */
-            if (pcidev->vendor_id == 0x8086)
-            {
-                hdr.command |= (1 << 2);
-                addr.bus = b;
-                addr.slot = s;
-                addr.reg = 0;
-                for (addr.reg = 0; addr.reg < 16; addr.reg++)
-                {
-                    outl(PCI_ADDR_PORT, addr.val);
-                    outl(PCI_DATA_PORT, p32[addr.reg]);
-                }
-            }
             kprintf("pcidev detected. Vendor: 0x%04x, Device: 0x%04x\n",
                     pcidev->vendor_id, pcidev->device_id);
         }

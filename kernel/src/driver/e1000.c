@@ -1,378 +1,472 @@
+/*
+ * Copyright (c) 2015-2018, Davide Galassi. All rights reserved.
+ *
+ * This file is part of the BeeOS software.
+ *
+ * BeeOS is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with BeeOS; if not, see <http://www.gnu/licenses/>.
+ */
+
+/*
+ * Intel PRO/1000 (82540EM) ethernet driver.
+ *
+ * Reception is interrupt driven: the ISR just wakes up the processes
+ * blocked in e1000_read(), the descriptor ring is consumed in process
+ * context. Transmission is synchronous: e1000_write() copies the frame
+ * in a per-descriptor buffer and the descriptor "done" bit is polled
+ * before the descriptor is reused.
+ *
+ * DMA memory (descriptor rings and packet buffers) is taken from the
+ * ZONE_LOW zone. Low memory frames are the only ones covered by the
+ * boot-time identity (offset) mapping, thus the only ones for which the
+ * phys_to_virt/virt_to_phys relation is guaranteed to hold (high memory
+ * pages are lazily backed by arbitrary frames in the page fault handler).
+ */
+
 #include "e1000.h"
+#include "pci.h"
 #include "kprintf.h"
-#include "kmalloc.h"
-#include "panic.h"
-#include "util.h"
+#include "sync/cond.h"
+#include "sync/spinlock.h"
+#include "mm/frame.h"
+#include "mm/zone.h"
 #include "arch/x86/vmem.h"
 #include "arch/x86/paging.h"
+#include "arch/x86/paging_bits.h"
 #include <string.h>
-#include <stddef.h>
+#include <stdint.h>
+#include <errno.h>
 
 
-#define E1000_PCI_DEVICE_ID 0x100E
+#define E1000_PCI_DEVICE_ID 0x100E      /* 82540EM, qemu default */
 
-#define REG_CTRL            0x0000
-#define REG_EEPROM          0x0014
-#define REG_IMASK           0x00D0
-#define REG_RCTRL           0x0100
-#define REG_RXDESCLO        0x2800
-#define REG_RXDESCHI        0x2804
-#define REG_RXDESCLEN       0x2808
-#define REG_RXDESCHEAD      0x2810
-#define REG_RXDESCTAIL      0x2818
+/* MMIO registers window size (BAR0) */
+#define E1000_MMIO_SIZE     0x20000
 
-#define REG_TCTRL           0x0400
-#define REG_TXDESCLO        0x3800
-#define REG_TXDESCHI        0x3804
-#define REG_TXDESCLEN       0x3808
-#define REG_TXDESCHEAD      0x3810
-#define REG_TXDESCTAIL      0x3818
+#define NUM_RX_DESC         16
+#define NUM_TX_DESC         16
+#define BUF_SIZE            2048
+/* NUM_xX_DESC * BUF_SIZE = 32KB = PAGE_SIZE << 3 */
+#define BUF_BLOCK_ORDER     3
 
-#define REG_MTA             0x5200
+/* Registers */
+#define REG_CTRL            0x0000      /* Device control */
+#define REG_EEPROM          0x0014      /* EEPROM read (EERD) */
+#define REG_ICR             0x00C0      /* Interrupt cause read (r/clear) */
+#define REG_IMS             0x00D0      /* Interrupt mask set */
+#define REG_RCTL            0x0100      /* Receive control */
+#define REG_TCTL            0x0400      /* Transmit control */
+#define REG_TIPG            0x0410      /* Transmit inter packet gap */
+#define REG_RDBAL           0x2800      /* RX descriptor base low */
+#define REG_RDBAH           0x2804      /* RX descriptor base high */
+#define REG_RDLEN           0x2808      /* RX descriptor ring length */
+#define REG_RDH             0x2810      /* RX descriptor head */
+#define REG_RDT             0x2818      /* RX descriptor tail */
+#define REG_TDBAL           0x3800      /* TX descriptor base low */
+#define REG_TDBAH           0x3804      /* TX descriptor base high */
+#define REG_TDLEN           0x3808      /* TX descriptor ring length */
+#define REG_TDH             0x3810      /* TX descriptor head */
+#define REG_TDT             0x3818      /* TX descriptor tail */
+#define REG_MTA             0x5200      /* Multicast table array (128 regs) */
+#define REG_RAL             0x5400      /* Receive address low (RAL0) */
+#define REG_RAH             0x5404      /* Receive address high (RAH0) */
 
-#define RCTL_EN             (1 << 1)    // Receiver Enable
-#define RCTL_SBP            (1 << 2)    // Store Bad Packets
-#define RCTL_UPE            (1 << 3)    // Unicast Promiscuous Enabled
-#define RCTL_MPE            (1 << 4)    // Multicast Promiscuous Enabled
-#define RCTL_LPE            (1 << 5)    // Long Packet Reception Enable
-#define RCTL_LBM_NONE       (0 << 6)    // No Loopback
-#define RCTL_LBM_PHY        (3 << 6)    // PHY or external SerDesc loopback
-#define RTCL_RDMTS_HALF     (0 << 8)    // Free Buffer Threshold is 1/2 of RDLEN
-#define RTCL_RDMTS_QUARTER  (1 << 8)    // Free Buffer Threshold is 1/4 of RDLEN
-#define RTCL_RDMTS_EIGHTH   (2 << 8)    // Free Buffer Threshold is 1/8 of RDLEN
-#define RCTL_MO_36          (0 << 12)   // Multicast Offset - bits 47:36
-#define RCTL_MO_35          (1 << 12)   // Multicast Offset - bits 46:35
-#define RCTL_MO_34          (2 << 12)   // Multicast Offset - bits 45:34
-#define RCTL_MO_32          (3 << 12)   // Multicast Offset - bits 43:32
-#define RCTL_BAM            (1 << 15)   // Broadcast Accept Mode
-#define RCTL_VFE            (1 << 18)   // VLAN Filter Enable
-#define RCTL_CFIEN          (1 << 19)   // Canonical Form Indicator Enable
-#define RCTL_CFI            (1 << 20)   // Canonical Form Indicator Bit Value
-#define RCTL_DPF            (1 << 22)   // Discard Pause Frames
-#define RCTL_PMCF           (1 << 23)   // Pass MAC Control Frames
-#define RCTL_SECRC          (1 << 26)   // Strip Ethernet CRC
+/* Device control register bits */
+#define CTRL_SLU            (1 << 6)    /* Set link up */
+#define CTRL_RST            (1 << 26)   /* Device reset (self clearing) */
 
-// Buffer Sizes
-#define RCTL_BSIZE_256      (3 << 16)
-#define RCTL_BSIZE_512      (2 << 16)
-#define RCTL_BSIZE_1024     (1 << 16)
-#define RCTL_BSIZE_2048     (0 << 16)
-#define RCTL_BSIZE_4096     ((3 << 16) | (1 << 25))
-#define RCTL_BSIZE_8192     ((2 << 16) | (1 << 25))
-#define RCTL_BSIZE_16384    ((1 << 16) | (1 << 25))
+/* Interrupt bits (ICR and IMS) */
+#define INT_LSC             (1 << 2)    /* Link status change */
+#define INT_RXSEQ           (1 << 3)    /* Receive sequence error */
+#define INT_RXDMT0          (1 << 4)    /* RX descriptor minimum threshold */
+#define INT_RXO             (1 << 6)    /* Receiver FIFO overrun */
+#define INT_RXT0            (1 << 7)    /* Receiver timer interrupt */
 
-#define ECTRL_FD            0x01    //FULL DUPLEX
-#define ECTRL_ASDE          0x20    //auto speed enable
-#define ECTRL_SLU           0x40    //set link up
+/* Receive control register bits */
+#define RCTL_EN             (1 << 1)    /* Receiver enable */
+#define RCTL_UPE            (1 << 3)    /* Unicast promiscuous enable */
+#define RCTL_MPE            (1 << 4)    /* Multicast promiscuous enable */
+#define RCTL_LBM_NONE       (0 << 6)    /* No loopback */
+#define RCTL_RDMTS_HALF     (0 << 8)    /* Free desc threshold: RDLEN/2 */
+#define RCTL_BAM            (1 << 15)   /* Broadcast accept mode */
+#define RCTL_BSIZE_2048     (0 << 16)   /* Receive buffer size */
+#define RCTL_SECRC          (1 << 26)   /* Strip ethernet CRC */
+
+/* Transmit control register bits */
+#define TCTL_EN             (1 << 1)    /* Transmit enable */
+#define TCTL_PSP            (1 << 3)    /* Pad short packets */
+#define TCTL_CT_SHIFT       4           /* Collision threshold */
+#define TCTL_COLD_SHIFT     12          /* Collision distance */
+#define TCTL_RTLC           (1 << 24)   /* Re-transmit on late collision */
+
+/* Receive address high register bits */
+#define RAH_AV              (1u << 31)  /* Address valid */
+
+/* Receive descriptor status bits */
+#define RXD_STAT_DD         (1 << 0)    /* Descriptor done */
+
+/* Transmit descriptor status bits */
+#define TXD_STAT_DD         (1 << 0)    /* Descriptor done */
+
+/* Transmit descriptor command bits */
+#define TXD_CMD_EOP         (1 << 0)    /* End of packet */
+#define TXD_CMD_IFCS        (1 << 1)    /* Insert FCS (ethernet CRC) */
+#define TXD_CMD_RS          (1 << 3)    /* Report status (DD write-back) */
+
+#define RCTL_FLAGS (RCTL_EN | RCTL_UPE | RCTL_MPE | RCTL_LBM_NONE \
+                  | RCTL_RDMTS_HALF | RCTL_BAM | RCTL_BSIZE_2048 | RCTL_SECRC)
+
+#define TCTL_FLAGS (TCTL_EN | TCTL_PSP | (15 << TCTL_CT_SHIFT) \
+                  | (64 << TCTL_COLD_SHIFT) | TCTL_RTLC)
+
+#define IMS_FLAGS (INT_LSC | INT_RXSEQ | INT_RXDMT0 | INT_RXO | INT_RXT0)
+
+/* IEEE 802.3 standard inter packet gap values (IPGT=10, IPGR1=8, IPGR2=6) */
+#define TIPG_VALUE (10 | (8 << 10) | (6 << 20))
 
 
-// TCTL Register
+struct e1000_rx_desc {
+    uint64_t addr;
+    uint16_t length;
+    uint16_t checksum;
+    uint8_t  status;
+    uint8_t  errors;
+    uint16_t special;
+} __attribute__((packed));
 
-#define TCTL_EN             (1 << 1)    // Transmit Enable
-#define TCTL_PSP            (1 << 3)    // Pad Short Packets
-#define TCTL_CT_SHIFT       4           // Collision Threshold
-#define TCTL_COLD_SHIFT     12          // Collision Distance
-#define TCTL_SWXOFF         (1 << 22)   // Software XOFF Transmission
-#define TCTL_RTLC           (1 << 24)   // Re-transmit on Late Collision
+struct e1000_tx_desc {
+    uint64_t addr;
+    uint16_t length;
+    uint8_t  cso;
+    uint8_t  cmd;
+    uint8_t  status;
+    uint8_t  css;
+    uint16_t special;
+} __attribute__((packed));
 
-#define TSTA_DD             (1 << 0)    // Descriptor Done
-#define TSTA_EC             (1 << 1)    // Excess Collisions
-#define TSTA_LC             (1 << 2)    // Late Collision
-#define LSTA_TU             (1 << 3)    // Transmit Underrun
 
-// Transmit Command
-#define CMD_EOP             (1 << 0)    // End of Packet
-#define CMD_IFCS            (1 << 1)    // Insert FCS
-#define CMD_IC              (1 << 2)    // Insert Checksum
-#define CMD_RS              (1 << 3)    // Report Status
-#define CMD_RPS             (1 << 4)    // Report Packet Sent
-#define CMD_VLE             (1 << 6)    // VLAN Packet Enable
-#define CMD_IDE             (1 << 7)    // Interrupt Delay Enable
+struct e1000 {
+    struct pci_device *pci;
+    int          eeprom;        /* EEPROM present flag */
+    uint8_t      mac[6];
+    volatile struct e1000_rx_desc *rx_ring;
+    volatile struct e1000_tx_desc *tx_ring;
+    uint8_t     *rx_buf;        /* NUM_RX_DESC contiguous BUF_SIZE buffers */
+    uint8_t     *tx_buf;        /* NUM_TX_DESC contiguous BUF_SIZE buffers */
+    unsigned int rx_cur;        /* First descriptor to consume */
+    unsigned int tx_cur;        /* Next descriptor to fill */
+    struct cond  rx_cond;       /* Readers wait here for frames */
+    struct spinlock tx_lock;
+};
 
-#define RX_FLAGS (RCTL_EN | RCTL_SBP | RCTL_UPE | RCTL_MPE | RCTL_LBM_NONE \
-                | RTCL_RDMTS_HALF | RCTL_BAM | RCTL_SECRC | RCTL_BSIZE_2048)
+static struct e1000 eth;
 
-#define TX_FLAGS (TCTL_EN | TCTL_PSP | \
-        (15 << TCTL_CT_SHIFT) | (64 << TCTL_COLD_SHIFT) | TCTL_RTLC)
 
-void e1000_outl(struct e1000 *e, uint16_t addr, uint32_t val)
+static void wr32(uint16_t reg, uint32_t val)
 {
-    *(uint32_t *)(e->pci->mm_base + addr) = val;
+    *(volatile uint32_t *)(eth.pci->mm_base + reg) = val;
 }
 
-uint32_t e1000_inl(struct e1000 *e, uint16_t addr)
+static uint32_t rd32(uint16_t reg)
 {
-    return *(uint32_t *)(e->pci->mm_base + addr);
+    return *(volatile uint32_t *)(eth.pci->mm_base + reg);
+}
+
+/*
+ * The receive ring is shared with the ISR: every spot where it is
+ * accessed from process context must run with interrupts disabled,
+ * otherwise the ISR may fire while the rx_cond lock is held and
+ * deadlock on it (the handler runs through an interrupt gate, that
+ * is with IF=0, so it would spin on the lock forever).
+ */
+static uint32_t irq_save(void)
+{
+    uint32_t flags;
+
+    asm volatile("pushfd\n\t"
+                 "pop %0\n\t"
+                 "cli"
+                 : "=r"(flags) : : "memory");
+    return flags;
+}
+
+static void irq_restore(uint32_t flags)
+{
+    asm volatile("push %0\n\t"
+                 "popfd"
+                 : : "r"(flags) : "memory", "cc");
 }
 
 
-uint32_t e1000_eeprom_read(struct e1000 *e, uint8_t addr)
-{
-    uint32_t val = 0;
-    uint32_t test;
-
-    if(e->is_e)
-        test = addr << 8;
-    else
-        test = addr << 2;
-    e1000_outl(e, REG_EEPROM, test | 0x1);
-    if(e->is_e)
-    {
-        while(!((val = e1000_inl(e, REG_EEPROM)) & (1<<4)))
-            kprintf("val: %x\n", val);
-
-    }
-    else
-    {
-        while(!((val = e1000_inl(e, REG_EEPROM)) & (1<<1)))
-            kprintf("val: %x\n", val);
-    }
-    val >>= 16;
-    return val;
-}
-
-void e1000_get_type(struct e1000 *e)
+static int eeprom_detect(void)
 {
     int i;
-    uint32_t val = 0;
-    e1000_outl(e, REG_EEPROM, 1);
-    for (i = 0; i < 1000 && !e->is_e; i++)
-    {
-        val = e1000_inl(e, REG_EEPROM);
-        e->is_e = (val & 0x10) ? 1 : 0;
+
+    wr32(REG_EEPROM, 0x01);
+    for (i = 0; i < 1000; i++) {
+        if ((rd32(REG_EEPROM) & 0x10) != 0)
+            return 1;
     }
+    return 0;
 }
 
-void e1000_get_mac(struct e1000 *e)
-{
-    uint32_t temp;
-    temp = e1000_eeprom_read(e, 0);
-    e->mac[0] = temp & 0xff;
-    e->mac[1] = temp >> 8;
-    temp = e1000_eeprom_read(e, 1);
-    e->mac[2] = temp & 0xff;
-    e->mac[3] = temp >> 8;
-    temp = e1000_eeprom_read(e, 2);
-    e->mac[4] = temp & 0xff;
-    e->mac[5] = temp >> 8;
-}
-
-void e1000_tx_init(struct e1000 *e)
-{
-    int i;
-    struct e1000_tx_desc *descs;
-
-    descs = kmalloc(sizeof(struct e1000_tx_desc) * (NUM_TX_DESC+1), 0);
-    if (!descs)
-        panic("Allocating TX descs\n");
-    descs = (struct e1000_tx_desc *)ALIGN_UP((uintptr_t)descs, 16);
-    memset(descs, 0, sizeof(struct e1000_tx_desc) * NUM_TX_DESC);
-    kprintf("TX buf @ 0x%p\n", descs);
-
-    e->tx_free = (uint8_t *)descs;
-    for(i = 0; i < NUM_TX_DESC; i++) {
-        e->tx_descs[i] = &descs[i];
-        e->tx_descs[i]->addr = 0;
-        e->tx_descs[i]->cmd = 0;
-        e->tx_descs[i]->status = TSTA_DD;
-    }
-
-    //give the card the pointer to the descriptors
-    e1000_outl(e, REG_TXDESCLO, (uint32_t)virt_to_phys(descs));
-    e1000_outl(e, REG_TXDESCHI, 0);
-
-    //now setup total length of descriptors
-    e1000_outl(e, REG_TXDESCLEN, NUM_TX_DESC * 16);
-
-    //setup numbers
-    e1000_outl(e, REG_TXDESCHEAD, 0);
-    e1000_outl(e, REG_TXDESCTAIL, 0);
-    e->tx_cur = 0;
-
-    // enable transmission
-    e1000_outl(e, REG_TCTRL, TX_FLAGS);
-}
-
-void e1000_rx_init(struct e1000 *e)
-{
-    struct e1000_rx_desc *descs;
-    void *ptr;
-    int i;
-
-    descs = kmalloc(sizeof(struct e1000_rx_desc) * (NUM_RX_DESC+1), 0);
-    if (!descs)
-        panic("Allocating RX descs\n");
-    descs = (struct e1000_rx_desc *)ALIGN_UP((uintptr_t)descs, 16);
-    memset(descs, 0, sizeof(struct e1000_rx_desc) * NUM_RX_DESC);
-    kprintf("RX buf @ 0x%p\n", descs);
-
-    e->rx_free = (uint8_t *)descs;
-    for(i = 0; i < NUM_RX_DESC; i++)
-    {
-        e->rx_descs[i] = &descs[i];
-        ptr = kmalloc(8192+16, 0);
-        if (!ptr)
-            panic("Out of memory allocating RX buffers");
-        e->rx_descs[i]->addr = (uint32_t)virt_to_phys(ptr);
-        e->rx_descs[i]->status = 0;
-    }
-
-    //give the card the pointer to the descriptors
-    e1000_outl(e, REG_RXDESCLO, (uint32_t)virt_to_phys(descs));
-    e1000_outl(e, REG_RXDESCHI, 0);
-
-    //now setup total length of descriptors
-    e1000_outl(e, REG_RXDESCLEN, NUM_RX_DESC * 16);
-
-    //setup numbers
-    e1000_outl(e, REG_RXDESCHEAD, 0);
-    e1000_outl(e, REG_RXDESCTAIL, NUM_RX_DESC-1);
-    e->rx_cur = 0;
-
-    //enable receiving
-    e1000_outl(e, REG_RCTRL, RX_FLAGS);
-}
-
-static void raw_to_asc(char *asc, const char *raw, size_t rawsize)
-{
-    char c;
-    int i = rawsize-1;      /* raw index */
-    int j = 2*rawsize-1;    /* asc index */
-
-    while (i >= 0)
-    {
-        c = raw[i] & 0x0F;
-        if (c < 10)
-            asc[j] = '0' + c;
-        else
-            asc[j] = 'A' + (c - 10);
-        j--;
-        c = (raw[i] >> 4) & 0x0F;
-        if (c < 10)
-            asc[j] = '0' + c;
-        else
-            asc[j] = 'A' + (c - 10);
-        j--;
-        i--;
-    }
-}
-
-size_t e1000_tx(struct e1000 *e, uint8_t *buf, size_t length)
-{
-    uint8_t old_cur;
-    //struct e1000 *e = dev->device;
-    char *copy = kmalloc(length, 0);
-    if (!copy)
-        return 0;
-    memcpy(copy, buf, length);
-    kprintf("TX buf @ 0x%p\n", buf);
-
-    e->tx_descs[e->tx_cur]->addr = (uintptr_t)virt_to_phys(copy);
-    e->tx_descs[e->tx_cur]->length = length;
-    e->tx_descs[e->tx_cur]->cmd = CMD_EOP | CMD_IFCS | CMD_RS | CMD_RPS;
-    old_cur = e->tx_cur;
-    e->tx_cur = (e->tx_cur + 1) % NUM_TX_DESC;
-    e1000_outl(e, REG_TXDESCTAIL, e->tx_cur);
-
-    while(!(e->tx_descs[old_cur]->status & 0xff));
-
-    return length;
-}
-
-void e1000_rx(struct e1000 *e)
-{
-    uint16_t old_cur;
-
-    while((e->rx_descs[e->rx_cur]->status & 0x1))
-    {
-        uint8_t *buf = (uint8_t *)e->rx_descs[e->rx_cur]->addr;
-        uint16_t len = e->rx_descs[e->rx_cur]->length;
-        char *str;
-
-        str = kmalloc(len*2+1, 0);
-        raw_to_asc(str, phys_to_virt(buf), len);
-        str[len*2] = '\0';
-
-        kprintf("[len %d] ", len);
-        kprintf("%s", str);
-        kprintf("\n");
-        kfree(str, len*2+1);
-
-        e->rx_descs[e->rx_cur]->status = 0;
-        old_cur = e->rx_cur;
-        e->rx_cur = (e->rx_cur + 1) % NUM_RX_DESC;
-        e1000_outl(e, REG_RXDESCTAIL, old_cur);
-    }
-}
-
-struct e1000 *g_e = NULL;
-
-void e1000_handler(void)
-{
-    struct e1000 *e = g_e;
-    uint32_t status = e1000_inl(e, 0xc0);
-
-    kprintf("e1000 interrupt : status=%x\n", status);
-
-    // TODO free the tx buffer
-
-    if(status & 0x04)
-    {
-    //  e1000_linkup(e);
-        kprintf("linkup\n");
-    }
-
-    if(status & 0x10)
-    {
-        kprintf("threshold good\n");
-    }
-
-    if(status & 0x80)
-        e1000_rx(e);
-}
-
-int e1000_init(struct e1000 *e)
+static uint16_t eeprom_read(uint8_t addr)
 {
     uint32_t val;
 
-    g_e = e;
+    wr32(REG_EEPROM, ((uint32_t)addr << 8) | 0x01);
+    while (((val = rd32(REG_EEPROM)) & (1 << 4)) == 0)
+        ;
+    return (uint16_t)(val >> 16);
+}
 
-    e->pci = pci_get_device(PCI_VENDOR_ID_INTEL, E1000_PCI_DEVICE_ID);
-    if (e->pci == NULL)
-        return -1;
-
-    page_map((void *)e->pci->mm_base, e->pci->mm_base);
-    page_map((void *)e->pci->mm_base + REG_MTA, e->pci->mm_base + REG_MTA);
-    page_map((void *)e->pci->mm_base + REG_TXDESCLO, e->pci->mm_base + REG_TXDESCLO);
-    page_map((void *)e->pci->mm_base + REG_RXDESCLO, e->pci->mm_base + REG_RXDESCLO);
-
-    e1000_get_type(e);
-    e1000_get_mac(e);
-
-    kprintf("Intel Pro/1000 Ethernet adapter found\n");
-    kprintf("MAC: %02x:%02x:%02x:%02x:%02x:%02x\n",
-            e->mac[0], e->mac[1], e->mac[2], e->mac[3], e->mac[4], e->mac[5]);
-
-    pci_register_handler(e->pci, e1000_handler);
-
-    /* Set the link up */
-    val = e1000_inl(e,REG_CTRL);
-    e1000_outl(e, REG_CTRL, val | ECTRL_SLU);
-
-
-    /* Initialize the multicase table array */
+static void mac_read(void)
+{
+    uint16_t word;
+    uint32_t val;
     int i;
+
+    if (eth.eeprom != 0) {
+        for (i = 0; i < 3; i++) {
+            word = eeprom_read(i);
+            eth.mac[i*2] = word & 0xFF;
+            eth.mac[i*2 + 1] = word >> 8;
+        }
+    } else {
+        /* No EEPROM: the address has been loaded in RAL0/RAH0 */
+        val = rd32(REG_RAL);
+        eth.mac[0] = val;
+        eth.mac[1] = val >> 8;
+        eth.mac[2] = val >> 16;
+        eth.mac[3] = val >> 24;
+        val = rd32(REG_RAH);
+        eth.mac[4] = val;
+        eth.mac[5] = val >> 8;
+    }
+}
+
+
+static int rx_init(void)
+{
+    int i;
+    void *ring_phys, *buf_phys;
+
+    ring_phys = frame_alloc(0, ZONE_LOW);
+    if (ring_phys == NULL)
+        return -1;
+    buf_phys = frame_alloc(BUF_BLOCK_ORDER, ZONE_LOW);
+    if (buf_phys == NULL) {
+        frame_free(ring_phys, 0);
+        return -1;
+    }
+
+    eth.rx_ring = (struct e1000_rx_desc *)phys_to_virt(ring_phys);
+    eth.rx_buf = (uint8_t *)phys_to_virt(buf_phys);
+    eth.rx_cur = 0;
+
+    memset((void *)eth.rx_ring, 0, NUM_RX_DESC * sizeof(*eth.rx_ring));
+    for (i = 0; i < NUM_RX_DESC; i++)
+        eth.rx_ring[i].addr = (uint32_t)buf_phys + i*BUF_SIZE;
+
+    wr32(REG_RDBAL, (uint32_t)ring_phys);
+    wr32(REG_RDBAH, 0);
+    wr32(REG_RDLEN, NUM_RX_DESC * sizeof(*eth.rx_ring));
+    wr32(REG_RDH, 0);
+    wr32(REG_RDT, NUM_RX_DESC - 1);
+    wr32(REG_RCTL, RCTL_FLAGS);
+    return 0;
+}
+
+static int tx_init(void)
+{
+    int i;
+    void *ring_phys, *buf_phys;
+
+    ring_phys = frame_alloc(0, ZONE_LOW);
+    if (ring_phys == NULL)
+        return -1;
+    buf_phys = frame_alloc(BUF_BLOCK_ORDER, ZONE_LOW);
+    if (buf_phys == NULL) {
+        frame_free(ring_phys, 0);
+        return -1;
+    }
+
+    eth.tx_ring = (struct e1000_tx_desc *)phys_to_virt(ring_phys);
+    eth.tx_buf = (uint8_t *)phys_to_virt(buf_phys);
+    eth.tx_cur = 0;
+
+    memset((void *)eth.tx_ring, 0, NUM_TX_DESC * sizeof(*eth.tx_ring));
+    for (i = 0; i < NUM_TX_DESC; i++) {
+        eth.tx_ring[i].addr = (uint32_t)buf_phys + i*BUF_SIZE;
+        /* Mark as completed so that the first use does not wait */
+        eth.tx_ring[i].status = TXD_STAT_DD;
+    }
+
+    wr32(REG_TDBAL, (uint32_t)ring_phys);
+    wr32(REG_TDBAH, 0);
+    wr32(REG_TDLEN, NUM_TX_DESC * sizeof(*eth.tx_ring));
+    wr32(REG_TDH, 0);
+    wr32(REG_TDT, 0);
+    wr32(REG_TIPG, TIPG_VALUE);
+    wr32(REG_TCTL, TCTL_FLAGS);
+    return 0;
+}
+
+
+ssize_t e1000_read(void *buf, size_t size)
+{
+    unsigned int i;
+    size_t n;
+    uint32_t flags;
+
+    if (eth.pci == NULL)
+        return -ENODEV;
+
+    flags = irq_save();
+    spinlock_lock(&eth.rx_cond.lock);
+
+    while ((eth.rx_ring[eth.rx_cur].status & RXD_STAT_DD) == 0) {
+        cond_wait(&eth.rx_cond);
+        /* The interrupt flag state is unpredictable after the switch */
+        (void)irq_save();
+    }
+
+    i = eth.rx_cur;
+    n = eth.rx_ring[i].length;
+    if (n > size)
+        n = size;
+    memcpy(buf, eth.rx_buf + i*BUF_SIZE, n);
+    eth.rx_ring[i].status = 0;
+    eth.rx_cur = (i + 1) % NUM_RX_DESC;
+    wr32(REG_RDT, i);   /* Give the descriptor back to the hardware */
+
+    spinlock_unlock(&eth.rx_cond.lock);
+    irq_restore(flags);
+    return (ssize_t)n;
+}
+
+ssize_t e1000_write(const void *buf, size_t size)
+{
+    volatile struct e1000_tx_desc *desc;
+
+    if (eth.pci == NULL)
+        return -ENODEV;
+    if (size == 0)
+        return 0;
+    if (size > BUF_SIZE)
+        return -EINVAL;
+
+    spinlock_lock(&eth.tx_lock);
+
+    desc = &eth.tx_ring[eth.tx_cur];
+    /* Wait for the descriptor (and its buffer) release by the hardware */
+    while ((desc->status & TXD_STAT_DD) == 0)
+        ;
+    memcpy(eth.tx_buf + eth.tx_cur*BUF_SIZE, buf, size);
+    desc->length = size;
+    desc->status = 0;
+    desc->cmd = TXD_CMD_EOP | TXD_CMD_IFCS | TXD_CMD_RS;
+    eth.tx_cur = (eth.tx_cur + 1) % NUM_TX_DESC;
+    wr32(REG_TDT, eth.tx_cur);
+
+    spinlock_unlock(&eth.tx_lock);
+    return (ssize_t)size;
+}
+
+
+static void e1000_isr(void)
+{
+    uint32_t icr;
+
+    icr = rd32(REG_ICR);    /* Reading also clears the pending causes */
+    if (icr == 0)
+        return;     /* Shared interrupt line, not for us */
+
+    if ((icr & INT_LSC) != 0)
+        wr32(REG_CTRL, rd32(REG_CTRL) | CTRL_SLU);
+
+    /*
+     * No lock around the wakeup: the cond queue is manipulated by the
+     * readers with interrupts disabled, so the ISR can never observe
+     * it in an inconsistent state.
+     */
+    if ((icr & (INT_RXT0 | INT_RXDMT0 | INT_RXO)) != 0)
+        cond_broadcast(&eth.rx_cond);
+}
+
+
+int e1000_init(void)
+{
+    int i;
+    uint32_t addr;
+
+    eth.pci = pci_get_device(PCI_VENDOR_ID_INTEL, E1000_PCI_DEVICE_ID);
+    if (eth.pci == NULL || eth.pci->mm_base == 0) {
+        eth.pci = NULL;
+        return -1;
+    }
+
+    pci_bus_master_enable(eth.pci);
+
+    /* Identity map the MMIO registers window */
+    for (addr = 0; addr < E1000_MMIO_SIZE; addr += PAGE_SIZE)
+        page_map((void *)(eth.pci->mm_base + addr), eth.pci->mm_base + addr);
+
+    /* Reset the device and wait for completion */
+    wr32(REG_CTRL, rd32(REG_CTRL) | CTRL_RST);
+    for (i = 0; i < 100000; i++) {
+        if ((rd32(REG_CTRL) & CTRL_RST) == 0)
+            break;
+    }
+    if ((rd32(REG_CTRL) & CTRL_RST) != 0) {
+        kprintf("e1000: reset failure\n");
+        eth.pci = NULL;
+        return -1;
+    }
+
+    wr32(REG_CTRL, rd32(REG_CTRL) | CTRL_SLU);
+
+    eth.eeprom = eeprom_detect();
+    mac_read();
+
+    /* Receive address 0: perfect match filter for our MAC */
+    wr32(REG_RAL, (uint32_t)eth.mac[0] | ((uint32_t)eth.mac[1] << 8) |
+            ((uint32_t)eth.mac[2] << 16) | ((uint32_t)eth.mac[3] << 24));
+    wr32(REG_RAH, (uint32_t)eth.mac[4] | ((uint32_t)eth.mac[5] << 8) |
+            RAH_AV);
+
+    /* Clear the multicast table array */
     for (i = 0; i < 128; i++)
-        e1000_outl(e, REG_MTA + (i * 4), 0);
+        wr32(REG_MTA + i*4, 0);
 
-    /* Enable all interrupts and clear existing pending ones */
-    e1000_outl(e, REG_IMASK , 0x1F6DC);
-    e1000_outl(e, REG_IMASK , 0xff & ~4);
-    e1000_inl(e, 0xc0);
+    cond_init(&eth.rx_cond);
+    spinlock_init(&eth.tx_lock);
 
-    /* CHicken OS */
-    e1000_tx_init(e);
-    e1000_rx_init(e);
+    if (rx_init() < 0 || tx_init() < 0) {
+        kprintf("e1000: out of low memory for DMA buffers\n");
+        eth.pci = NULL;
+        return -1;
+    }
 
+    pci_register_handler(eth.pci, e1000_isr);
+
+    /* Enable the interesting interrupts and clear the pending ones */
+    wr32(REG_IMS, IMS_FLAGS);
+    (void)rd32(REG_ICR);
+
+    kprintf("Intel PRO/1000 ethernet adapter (irq=%d)\n", eth.pci->int_line);
+    kprintf("MAC: %02x:%02x:%02x:%02x:%02x:%02x\n",
+            eth.mac[0], eth.mac[1], eth.mac[2],
+            eth.mac[3], eth.mac[4], eth.mac[5]);
     return 0;
 }

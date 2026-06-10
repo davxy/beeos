@@ -1,46 +1,61 @@
+/*
+ * Copyright (c) 2015-2018, Davide Galassi. All rights reserved.
+ *
+ * This file is part of the BeeOS software.
+ *
+ * BeeOS is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with BeeOS; if not, see <http://www.gnu/licenses/>.
+ */
+
+/*
+ * Intel PRO/1000 (e1000) ethernet driver.
+ *
+ * The device is exposed as a raw packet interface: each read returns
+ * one received ethernet frame, each write transmits one frame.
+ */
+
 #ifndef BEEOS_DRIVER_E1000_H_
 #define BEEOS_DRIVER_E1000_H_
 
-#include "pci.h"
+#include <sys/types.h>
+#include <stddef.h>
 
+/**
+ * Look for an e1000 device on the PCI bus and initialize it.
+ *
+ * @return  0 on success, -1 if the device is not present or the
+ *          initialization failed.
+ */
+int e1000_init(void);
 
-#define NUM_RX_DESC 16 //256
-#define NUM_TX_DESC 16 //256
+/**
+ * Read a single received frame.
+ * Blocks until a frame is available. If the frame is bigger than the
+ * supplied buffer the exceeding part is silently discarded.
+ *
+ * @param buf   Destination buffer.
+ * @param size  Buffer size.
+ * @return      Number of bytes copied into buf, negative on error.
+ */
+ssize_t e1000_read(void *buf, size_t size);
 
-
-struct e1000_rx_desc {
-    uint64_t addr;
-    uint16_t length;
-    uint16_t checksum;
-    uint8_t status;
-    uint8_t errors;
-    uint16_t special;
-} __attribute__((packed));
-
-struct e1000_tx_desc {
-    uint64_t addr;
-    uint16_t length;
-    uint8_t cso;
-    uint8_t cmd;
-    uint8_t status;
-    uint8_t css;
-    uint16_t special;
-} __attribute__((packed));
-
-
-struct e1000 {
-    struct pci_device *pci;
-    int     is_e;
-    uint8_t mac[6];
-    uint16_t rx_cur;
-    uint16_t tx_cur;
-    uint8_t *rx_free;
-    uint8_t *tx_free;
-    struct e1000_rx_desc *rx_descs[NUM_RX_DESC];
-    struct e1000_tx_desc *tx_descs[NUM_TX_DESC];
-};
-
-int e1000_init(struct e1000 *e);
-
+/**
+ * Transmit a single frame.
+ *
+ * @param buf   Frame data (starting with the ethernet header).
+ * @param size  Frame size.
+ * @return      Number of transmitted bytes, negative on error.
+ */
+ssize_t e1000_write(const void *buf, size_t size);
 
 #endif /* BEEOS_DRIVER_E1000_H_ */

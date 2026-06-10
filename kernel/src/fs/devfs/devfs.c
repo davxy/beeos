@@ -22,6 +22,7 @@
 #include "driver/tty.h"
 #include "driver/ramdisk.h"
 #include "driver/random.h"
+#include "driver/e1000.h"
 #include "kmalloc.h"
 #include "kprintf.h"
 #include "list.h"
@@ -78,7 +79,7 @@ static ssize_t devfs_inode_read(struct inode *inod, void *buf,
         n = random_read(buf, count);
         break;
     case DEV_ETH0:
-        n = -1; /* TODO (using a nic abstraction) */
+        n = e1000_read(buf, count);
         break;
     default:
         n = -ENODEV;
@@ -121,8 +122,7 @@ static ssize_t devfs_inode_write(struct inode *inod, const void *buf,
         n = -1;
         break;
     case DEV_ETH0:
-        n = -1; /* TODO (using a nic abstraction) */
-        break;
+        n = e1000_write(buf, count);
         break;
     default:
         n = -ENODEV;
