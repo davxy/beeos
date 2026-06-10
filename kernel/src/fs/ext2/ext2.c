@@ -239,8 +239,8 @@ static struct inode *ext2_lookup(struct inode *dir, const char *name)
     if (dirbuf == NULL)
         return NULL;
 
-    if (devfs_read(dir->sb->dev, dirbuf, dir->size,
-                   ((struct ext2_inode *)dir)->blocks[0] * 1024) != dir->size)
+    if (ext2_read((struct ext2_inode *)dir, dirbuf, dir->size, 0)
+            != dir->size)
         goto end;
 
     count = dir->size;
@@ -287,8 +287,7 @@ static int ext2_readdir(struct inode *dir, unsigned int i,
     if (dirbuf == NULL)
         return -ENOMEM;
 
-    ret = devfs_read(dir->sb->dev, dirbuf, dir->size,
-                    ((struct ext2_inode *)dir)->blocks[0] * 1024);
+    ret = ext2_read((struct ext2_inode *)dir, dirbuf, dir->size, 0);
     if (ret != dir->size) {
         if (ret >= 0)
             ret = -EIO;
