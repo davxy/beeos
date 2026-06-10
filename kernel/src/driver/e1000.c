@@ -36,6 +36,8 @@
 #include "e1000.h"
 #include "pci.h"
 #include "kprintf.h"
+#include "proc.h"
+#include "timer.h"
 #include "sync/cond.h"
 #include "sync/spinlock.h"
 #include "mm/frame.h"
@@ -323,36 +325,79 @@ static int tx_init(void)
 }
 
 
-ssize_t e1000_read(void *buf, size_t size)
+/* Runs in the timer ISR context: wake up all the readers, the ones
+ * with an expired deadline give up, the others go back to sleep. */
+static void read_timeout_wakeup(void *data)
+{
+    cond_broadcast(&eth.rx_cond);
+}
+
+ssize_t e1000_read_timeout(void *buf, size_t size, unsigned long timeout)
 {
     unsigned int i;
-    size_t n;
+    ssize_t n;
     uint32_t flags;
+    struct timer_event tm;
+    unsigned long deadline = (unsigned long)timer_ticks + timeout;
 
     if (eth.pci == NULL)
         return -ENODEV;
 
+    if (timeout != 0) {
+        timer_event_init(&tm, read_timeout_wakeup, NULL, deadline);
+        timer_event_add(&tm);
+    }
+
     flags = irq_save();
     spinlock_lock(&eth.rx_cond.lock);
 
+    n = 0;
     while ((eth.rx_ring[eth.rx_cur].status & RXD_STAT_DD) == 0) {
+        if (timeout != 0 && (unsigned long)timer_ticks >= deadline) {
+            n = -ETIMEDOUT;
+            break;
+        }
+        if (task_signal_pending(current) != 0) {
+            n = -EINTR;
+            break;
+        }
         cond_wait(&eth.rx_cond);
         /* The interrupt flag state is unpredictable after the switch */
         (void)irq_save();
     }
 
-    i = eth.rx_cur;
-    n = eth.rx_ring[i].length;
-    if (n > size)
-        n = size;
-    memcpy(buf, eth.rx_buf + i*BUF_SIZE, n);
-    eth.rx_ring[i].status = 0;
-    eth.rx_cur = (i + 1) % NUM_RX_DESC;
-    wr32(REG_RDT, i);   /* Give the descriptor back to the hardware */
+    if (n == 0) {
+        i = eth.rx_cur;
+        n = eth.rx_ring[i].length;
+        if (n > (ssize_t)size)
+            n = (ssize_t)size;
+        memcpy(buf, eth.rx_buf + i*BUF_SIZE, n);
+        eth.rx_ring[i].status = 0;
+        eth.rx_cur = (i + 1) % NUM_RX_DESC;
+        wr32(REG_RDT, i);   /* Give the descriptor back to the hardware */
+    }
 
     spinlock_unlock(&eth.rx_cond.lock);
     irq_restore(flags);
-    return (ssize_t)n;
+
+    /* No-op if the event already fired (list links are reset) */
+    if (timeout != 0)
+        timer_event_del(&tm);
+
+    return n;
+}
+
+ssize_t e1000_read(void *buf, size_t size)
+{
+    return e1000_read_timeout(buf, size, 0);
+}
+
+int e1000_mac(uint8_t *mac)
+{
+    if (eth.pci == NULL)
+        return -ENODEV;
+    memcpy(mac, eth.mac, sizeof(eth.mac));
+    return 0;
 }
 
 ssize_t e1000_write(const void *buf, size_t size)

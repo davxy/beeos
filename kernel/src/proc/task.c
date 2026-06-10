@@ -41,6 +41,33 @@ void task_signal(struct task *tsk, int sig)
     }
 }
 
+/*
+ * Check for pending signals that would have a visible effect once
+ * delivered, that is not masked and not (explicitly or by default)
+ * ignored. The disposition logic mirrors do_signal().
+ * Used to abort interruptible kernel waits with -EINTR.
+ */
+int task_signal_pending(struct task *tsk)
+{
+    int sig;
+    const struct sigaction *act;
+
+    for (sig = 1; sig < SIGNALS_NUM; sig++) {
+        if (sigismember(&tsk->sigpend, sig) != 1 ||
+                sigismember(&tsk->sigmask, sig) > 0)
+            continue;
+        act = &tsk->signals[sig - 1];
+        if (act->sa_handler == SIG_IGN)
+            continue;
+        if (act->sa_handler == SIG_DFL &&
+                (sig == SIGCHLD || sig == SIGURG || sig == SIGSTOP ||
+                 sig == SIGTSTP || sig == SIGTTIN || sig == SIGTTOU))
+            continue;
+        return 1;
+    }
+    return 0;
+}
+
 int task_init(struct task *tsk, task_entry_t entry)
 {
     static pid_t next_pid = 1;

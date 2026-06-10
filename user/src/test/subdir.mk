@@ -15,6 +15,7 @@ local_sources := dump.c \
 				 initadopt.c \
 				 pgrp.c \
 				 atexit.c \
+				 socket.c \
 				 eth.c
 
 dirs := cp03 cp08

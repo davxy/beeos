@@ -7,7 +7,8 @@ dirs += dirent \
 		signal \
 		sys \
 		stdint \
-		time
+		time \
+		arpa
 
 ifeq ($(ARCH),x86)
 dirs += arch/x86

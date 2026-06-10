@@ -84,6 +84,13 @@ static int pipe_read(struct inode *inod, void *buf,
             if (left != count && pnode->queued_writers == 0)
                 goto done;
 
+            if (task_signal_pending(current) != 0) {
+                if (left != count)
+                    goto done;  /* Return what has been read so far */
+                spinlock_unlock(&pnode->queue.lock);
+                return -EINTR;
+            }
+
             /* TODO: if BLOCKING allowed */
             pnode->queued_readers++;
             if (pnode->queued_writers > 0)  /* if there are pending writers */
@@ -145,6 +152,13 @@ static int pipe_write(struct inode *inod, const void *buf,
                 return -EPIPE;
             }
 
+            if (task_signal_pending(current) != 0) {
+                if (left != count)
+                    goto done;  /* Partial write */
+                spinlock_unlock(&pnode->queue.lock);
+                return -EINTR;
+            }
+
             /* if is BLOCKING */
             pnode->queued_writers++;
             if (pnode->queued_readers > 0)     /* there are pending writers */
@@ -170,6 +184,7 @@ static int pipe_write(struct inode *inod, const void *buf,
             pnode->nwp = 0;
         left -= n;
     }
+done:
     spinlock_unlock(&pnode->queue.lock);
     n = count - left;
     /* Notify if something has been written or a reader MUST be woken up */

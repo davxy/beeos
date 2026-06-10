@@ -1,1 +1,1 @@
-local_sources := pipe.c
+local_sources := pipe.c socket.c
