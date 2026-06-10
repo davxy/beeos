@@ -93,9 +93,23 @@ char *strerror(int errnum)
     case EINVAL:
         s = "Invalid argument";
         break;
+    case EMFILE:
+        s = "Too many open files";
+        break;
+    case ENOTSOCK:
+        s = "Socket operation on non-socket";
+        break;
+    case ESOCKTNOSUPPORT:
+        s = "Socket type not supported";
+        break;
+    case EOPNOTSUPP:
+        s = "Operation not supported on transport endpoint";
+        break;
+    case EAFNOSUPPORT:
+        s = "Address family not supported by protocol";
+        break;
 #if 0
 #define ENFILE      23  /* File table overflow */
-#define EMFILE      24  /* Too many open files */
 #define ENOTTY      25  /* Not a typewriter */
 #define ETXTBSY     26  /* Text file busy */
 #define EFBIG       27  /* File too large */
@@ -163,16 +177,12 @@ char *strerror(int errnum)
 #define ERESTART    85  /* Interrupted system call should be restarted */
 #define ESTRPIPE    86  /* Streams pipe error */
 #define EUSERS      87  /* Too many users */
-#define ENOTSOCK    88  /* Socket operation on non-socket */
 #define EDESTADDRREQ    89  /* Destination address required */
 #define EMSGSIZE    90  /* Message too long */
 #define EPROTOTYPE  91  /* Protocol wrong type for socket */
 #define ENOPROTOOPT 92  /* Protocol not available */
 #define EPROTONOSUPPORT 93  /* Protocol not supported */
-#define ESOCKTNOSUPPORT 94  /* Socket type not supported */
-#define EOPNOTSUPP  95  /* Operation not supported on transport endpoint */
 #define EPFNOSUPPORT    96  /* Protocol family not supported */
-#define EAFNOSUPPORT    97  /* Address family not supported by protocol */
 #define EADDRINUSE  98  /* Address already in use */
 #define EADDRNOTAVAIL   99  /* Cannot assign requested address */
 #define ENETDOWN    100 /* Network is down */

@@ -1,6 +1,5 @@
 #include "sys.h"
-
-int socket_create(int, int, int);
+#include "ipc/socket.h"
 
 int sys_socket(int domain, int type, int protocol)
 {

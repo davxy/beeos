@@ -22,6 +22,7 @@
 
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <sys/socket.h>
 #include <time.h>
 #include <signal.h>
 
@@ -100,6 +101,10 @@ int sys_mount(const char *source, const char *target,
               const void *data);
 
 unsigned int sys_clock(void);
+
+int sys_socket(int domain, int type, int protocol);
+
+int sys_connect(int sockfd, const struct sockaddr *addr, socklen_t addrlen);
 
 int sys_info(void);
 
